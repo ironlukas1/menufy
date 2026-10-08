@@ -1,0 +1,10 @@
+{
+  "description": "Discover local restaurants with detailed menus, ratings, and filters for allergies, price, and delivery options, tailored for food enthusiasts.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
