@@ -1,0 +1,23 @@
+services:
+  menufy:
+    image: nginx:alpine
+    container_name: menufy
+    restart: unless-stopped
+    mem_limit: 32m
+    cpus: 0.25
+    pids_limit: 50
+    volumes:
+      - ./site:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - homelab
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.menufy.rule=Host(`menufy.misaligned.dev`)"
+      - "traefik.http.routers.menufy.entrypoints=websecure"
+      - "traefik.http.routers.menufy.tls.certresolver=letsencrypt"
+      - "traefik.http.services.menufy.loadbalancer.server.port=80"
+
+networks:
+  homelab:
+    external: true
