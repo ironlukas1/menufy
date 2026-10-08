@@ -1,0 +1,90 @@
+:root {
+  color-scheme: light;
+  --ink: #17211b;
+  --muted: #69736d;
+  --faint: #929b95;
+  --line: #dfe5e0;
+  --soft-line: #edf0ed;
+  --paper: #ffffff;
+  --canvas: #f6f8f5;
+  --subtle: #fafbf9;
+  --green: #176b43;
+  --green-dark: #0e5131;
+  --green-soft: #e6f2eb;
+  --green-line: #bedbc9;
+  --lime: #c4dc76;
+  --cream: #f1f1df;
+  --amber: #eead39;
+  --on-green: #ffffff;
+  --danger: #b3261e;
+  --danger-soft: #fdecea;
+  --tag-fg: #8a6320;
+  --tag-bg: #fff2d9;
+  --check-border: #aeb7b1;
+  --overlay: rgba(255, 255, 255, 0.92);
+  --map-bg: #e7ece5;
+  --map-patch: #d9e3d6;
+  --map-river: #c9e3e2;
+  --map-road: #fbfbf7;
+  --shadow: 0 14px 38px rgba(27, 52, 38, 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ink: #e8efe9;
+    --muted: #9aa69f;
+    --faint: #75807a;
+    --line: #2b3630;
+    --soft-line: #222b26;
+    --paper: #18211c;
+    --canvas: #0f1612;
+    --subtle: #1b2520;
+    --green: #2f9a65;
+    --green-dark: #1f7a4d;
+    --green-soft: #1b3a2a;
+    --green-line: #2d5a42;
+    --lime: #c4dc76;
+    --amber: #f0b44a;
+    --danger: #f2b8b5;
+    --danger-soft: #3b1f1d;
+    --tag-fg: #f0c477;
+    --tag-bg: #3a2f17;
+    --check-border: #5b6761;
+    --overlay: rgba(24, 33, 28, 0.92);
+    --map-bg: #1b2520;
+    --map-patch: #202c25;
+    --map-river: #1d3a3a;
+    --map-road: #2a352f;
+    --shadow: 0 14px 38px rgba(0, 0, 0, 0.35);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #e8efe9;
+  --muted: #9aa69f;
+  --faint: #75807a;
+  --line: #2b3630;
+  --soft-line: #222b26;
+  --paper: #18211c;
+  --canvas: #0f1612;
+  --subtle: #1b2520;
+  --green: #2f9a65;
+  --green-dark: #1f7a4d;
+  --green-soft: #1b3a2a;
+  --green-line: #2d5a42;
+  --lime: #c4dc76;
+  --amber: #f0b44a;
+  --danger: #f2b8b5;
+  --danger-soft: #3b1f1d;
+  --tag-fg: #f0c477;
+  --tag-bg: #3a2f17;
+  --check-border: #5b6761;
+  --overlay: rgba(24, 33, 28, 0.92);
+  --map-bg: #1b2520;
+  --map-patch: #202c25;
+  --map-river: #1d3a3a;
+  --map-road: #2a352f;
+  --shadow: 0 14px 38px rgba(0, 0, 0, 0.35);
+}
