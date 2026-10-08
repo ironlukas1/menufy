@@ -21,12 +21,20 @@ function Fit({ items, selected, expanded }: { items: Restaurant[]; selected: str
   const map = useMap();
   useEffect(() => {
     const t = setTimeout(() => {
+      if (!(map as unknown as { _loaded?: boolean })._loaded) return;
       map.invalidateSize();
       const sel = items.find((r) => r.slug === selected);
       if (sel) map.flyTo([sel.lat, sel.lng], 15, { duration: 0.5 });
       else if (items.length) map.fitBounds(boundsOf(items), { maxZoom: 14 });
     }, 60);
-    return () => clearTimeout(t);
+    return () => {
+      clearTimeout(t);
+      try {
+        map.stop();
+      } catch {
+        /* map already removed */
+      }
+    };
   }, [map, items, selected, expanded]);
   return null;
 }

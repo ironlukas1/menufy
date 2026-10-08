@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Component, useEffect, useState, type ReactNode } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router";
 import Icon from "./Icon";
 import ProtoPanel from "./ProtoPanel";
@@ -102,6 +102,26 @@ export function Footer() {
   );
 }
 
+class RouteBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  componentDidCatch(e: unknown) {
+    console.error(e);
+    try {
+      if (sessionStorage.getItem("menufy-reloaded") === location.pathname) return;
+      sessionStorage.setItem("menufy-reloaded", location.pathname);
+    } catch {
+      return;
+    }
+    location.reload();
+  }
+  render() {
+    return this.state.failed ? null : this.props.children;
+  }
+}
+
 export default function Layout() {
   const loc = useLocation();
   useEffect(() => window.scrollTo({ top: 0 }), [loc.pathname]);
@@ -109,7 +129,9 @@ export default function Layout() {
     <div className="app-shell">
       <TopBar />
       <main>
-        <Outlet />
+        <RouteBoundary key={loc.pathname}>
+          <Outlet />
+        </RouteBoundary>
       </main>
       <Footer />
       <ProtoPanel />

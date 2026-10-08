@@ -134,7 +134,7 @@ nav { display: flex; align-self: stretch; gap: 28px; }
 
 .hero {
   position: relative;
-  overflow: hidden;
+  z-index: 6;
   color: var(--on-green);
   background: var(--green);
 }
@@ -213,6 +213,7 @@ nav { display: flex; align-self: stretch; gap: 28px; }
 
 .sign-in-button:hover { background: rgba(255,255,255,.2); }
 
+.hero-bg { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
 .hero-orb { position: absolute; border-radius: 50%; opacity: .22; }
 .hero-orb-one { width: 250px; height: 250px; left: -70px; top: -80px; background: var(--lime); }
 .hero-orb-two { width: 140px; height: 140px; right: 7%; bottom: -80px; border: 30px solid var(--lime); }

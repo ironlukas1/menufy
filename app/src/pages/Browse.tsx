@@ -187,7 +187,7 @@ export default function Browse() {
     setPinned(null);
   };
 
-  const mapItems = restaurants.filter((r) => r.city === f.city);
+  const mapItems = useMemo(() => restaurants.filter((r) => r.city === f.city), [f.city]);
 
   const pick = (s: string) => {
     setPinned(s);
@@ -202,8 +202,10 @@ export default function Browse() {
     <>
       {isIndex && (
         <section className="hero">
-          <div className="hero-orb hero-orb-one" />
-          <div className="hero-orb hero-orb-two" />
+          <div className="hero-bg">
+            <div className="hero-orb hero-orb-one" />
+            <div className="hero-orb hero-orb-two" />
+          </div>
           <div className="hero-inner">
             <p className="eyebrow">Dobrý obed je bližšie, než si myslíte</p>
             <h1>Čo si dáte dnes?</h1>
