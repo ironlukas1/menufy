@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router";
 import Icon from "@/components/Icon";
+import Lightbox from "@/components/Lightbox";
 import { HeartButton, MenuRow } from "@/components/RestaurantCard";
 import { DAYS, bySlug, dailyFor } from "@/data/restaurants";
 import { openStatus, stars } from "@/lib";
@@ -10,6 +11,7 @@ export default function Detail() {
   const r = bySlug(slug);
   const [tab, setTab] = useState<"daily" | "standard">("daily");
   const [day, setDay] = useState(0);
+  const [photo, setPhoto] = useState<number | null>(null);
 
   if (!r)
     return (
@@ -132,9 +134,14 @@ export default function Detail() {
         <h3>Fotogaléria</h3>
         <div className="gallery">
           {r.gallery.map((g, i) => (
-            <img key={i} src={g} alt={`${r.name} – fotka ${i + 1}`} loading="lazy" />
+            <button key={i} className="gallery-item" onClick={() => setPhoto(i)} aria-label={`Zväčšiť fotku ${i + 1}`}>
+              <img src={g} alt={`${r.name} – fotka ${i + 1}`} loading="lazy" />
+            </button>
           ))}
         </div>
+        {photo !== null && (
+          <Lightbox images={r.gallery} index={photo} alt={r.name} onClose={() => setPhoto(null)} onIndex={setPhoto} />
+        )}
       </section>
 
       <section className="panel">

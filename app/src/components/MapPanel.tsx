@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { CircleMarker, MapContainer, Marker, TileLayer, useMap } from "react-leaflet";
+import { CircleMarker, MapContainer, Marker, TileLayer, ZoomControl, useMap } from "react-leaflet";
 import L from "leaflet";
 import Icon from "./Icon";
 import type { Restaurant } from "@/data/restaurants";
@@ -39,6 +39,15 @@ function Fit({ items, selected, expanded }: { items: Restaurant[]; selected: str
   return null;
 }
 
+function Interactive({ on }: { on: boolean }) {
+  const map = useMap();
+  useEffect(() => {
+    const handlers = [map.dragging, map.touchZoom, map.scrollWheelZoom, map.doubleClickZoom, map.boxZoom, map.keyboard];
+    handlers.forEach((h) => (on ? h.enable() : h.disable()));
+  }, [map, on]);
+  return null;
+}
+
 export default function MapPanel({
   items,
   selected,
@@ -68,18 +77,15 @@ export default function MapPanel({
           </button>
         )}
       </div>
-      <div className={`map-canvas ${expanded ? "is-open" : ""} ${dark ? "dark-tiles" : ""}`}>
+      <div
+        className={`map-canvas ${expanded ? "is-open" : ""} ${selected && !expanded ? "has-selection" : ""} ${dark ? "dark-tiles" : ""}`}
+      >
         <MapContainer
           center={[CITY_CENTER.lat, CITY_CENTER.lng]}
           zoom={13}
           bounds={items.length ? boundsOf(items) : undefined}
           boundsOptions={{ maxZoom: 14 }}
-          scrollWheelZoom={expanded}
-          dragging={expanded}
-          zoomControl={expanded}
-          doubleClickZoom={expanded}
-          touchZoom={expanded}
-          keyboard={expanded}
+          zoomControl={false}
           style={{ height: "100%", width: "100%" }}
         >
           <TileLayer
@@ -96,10 +102,11 @@ export default function MapPanel({
               position={[r.lat, r.lng]}
               icon={pin(r.rating.toFixed(1).replace(".", ","), r.slug === selected)}
               eventHandlers={{ click: () => onPick(r.slug) }}
-              keyboard={expanded}
               title={r.name}
             />
           ))}
+          <Interactive on={expanded} />
+          {expanded && <ZoomControl position="topright" />}
           <Fit items={items} selected={selected} expanded={expanded} />
         </MapContainer>
         {!expanded && (

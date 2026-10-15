@@ -17,7 +17,7 @@ export type Filters = {
   maxPrice: number;
   delivery: boolean;
   minRating: number;
-  sort: "rating" | "price" | "distance";
+  sort: "rating" | "price" | "distance" | "favorites";
 };
 
 export const MAX_PRICE = 15;
@@ -49,10 +49,12 @@ export type BrowseCtx = {
 function Search({
   query,
   setQuery,
+  onSubmit,
   onOpen,
 }: {
   query: string;
-  setQuery: (q: string) => void;
+  setQuery: (q: string, apply?: boolean) => void;
+  onSubmit: () => void;
   onOpen: (slug: string) => void;
 }) {
   const [focus, setFocus] = useState(false);
@@ -71,7 +73,14 @@ function Search({
   const show = focus && q && (places.length > 0 || dishes.length > 0);
 
   return (
-    <div className="search-box">
+    <form
+      className="search-box"
+      onSubmit={(e) => {
+        e.preventDefault();
+        setFocus(false);
+        onSubmit();
+      }}
+    >
       <Icon name="search" size={22} />
       <input
         value={query}
@@ -84,11 +93,11 @@ function Search({
         aria-expanded={!!show}
       />
       {query && (
-        <button className="clear-search" onClick={() => setQuery("")} aria-label="Vymazať vyhľadávanie">
+        <button type="button" className="clear-search" onClick={() => setQuery("", true)} aria-label="Vymazať vyhľadávanie">
           <Icon name="close" size={17} />
         </button>
       )}
-      <button className="search-action">Hľadať</button>
+      <button type="submit" className="search-action">Hľadať</button>
       {show && (
         <div className="search-menu" role="listbox">
           {places.length > 0 && (
@@ -109,7 +118,7 @@ function Search({
             <>
               <span className="search-group">Jedlá</span>
               {dishes.map((d) => (
-                <button key={d.name} onMouseDown={() => setQuery(d.name)} role="option">
+                <button key={d.name} onMouseDown={() => setQuery(d.name, true)} role="option">
                   <span className="mini-logo dish">
                     <Icon name="search" size={14} />
                   </span>
@@ -123,7 +132,7 @@ function Search({
           )}
         </div>
       )}
-    </div>
+    </form>
   );
 }
 
@@ -131,8 +140,9 @@ export default function Browse() {
   const { slug } = useParams();
   const nav = useNavigate();
   const loc = useLocation();
-  const { geo } = useProto();
+  const { geo, favorites } = useProto();
   const [f, setF] = useState<Filters>(initial);
+  const [draft, setDraft] = useState("");
   const [query, setQuery] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [mapExpanded, setMapExpanded] = useState(false);
@@ -153,6 +163,7 @@ export default function Browse() {
       .filter((r) => !f.delivery || r.delivery.available)
       .filter((r) => r.rating >= f.minRating)
       .filter((r) => !pinned || r.slug === pinned)
+      .filter((r) => f.sort !== "favorites" || favorites.includes(r.slug))
       .filter((r) => {
         const items = dailyFor(r, f.day).filter(
           (it) => it.price <= f.maxPrice && !it.allergens.some((a) => f.excluded.includes(String(a))),
@@ -170,7 +181,7 @@ export default function Browse() {
         }
         return b.r.rating - a.r.rating;
       });
-  }, [f, query, pinned, origin]);
+  }, [f, query, pinned, origin, favorites]);
 
   const activeCount = [
     f.delivery,
@@ -184,6 +195,7 @@ export default function Browse() {
   const reset = () => {
     setF({ ...initial, city: f.city });
     setQuery("");
+    setDraft("");
     setPinned(null);
   };
 
@@ -211,7 +223,17 @@ export default function Browse() {
             <h1>Čo si dáte dnes?</h1>
             <p className="hero-copy">Objavte najlepšie denné menu vo vašom okolí. Čerstvé, prehľadné a bez zdĺhavého hľadania.</p>
             <div className="search-controls">
-              <Search query={query} setQuery={setQuery} onOpen={(s) => nav(`/restaurant/${s}`)} />
+              <Search
+                query={draft}
+                setQuery={(q, apply) => {
+                  setDraft(q);
+                  if (apply) setQuery(q);
+                }}
+                onSubmit={() => {
+                  setQuery(draft);
+                  setTimeout(() => feedRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+                }}
+                onOpen={(s) => nav(`/restaurant/${s}`)} />
               <button
                 className={`hero-filter-button ${filtersOpen ? "active" : ""}`}
                 onClick={() => setFiltersOpen(!filtersOpen)}

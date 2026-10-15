@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router";
 import Icon, { type IconName } from "@/components/Icon";
 import { notices } from "@/data/notifications";
@@ -9,6 +10,7 @@ const kinds: Record<string, { icon: IconName; label: string }> = {
 };
 
 export default function Notifications() {
+  const [items, setItems] = useState(notices);
   return (
     <div className="page">
       <div className="page-head page-head-row">
@@ -21,7 +23,7 @@ export default function Notifications() {
         </Link>
       </div>
       <ul className="notice-list">
-        {notices.map((n) => (
+        {items.map((n) => (
           <li key={n.id} className={`notice ${n.kind}`}>
             <span className="notice-icon">
               <Icon name={kinds[n.kind].icon} size={18} />
@@ -39,9 +41,25 @@ export default function Notifications() {
                 </Link>
               )}
             </div>
+            <button
+              className="notice-delete"
+              onClick={() => setItems((l) => l.filter((x) => x.id !== n.id))}
+              aria-label={`Odstrániť upozornenie: ${n.title}`}
+            >
+              <Icon name="trash" size={16} />
+            </button>
           </li>
         ))}
       </ul>
+      {items.length === 0 && (
+        <div className="empty-state">
+          <span>
+            <Icon name="bell" size={26} />
+          </span>
+          <h3>Žiadne upozornenia</h3>
+          <p>Keď bude niečo nové, uvidíte to tu.</p>
+        </div>
+      )}
     </div>
   );
 }
