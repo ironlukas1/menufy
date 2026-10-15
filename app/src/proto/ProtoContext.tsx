@@ -65,7 +65,9 @@ export function ProtoProvider({ children }: { children: ReactNode }) {
     }
   }, [theme]);
 
-  useEffect(() => write("menufy-auth", loggedIn ? "1" : "0"), [loggedIn]);
+  useEffect(() => {
+    write("menufy-auth", loggedIn ? "1" : "0");
+  }, [loggedIn]);
 
   const value: Proto = {
     loggedIn,

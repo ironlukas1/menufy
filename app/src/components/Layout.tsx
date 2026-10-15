@@ -25,7 +25,9 @@ function TopBar() {
   const [open, setOpen] = useState(false);
   const loc = useLocation();
 
-  useEffect(() => setOpen(false), [loc.pathname]);
+  useEffect(() => {
+    setOpen(false);
+  }, [loc.pathname]);
 
   return (
     <header className="top-bar">
@@ -102,29 +104,32 @@ export function Footer() {
   );
 }
 
-class RouteBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
-  state = { failed: false };
-  static getDerivedStateFromError() {
-    return { failed: true };
+class RouteBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+  state = { error: null as Error | null };
+  static getDerivedStateFromError(error: Error) {
+    return { error };
   }
   componentDidCatch(e: unknown) {
     console.error(e);
-    try {
-      if (sessionStorage.getItem("menufy-reloaded") === location.pathname) return;
-      sessionStorage.setItem("menufy-reloaded", location.pathname);
-    } catch {
-      return;
-    }
-    location.reload();
   }
   render() {
-    return this.state.failed ? null : this.props.children;
+    const { error } = this.state;
+    if (!error) return this.props.children;
+    return (
+      <div style={{ padding: 32 }}>
+        <p>Niečo sa pokazilo.</p>
+        <pre style={{ whiteSpace: "pre-wrap", fontSize: 12 }}>{error.stack || error.message}</pre>
+        <button onClick={() => location.reload()}>Obnoviť stránku</button>
+      </div>
+    );
   }
 }
 
 export default function Layout() {
   const loc = useLocation();
-  useEffect(() => window.scrollTo({ top: 0 }), [loc.pathname]);
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+  }, [loc.pathname]);
   return (
     <div className="app-shell">
       <TopBar />
