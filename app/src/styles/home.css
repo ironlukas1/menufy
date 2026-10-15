@@ -352,6 +352,7 @@ h1 {
 
 .primary-filters { padding: 12px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 9px; }
 .field {
+  position: relative;
   min-width: 0;
   height: 44px;
   padding: 0 13px;
@@ -364,8 +365,15 @@ h1 {
   color: var(--muted);
 }
 .field:focus-within { border-color: var(--green); box-shadow: 0 0 0 3px var(--green-soft); }
+.field > svg { position: relative; z-index: 1; flex: none; pointer-events: none; }
+.field > svg:last-child { margin-left: auto; }
 .field select {
+  position: absolute;
+  inset: 0;
   width: 100%;
+  height: 100%;
+  padding: 0 38px 0 13px;
+  cursor: pointer;
   min-width: 0;
   appearance: none;
   border: 0;
@@ -375,6 +383,8 @@ h1 {
   font-size: 13px;
   font-weight: 600;
 }
+.field:has(> svg:first-child) select { padding-left: 39px; }
+.field select option { background: var(--paper); color: var(--ink); }
 
 .filter-toggle {
   height: 44px;

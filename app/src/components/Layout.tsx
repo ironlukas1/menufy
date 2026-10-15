@@ -12,8 +12,12 @@ const links = [
 ] as const;
 
 function Brand() {
+  const loc = useLocation();
+  const toTop = () => {
+    if (loc.pathname === "/") window.scrollTo({ top: 0, behavior: "smooth" });
+  };
   return (
-    <Link to="/" className="top-brand" aria-label="menufy – domov">
+    <Link to="/" className="top-brand" aria-label="menufy – domov" onClick={toTop}>
       <span className="top-brand-mark" />
       <span>menufy</span>
     </Link>
@@ -94,7 +98,7 @@ function TopBar() {
 export function Footer() {
   return (
     <footer>
-      <Link to="/" className="top-brand footer-brand">
+      <Link to="/" className="top-brand footer-brand" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
         <span className="top-brand-mark" />
         <span>menufy</span>
       </Link>
