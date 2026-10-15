@@ -89,22 +89,18 @@ a { color: inherit; }
 .geo-banner button { padding: 7px 12px; border: 0; border-radius: 6px; color: var(--on-green); background: var(--green); font-weight: 700; font-size: 12px; }
 
 /* ---------- map ---------- */
-.map-canvas { position: relative; height: 560px; overflow: hidden; background: var(--map-bg); transition: height .3s ease; }
+.map-canvas { position: relative; isolation: isolate; height: 560px; overflow: hidden; background: var(--map-bg); transition: height .3s ease; }
 .map-card.expanded .map-canvas { height: 680px; }
 .map-canvas:not(.is-open) .leaflet-container { filter: blur(2.5px); pointer-events: none; }
 .map-canvas:not(.is-open) .leaflet-marker-icon,
 .map-canvas:not(.is-open) .leaflet-interactive { pointer-events: none !important; }
 .map-canvas.has-selection .leaflet-container { filter: none; }
-.map-canvas.has-selection .map-overlay { inset: auto 12px 12px auto; margin: 0; width: auto; height: auto; padding: 9px 14px; flex-direction: row; gap: 8px; }
-.map-canvas.has-selection .map-overlay > span { width: 24px; height: 24px; margin: 0; }
-.map-canvas.has-selection .map-overlay small { display: none; }
 .leaflet-container { font-family: "DM Sans", sans-serif; background: var(--map-bg); }
 .dark-tiles .osm-tiles { filter: invert(1) hue-rotate(180deg) brightness(.9) contrast(.9); }
 .pin-wrap { background: none; border: 0; }
 .pin { width: 44px; height: 36px; display: grid; place-items: center; border: 3px solid #fff; border-radius: 18px 18px 18px 3px; color: #fff; background: var(--green); box-shadow: 0 4px 10px rgba(20, 73, 44, .35); transform: rotate(-8deg); transition: transform .15s; }
 .pin b { font-size: 10px; font-weight: 800; transform: rotate(8deg); }
 .pin.selected, .pin-wrap:hover .pin { background: var(--green-dark); transform: rotate(-8deg) scale(1.15); }
-.map-overlay { z-index: 1000; }
 
 /* ---------- generic pages ---------- */
 .page { width: min(1240px, calc(100% - 40px)); margin: 0 auto; padding: 40px 0 80px; }
@@ -210,9 +206,29 @@ a { color: inherit; }
 .faq .open button svg { transform: rotate(180deg); }
 .faq p { margin: 0 0 12px; color: var(--muted); font-size: 13px; }
 .legal-links { margin-top: 16px; display: flex; gap: 18px; font-size: 13px; }
-.legal-links a, .legal-links button { padding: 0; border: 0; background: none; color: var(--green); font: inherit; font-weight: 600; cursor: pointer; }
-.legal-links button:hover { text-decoration: underline; }
-.legal-text p { margin: 0 0 10px; color: var(--muted); font-size: 13px; line-height: 1.55; }
+.legal-links a { color: var(--green); font-weight: 600; }
+.legal-page .back-link { padding: 0; border: 0; background: none; cursor: pointer; }
+.legal-intro { margin: 0 0 18px; color: var(--muted); font-size: 15px; line-height: 1.6; }
+.legal-toc strong { display: block; margin-bottom: 8px; font: 700 13px "Manrope", sans-serif; }
+.legal-toc ol { margin: 0; padding-left: 20px; list-style: decimal; columns: 2; column-gap: 28px; color: var(--muted); font-size: 13px; }
+.legal-toc li { padding: 3px 0; break-inside: avoid; }
+.legal-toc button { padding: 0; border: 0; background: none; color: var(--green); font: inherit; font-weight: 600; text-align: left; cursor: pointer; }
+.legal-toc button:hover { text-decoration: underline; }
+.legal-doc { padding: 6px 24px; }
+.legal-doc section { padding: 18px 0; border-bottom: 1px solid var(--soft-line); scroll-margin-top: 84px; }
+.legal-doc section:last-child { border-bottom: 0; }
+.legal-doc h3 { margin: 0 0 10px; font-size: 17px; }
+.legal-doc h3 span { color: var(--green); }
+.legal-doc p, .legal-doc li { color: var(--ink); font-size: 14px; line-height: 1.65; }
+.legal-doc p { margin: 0 0 10px; }
+.legal-doc p:last-child { margin-bottom: 0; }
+.legal-doc ul { margin: 0; padding-left: 20px; list-style: disc; }
+.legal-doc li { margin-bottom: 6px; }
+.legal-doc li::marker { color: var(--green); }
+.legal-doc a, .legal-other a { color: var(--green); font-weight: 600; }
+.legal-callout { padding: 12px 14px; display: flex; align-items: flex-start; gap: 10px; border: 1px solid var(--green-line); border-radius: 10px; background: var(--green-soft); }
+.legal-callout svg { flex: none; margin-top: 2px; color: var(--green); }
+.legal-other { margin: 16px 0 0; color: var(--muted); font-size: 13px; }
 .guest-note { margin-bottom: 16px; padding: 16px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; border: 1px dashed var(--green-line); border-radius: 12px; background: var(--green-soft); color: var(--green-dark); }
 .guest-note > div { flex: 1; display: grid; gap: 2px; min-width: 200px; }
 .guest-note span { color: var(--muted); font-size: 13px; }
@@ -270,6 +286,8 @@ a { color: inherit; }
   .detail-logo { width: 60px; height: 60px; margin-top: -30px; }
   .gallery { grid-template-columns: 1fr 1fr; }
   .gallery-item:last-child { grid-column: 1 / -1; }
+  .legal-toc ol { columns: 1; }
+  .legal-doc { padding: 4px 16px; }
   .lightbox { padding: 64px 12px; }
   .lightbox-nav.prev { left: 8px; }
   .lightbox-nav.next { right: 8px; }

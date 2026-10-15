@@ -103,6 +103,10 @@ export function Footer() {
         <span>menufy</span>
       </Link>
       <p>Každý deň dobrá voľba.</p>
+      <div className="footer-links" role="navigation" aria-label="Právne informácie">
+        <Link to="/terms">Podmienky používania</Link>
+        <Link to="/privacy">Ochrana osobných údajov</Link>
+      </div>
       <span>© 2026 menufy</span>
     </footer>
   );

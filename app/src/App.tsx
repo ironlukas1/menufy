@@ -8,6 +8,7 @@ import Saved from "@/pages/Saved";
 import Notifications from "@/pages/Notifications";
 import Settings from "@/pages/Settings";
 import { ForgotPassword, Login, ResetPassword } from "@/pages/Auth";
+import { Privacy, Terms } from "@/pages/Legal";
 
 export default function App() {
   return (
@@ -22,6 +23,8 @@ export default function App() {
             <Route path="saved" element={<RequireAuth><Saved /></RequireAuth>} />
             <Route path="notifications" element={<RequireAuth><Notifications /></RequireAuth>} />
             <Route path="settings" element={<Settings />} />
+            <Route path="terms" element={<Terms />} />
+            <Route path="privacy" element={<Privacy />} />
             <Route path="login" element={<Login />} />
             <Route path="forgot-password" element={<ForgotPassword />} />
             <Route path="reset-password" element={<ResetPassword />} />

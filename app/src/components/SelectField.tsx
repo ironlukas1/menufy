@@ -1,14 +1,14 @@
 import { Children, isValidElement, useEffect, useId, useRef, useState, type ReactElement, type ReactNode } from "react";
 import Icon, { type IconName } from "./Icon";
 
-type Opt = { value: string; label: string };
+type Opt = { value: string; label: string; node: ReactNode };
 
 const parse = (children: ReactNode): Opt[] =>
   Children.toArray(children).flatMap((c) => {
     if (!isValidElement(c)) return [];
-    const { value, children: label } = (c as ReactElement<{ value?: string | number; children?: ReactNode }>).props;
-    const text = Children.toArray(label).join("");
-    return [{ value: String(value ?? text), label: text }];
+    const { value, label, children } = (c as ReactElement<{ value?: string | number; label?: string; children?: ReactNode }>).props;
+    const text = label ?? Children.toArray(children).join("");
+    return [{ value: String(value ?? text), label: text, node: children }];
   });
 
 export default function SelectField({
@@ -87,7 +87,7 @@ export default function SelectField({
         onKeyDown={onKey}
       >
         {icon && <Icon name={icon} size={18} />}
-        <span className="field-value">{opts[selected]?.label}</span>
+        <span className="field-value">{opts[selected]?.node}</span>
         <Icon name="chevron" size={16} />
       </button>
       {open && (
@@ -96,12 +96,13 @@ export default function SelectField({
             <li
               key={o.value}
               role="option"
+              aria-label={o.label}
               aria-selected={i === selected}
               className={`${i === active ? "active" : ""} ${i === selected ? "selected" : ""}`}
               onPointerEnter={() => setActive(i)}
               onClick={() => pick(i)}
             >
-              {o.label}
+              <span className="field-option">{o.node}</span>
               {i === selected && <Icon name="check" size={14} />}
             </li>
           ))}

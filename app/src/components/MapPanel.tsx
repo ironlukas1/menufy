@@ -71,9 +71,13 @@ export default function MapPanel({
           <span>Mapa reštaurácií</span>
           <small>{items.length} miest</small>
         </div>
-        {expanded && (
-          <button onClick={() => setExpanded(false)} aria-label="Zavrieť mapu">
+        {expanded ? (
+          <button className="map-close" onClick={() => setExpanded(false)} aria-label="Zavrieť mapu">
             <Icon name="close" size={18} />
+          </button>
+        ) : (
+          <button className="map-open" onClick={() => setExpanded(true)}>
+            <Icon name="map" size={16} /> Otvoriť mapu
           </button>
         )}
       </div>
@@ -109,15 +113,7 @@ export default function MapPanel({
           {expanded && <ZoomControl position="topright" />}
           <Fit items={items} selected={selected} expanded={expanded} />
         </MapContainer>
-        {!expanded && (
-          <button className="map-overlay" onClick={() => setExpanded(true)}>
-            <span>
-              <Icon name="map" size={22} />
-            </span>
-            <strong>Otvoriť mapu</strong>
-            <small>Pozrite si reštaurácie vo svojom okolí</small>
-          </button>
-        )}
+        {!expanded && <div className="map-cover" onClick={() => setExpanded(true)} aria-hidden="true" />}
       </div>
       {expanded && <p className="map-tip">Kliknutím na marker vyfiltrujete vybranú reštauráciu.</p>}
     </aside>

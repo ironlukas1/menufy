@@ -161,7 +161,7 @@ export default function Browse() {
       .filter((r) => f.district === "Všetky časti" || r.district === f.district)
       .filter((r) => !f.cuisines.length || r.cuisines.some((c) => f.cuisines.includes(c)))
       .filter((r) => !f.delivery || r.delivery.available)
-      .filter((r) => r.rating >= f.minRating)
+      .filter((r) => Math.round(r.rating) >= f.minRating)
       .filter((r) => !pinned || r.slug === pinned)
       .filter((r) => f.sort !== "favorites" || favorites.includes(r.slug))
       .filter((r) => {
@@ -340,8 +340,16 @@ export default function Browse() {
             </label>
             <SelectField label="Hodnotenie" value={String(f.minRating)} onChange={(v) => set({ minRating: Number(v) })}>
               <option value="0">Akékoľvek hodnotenie</option>
-              <option value="4.5">4,5 a viac</option>
-              <option value="4.8">4,8 a viac</option>
+              {[1, 2, 3, 4, 5].map((n) => (
+                <option key={n} value={n} label={n === 5 ? "5 hviezdičiek" : `${n} ${n === 1 ? "hviezdička" : "hviezdičky"} a viac`}>
+                  <span className="star-row" aria-hidden="true">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <Icon key={i} name="star" size={14} filled={i <= n} />
+                    ))}
+                  </span>
+                  {n === 5 ? "5" : `${n} a viac`}
+                </option>
+              ))}
             </SelectField>
             <label className="check-field">
               <input type="checkbox" checked={f.delivery} onChange={(e) => set({ delivery: e.target.checked })} />

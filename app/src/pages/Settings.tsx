@@ -31,7 +31,7 @@ export default function Settings() {
   const { loggedIn, setLoggedIn, theme, setTheme, dark, email } = useProto();
   const nav = useNavigate();
   const { hash } = useLocation();
-  const [modal, setModal] = useState<null | "email" | "delete" | "terms" | "privacy">(null);
+  const [modal, setModal] = useState<null | "email" | "delete">(null);
   const [n, setN] = useState({ daily: true, fav: true, promo: false });
   const [faq, setFaq] = useState<number | null>(null);
   const [sent, setSent] = useState(false);
@@ -145,12 +145,8 @@ export default function Settings() {
           </form>
         )}
         <div className="legal-links">
-          <button type="button" onClick={() => setModal("terms")}>
-            Podmienky používania
-          </button>
-          <button type="button" onClick={() => setModal("privacy")}>
-            Ochrana osobných údajov
-          </button>
+          <Link to="/terms">Podmienky používania</Link>
+          <Link to="/privacy">Ochrana osobných údajov</Link>
         </div>
       </Section>
 
@@ -197,34 +193,6 @@ export default function Settings() {
               <button className="btn-primary">Uložiť</button>
             </div>
           </form>
-        </Modal>
-      )}
-      {modal === "terms" && (
-        <Modal title="Podmienky používania" onClose={() => setModal(null)}>
-          <div className="legal-text">
-            <p>menufy zobrazuje denné menu reštaurácií tak, ako ho zverejnia samotné reštaurácie. Za správnosť jedál, cien a alergénov zodpovedá príslušná reštaurácia.</p>
-            <p>Službu môžete používať zdarma. Obsah aplikácie nesmiete automatizovane kopírovať ani zneužívať na iný ako osobný účel.</p>
-            <p>Podmienky môžeme zmeniť; o zásadných zmenách vás budeme informovať v aplikácii.</p>
-          </div>
-          <div className="modal-actions">
-            <button className="btn-primary" onClick={() => setModal(null)}>
-              Rozumiem
-            </button>
-          </div>
-        </Modal>
-      )}
-      {modal === "privacy" && (
-        <Modal title="Ochrana osobných údajov" onClose={() => setModal(null)}>
-          <div className="legal-text">
-            <p>Spracúvame len údaje potrebné na chod služby: e-mail, obľúbené reštaurácie a nastavenia upozornení.</p>
-            <p>Poloha sa používa iba na zoradenie reštaurácií podľa vzdialenosti a neukladáme ju.</p>
-            <p>Údaje nepredávame tretím stranám. Účet a všetky súvisiace údaje môžete kedykoľvek zmazať v Nastaveniach.</p>
-          </div>
-          <div className="modal-actions">
-            <button className="btn-primary" onClick={() => setModal(null)}>
-              Rozumiem
-            </button>
-          </div>
         </Modal>
       )}
       {modal === "delete" && (
