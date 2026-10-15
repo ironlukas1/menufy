@@ -566,8 +566,8 @@ h3 { margin: 3px 0 1px; font-family: "Manrope", sans-serif; font-size: 20px; let
 .map-header span { font-family: "Manrope", sans-serif; font-size: 14px; font-weight: 700; }
 .map-header small { color: var(--muted); font-size: 10px; }
 .map-close { width: 32px; height: 32px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 50%; background: var(--paper); color: var(--ink); cursor: pointer; }
-.map-open { height: 34px; padding: 0 13px; display: inline-flex; align-items: center; gap: 7px; border: 0; border-radius: 8px; color: var(--on-green); background: var(--green); font-size: 12px; font-weight: 700; cursor: pointer; }
-.map-open:hover { background: var(--green-dark); }
+.map-open-btn { height: 34px; padding: 0 13px; display: inline-flex; align-items: center; gap: 7px; border: 0; border-radius: 8px; color: var(--on-green); background: var(--green); font-size: 12px; font-weight: 700; cursor: pointer; }
+.map-open-btn:hover { background: var(--green-dark); }
 .map-cover { position: absolute; inset: 0; z-index: 1000; cursor: pointer; }
 .map-tip { margin: 0; padding: 12px; color: var(--muted); background: var(--paper); font-size: 11px; text-align: center; }
 .empty-state { padding: 60px 20px; text-align: center; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); }

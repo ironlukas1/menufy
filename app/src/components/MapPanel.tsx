@@ -42,6 +42,12 @@ function Fit({ items, selected, expanded }: { items: Restaurant[]; selected: str
 function Interactive({ on }: { on: boolean }) {
   const map = useMap();
   useEffect(() => {
+    const el = map.getContainer();
+    const ro = new ResizeObserver(() => map.invalidateSize());
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [map]);
+  useEffect(() => {
     const handlers = [map.dragging, map.touchZoom, map.scrollWheelZoom, map.doubleClickZoom, map.boxZoom, map.keyboard];
     handlers.forEach((h) => (on ? h.enable() : h.disable()));
   }, [map, on]);
@@ -76,7 +82,7 @@ export default function MapPanel({
             <Icon name="close" size={18} />
           </button>
         ) : (
-          <button className="map-open" onClick={() => setExpanded(true)}>
+          <button className="map-open-btn" onClick={() => setExpanded(true)}>
             <Icon name="map" size={16} /> Otvoriť mapu
           </button>
         )}
