@@ -33,7 +33,7 @@ A modern browser (Chrome, Firefox, Safari, Edge) is needed to view the prototype
    If `corepack enable` fails with a permissions error, run PowerShell as Administrator, or use `npm install -g pnpm` instead.
 3. Clone and run:
    ```powershell
-   git clone <repo-url> menufy
+   git clone https://github.com/ironlukas1/menufy.git menufy
    cd menufy\app
    pnpm install
    pnpm dev
@@ -56,7 +56,7 @@ Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
    Alternatively, `brew install pnpm`.
 2. Clone and run:
    ```bash
-   git clone <repo-url> menufy
+   git clone https://github.com/ironlukas1/menufy.git menufy
    cd menufy/app
    pnpm install
    pnpm dev
