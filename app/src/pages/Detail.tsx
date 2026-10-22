@@ -55,15 +55,21 @@ export default function Detail() {
             <li>
               <Icon name="location" size={16} /> {r.address}
             </li>
-            <li>
-              <Icon name="phone" size={16} /> <a href={`tel:${r.phone.replace(/\s/g, "")}`}>{r.phone}</a>
-            </li>
-            <li>
-              <Icon name="mail" size={16} /> <a href={`mailto:${r.email}`}>{r.email}</a>
-            </li>
-            <li>
-              <Icon name="globe" size={16} /> <a href={`https://${r.web}`}>{r.web}</a>
-            </li>
+            {r.phone && (
+              <li>
+                <Icon name="phone" size={16} /> <a href={`tel:${r.phone.replace(/\s/g, "")}`}>{r.phone}</a>
+              </li>
+            )}
+            {r.email && (
+              <li>
+                <Icon name="mail" size={16} /> <a href={`mailto:${r.email}`}>{r.email}</a>
+              </li>
+            )}
+            {r.web && (
+              <li>
+                <Icon name="globe" size={16} /> <a href={`https://${r.web}`}>{r.web}</a>
+              </li>
+            )}
           </ul>
         </section>
         <section className="panel">
@@ -89,6 +95,11 @@ export default function Detail() {
           ) : (
             <p className="muted">Reštaurácia donášku neposkytuje.</p>
           )}
+          {r.delivery.links?.map((l) => (
+            <a key={l.url} className="btn-ghost block" href={l.url} target="_blank" rel="noopener noreferrer">
+              Objednať cez {l.name} <Icon name="arrow" size={16} />
+            </a>
+          ))}
         </section>
       </div>
 
@@ -144,7 +155,7 @@ export default function Detail() {
         )}
       </section>
 
-      <section className="panel">
+      {r.reviews.length > 0 && <section className="panel">
         <h3>Hodnotenia</h3>
         <div className="rating-split">
           <div className="rating-box">
@@ -177,7 +188,7 @@ export default function Detail() {
             </div>
           ))}
         </div>
-      </section>
+      </section>}
     </article>
   );
 }

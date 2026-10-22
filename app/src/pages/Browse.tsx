@@ -5,7 +5,7 @@ import SelectField from "@/components/SelectField";
 import MapPanel from "@/components/MapPanel";
 import { ALLERGENS, CUISINES, LOCATIONS } from "@/data/allergens";
 import { DAYS, dailyFor, restaurants, type Restaurant } from "@/data/restaurants";
-import { CITY_CENTER, distanceKm } from "@/lib";
+import { CITY_CENTER, distanceKm, nextAt, openStatus } from "@/lib";
 import { useProto } from "@/proto/ProtoContext";
 
 export type Filters = {
@@ -17,6 +17,7 @@ export type Filters = {
   maxPrice: number;
   delivery: boolean;
   minRating: number;
+  openAt: string;
   sort: "rating" | "price" | "distance" | "favorites";
 };
 
@@ -31,6 +32,7 @@ const initial: Filters = {
   maxPrice: MAX_PRICE,
   delivery: false,
   minRating: 0,
+  openAt: "",
   sort: "rating",
 };
 
@@ -173,6 +175,7 @@ export default function Browse() {
       .filter((r) => f.district === "Všetky časti" || r.district === f.district)
       .filter((r) => !f.cuisines.length || r.cuisines.some((c) => f.cuisines.includes(c)))
       .filter((r) => !f.delivery || r.delivery.available)
+      .filter((r) => !f.openAt || openStatus(r, nextAt(f.openAt)).open)
       .filter((r) => Math.round(r.rating) >= f.minRating)
       .filter((r) => !pinned || r.slug === pinned)
       .filter((r) => f.sort !== "favorites" || favorites.includes(r.slug))
@@ -180,7 +183,8 @@ export default function Browse() {
         const items = dailyFor(r, f.day).filter(
           (it) => it.price <= f.maxPrice && !it.allergens.some((a) => f.excluded.includes(String(a))),
         );
-        if (!items.length) return false;
+        const publishesMenu = r.daily.some((d) => d.length) || r.standard.length > 0;
+        if (!items.length && publishesMenu) return false;
         if (!q) return true;
         return r.name.toLocaleLowerCase("sk").includes(q) || items.some((it) => it.name.toLocaleLowerCase("sk").includes(q));
       })
@@ -188,7 +192,10 @@ export default function Browse() {
       .sort((a, b) => {
         if (f.sort === "distance") return a.distance - b.distance;
         if (f.sort === "price") {
-          const avg = (x: Restaurant) => dailyFor(x, f.day).reduce((s, i) => s + i.price, 0) / dailyFor(x, f.day).length;
+          const avg = (x: Restaurant) => {
+            const m = dailyFor(x, f.day);
+            return m.length ? m.reduce((s, i) => s + i.price, 0) / m.length : Infinity;
+          };
           return avg(a.r) - avg(b.r);
         }
         return b.r.rating - a.r.rating;
@@ -196,7 +203,7 @@ export default function Browse() {
   }, [f, query, pinned, origin, favorites]);
 
   const activeCount =
-    [f.delivery, f.maxPrice < MAX_PRICE, f.minRating > 0, !!pinned].filter(Boolean).length +
+    [f.delivery, f.maxPrice < MAX_PRICE, f.minRating > 0, !!f.openAt, !!pinned].filter(Boolean).length +
     f.excluded.length +
     f.cuisines.length;
 
@@ -345,6 +352,15 @@ export default function Browse() {
                 aria-label="Maximálna cena"
               />
             </label>
+            <SelectField icon="clock" label="Otvorené o" value={f.openAt} onChange={(v) => set({ openAt: v })}>
+              <option value="">Kedykoľvek</option>
+              <option value="now">Teraz</option>
+              {Array.from({ length: 24 }, (_, h) => `${String(h).padStart(2, "0")}:00`).map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </SelectField>
             <SelectField label="Hodnotenie" value={String(f.minRating)} onChange={(v) => set({ minRating: Number(v) })}>
               <option value="0">Akékoľvek hodnotenie</option>
               {[1, 2, 3, 4, 5].map((n) => (

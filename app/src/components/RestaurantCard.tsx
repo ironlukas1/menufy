@@ -80,6 +80,7 @@ export default function RestaurantCard({
   useEffect(() => setOpen(menuOpen || hasHit), [menuOpen, hasHit]);
   const n = items.length;
   const noun = n === 1 ? "jedlo" : n >= 2 && n <= 4 ? "jedlá" : "jedál";
+  const publishesMenu = r.daily.some((d) => d.length) || r.standard.length > 0;
 
   return (
     <article
@@ -104,27 +105,36 @@ export default function RestaurantCard({
             <HeartButton slug={r.slug} />
           </div>
           <div className="restaurant-meta">
-            <span className="rating" title="Hodnotenie Google">
-              <Icon name="star" size={16} filled /> <strong>{r.rating.toFixed(1).replace(".", ",")}</strong>
-              <em>({r.ratingCount})</em>
-            </span>
+            {r.ratingCount > 0 && (
+              <span className="rating" title="Hodnotenie Google">
+                <Icon name="star" size={16} filled /> <strong>{r.rating.toFixed(1).replace(".", ",")}</strong>
+                <em>({r.ratingCount})</em>
+              </span>
+            )}
             <span>
               <Icon name="location" size={15} /> {fmtKm(distance)}
             </span>
             {r.delivery.available && (
               <span className="delivery-badge">
-                <Icon name="truck" size={17} /> Donáška · {r.delivery.eta}
+                <Icon name="truck" size={17} /> Donáška{r.delivery.eta && ` · ${r.delivery.eta}`}
               </span>
             )}
+            {r.delivery.links?.map((l) => (
+              <a key={l.url} className="inline-link" href={l.url} target="_blank" rel="noopener noreferrer">
+                Objednať cez {l.name} <Icon name="arrow" size={14} />
+              </a>
+            ))}
           </div>
           <p className="detail-line">
             <Icon name="location" size={15} /> {r.address}
           </p>
           <p className="detail-line">
-            <span className="desktop-only phone-line">
-              <Icon name="phone" size={15} /> {r.phone}
-              <i />
-            </span>
+            {r.phone && (
+              <span className="desktop-only phone-line">
+                <Icon name="phone" size={15} /> {r.phone}
+                <i />
+              </span>
+            )}
             <Icon name="clock" size={15} /> {r.todayHours}
           </p>
         </div>
@@ -132,7 +142,7 @@ export default function RestaurantCard({
       <button className={`menu-heading ${open ? "open" : ""}`} onClick={() => setOpen(!open)} aria-expanded={open}>
         <span>Denné menu</span>
         <span className="menu-date">
-          {date} · {n} {noun} <Icon name="chevron" size={16} />
+          {date} · {publishesMenu ? `${n} ${noun}` : "nezverejňuje"} <Icon name="chevron" size={16} />
         </span>
       </button>
       {open && (
@@ -140,7 +150,11 @@ export default function RestaurantCard({
           {items.map((it) => (
             <MenuRow key={it.name} item={it} hit={!!q && it.name.toLocaleLowerCase("sk").includes(q)} />
           ))}
-          {items.length === 0 && <p className="menu-empty">Žiadne jedlo nevyhovuje filtrom.</p>}
+          {items.length === 0 && (
+            <p className="menu-empty">
+              {publishesMenu ? "Žiadne jedlo nevyhovuje filtrom." : "Denné menu nezverejňuje. Ponuku nájdete u donáškovej služby."}
+            </p>
+          )}
         </div>
       )}
       <Link className="card-action" to={`/restaurant/${r.slug}`}>
