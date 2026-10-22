@@ -183,14 +183,10 @@ export default function Browse() {
       });
   }, [f, query, pinned, origin, favorites]);
 
-  const activeCount = [
-    f.delivery,
-    f.maxPrice < MAX_PRICE,
-    f.minRating > 0,
-    f.excluded.length > 0,
-    f.cuisines.length > 0,
-    !!pinned,
-  ].filter(Boolean).length;
+  const activeCount =
+    [f.delivery, f.maxPrice < MAX_PRICE, f.minRating > 0, !!pinned].filter(Boolean).length +
+    f.excluded.length +
+    f.cuisines.length;
 
   const reset = () => {
     setF({ ...initial, city: f.city });
