@@ -85,6 +85,24 @@ pnpm -v    # 9.x or newer
 - **Map is blank** – check the internet connection (tiles load from an online provider).
 - **Install errors after switching Node version** – delete `app/node_modules` and run `pnpm install` again.
 
+## Backend API
+
+The backend is a separate Next.js App Router service in `backend/`. Keeping it separate preserves the Vite and Capacitor frontend while giving the project server-side API routes that can later connect to Supabase.
+
+Run the backend in a second terminal:
+
+```bash
+cd backend
+pnpm install
+pnpm dev
+```
+
+The backend runs on <http://localhost:3001>. The Vite dev server proxies `/api/*` requests to it, so frontend requests can use same-origin paths such as `/api/v1/health`. The initial health endpoint is <http://localhost:3001/api/v1/health>.
+
+Keep database access behind server-side modules and call those modules from Route Handlers. When Supabase is added, keep secret keys in backend environment variables and never expose them with a `NEXT_PUBLIC_` prefix. Use the publishable key for user-scoped access; reserve the secret key for trusted admin operations because it bypasses row-level security. Use `backend/.env.example` as the starting point for local configuration.
+
+Production deployment builds the backend from `backend/` and routes `/api/*` through Nginx to the Next.js service. Set `MENUFY_CORS_ORIGINS` in the deployment environment if a native Capacitor build will call the API directly from an origin beyond the defaults in `backend/src/server/http/cors.ts`.
+
 ## Design scaffold (optional)
 
 `design/` is a separate Vite project (Figma Make export). Same steps, from the `design` folder:
