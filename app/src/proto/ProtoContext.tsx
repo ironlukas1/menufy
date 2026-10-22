@@ -18,6 +18,7 @@ type Proto = {
   favorites: string[];
   toggleFavorite: (slug: string) => void;
   email: string;
+  userId: string | null;
   notify: Notify;
   setNotify: (patch: Partial<Notify>) => void;
 };
@@ -196,6 +197,7 @@ export function ProtoProvider({ children }: { children: ReactNode }) {
     notify,
     setNotify,
     email,
+    userId,
   };
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

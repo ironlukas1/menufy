@@ -6,6 +6,9 @@ insert into public.profiles (id, email)
 select id, coalesce(email, '') from auth.users
 on conflict (id) do nothing;
 
+-- Per-user "cleared" mark; notifications are shared broadcasts, so users hide them instead of deleting.
+alter table public.notification_reads add column if not exists dismissed_at timestamptz;
+
 create table if not exists public.preferences (
   user_id uuid primary key references auth.users (id) on delete cascade default auth.uid(),
   theme text not null default 'system' check (theme in ('system', 'light', 'dark')),
