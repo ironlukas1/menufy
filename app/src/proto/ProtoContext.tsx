@@ -120,11 +120,12 @@ export function ProtoProvider({ children }: { children: ReactNode }) {
     if (!userId) return setFavorites([]);
     let live = true;
     Promise.all([
-      supabase.from("favorites").select("restaurant_slug").order("created_at"),
+      supabase.from("favorites").select("restaurants(slug)").order("created_at"),
       supabase.from("preferences").select("*").maybeSingle(),
     ]).then(([f, p]) => {
       if (!live) return;
-      if (f.data) setFavorites(f.data.map((r) => r.restaurant_slug));
+      // many-to-one embed returns an object; the untyped client types it as an array
+      if (f.data) setFavorites(f.data.map((r) => (r.restaurants as unknown as { slug: string }).slug));
       if (p.data) {
         setThemeState(p.data.theme);
         setNotifyState({ daily: p.data.notify_daily, fav: p.data.notify_fav, promo: p.data.notify_promo });
@@ -139,12 +140,15 @@ export function ProtoProvider({ children }: { children: ReactNode }) {
     const adding = !favorites.includes(slug);
     setFavorites((f) => (adding ? [...f, slug] : f.filter((x) => x !== slug)));
     if (!userId) return;
-    const q = adding
-      ? supabase.from("favorites").insert({ restaurant_slug: slug })
-      : supabase.from("favorites").delete().eq("restaurant_slug", slug);
-    void q.then(({ error }) => {
+    void (async () => {
+      const r = await supabase.from("restaurants").select("id").eq("slug", slug).single();
+      const { error } = r.error
+        ? r
+        : adding
+          ? await supabase.from("favorites").insert({ user_id: userId, restaurant_id: r.data.id })
+          : await supabase.from("favorites").delete().eq("restaurant_id", r.data.id);
       if (error) setFavorites((f) => (adding ? f.filter((x) => x !== slug) : [...f, slug]));
-    });
+    })();
   };
   const [systemDark, setSystemDark] = useState(
     typeof matchMedia !== "undefined" && matchMedia("(prefers-color-scheme: dark)").matches,
