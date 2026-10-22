@@ -1,0 +1,705 @@
+[
+  {
+    "id": "r_bistro-mlyn",
+    "slug": "bistro-mlyn",
+    "name": "Bistro Mlyn",
+    "initials": "BM",
+    "tagline": "Moderná slovenská kuchyňa",
+    "cuisines": [
+      "Slovenská"
+    ],
+    "city": "Bratislava",
+    "district": "Ružinov",
+    "address": "Mlynské nivy 12, Ružinov",
+    "phone": "+421 910 234 567",
+    "email": "obed@bistromlyn.sk",
+    "web": "bistromlyn.sk",
+    "rating": 4.8,
+    "ratingCount": 312,
+    "lat": 48.1465,
+    "lng": 17.126,
+    "delivery": {
+      "available": true,
+      "eta": "30 – 45 min"
+    },
+    "hours": [
+      [
+        "Pondelok",
+        "11:00 – 15:00"
+      ],
+      [
+        "Utorok",
+        "11:00 – 15:00"
+      ],
+      [
+        "Streda",
+        "11:00 – 15:00"
+      ],
+      [
+        "Štvrtok",
+        "11:00 – 15:00"
+      ],
+      [
+        "Piatok",
+        "11:00 – 15:00"
+      ],
+      [
+        "Sobota",
+        "Zatvorené"
+      ],
+      [
+        "Nedeľa",
+        "Zatvorené"
+      ]
+    ],
+    "image": "https://images.unsplash.com/photo-1564759296729-771e78c26df7?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=900",
+    "gallery": [
+      "https://images.unsplash.com/photo-1564759296729-771e78c26df7?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=900",
+      "https://images.unsplash.com/photo-1565895405227-31cffbe0cf86?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=900",
+      "https://images.unsplash.com/photo-1564759224907-65b945ff0e84?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=900"
+    ],
+    "standard": [
+      {
+        "name": "Hovädzí burger Mlyn",
+        "desc": "Hovädzie 180 g, cheddar, lokálna žemľa",
+        "weight": "320 g",
+        "allergens": [
+          1,
+          3,
+          7,
+          10
+        ],
+        "price": 10.9,
+        "tag": "Stále"
+      },
+      {
+        "name": "Caesar šalát s kuracím",
+        "desc": "Rímsky šalát, parmezán, krutóny",
+        "weight": "300 g",
+        "allergens": [
+          1,
+          3,
+          4,
+          7
+        ],
+        "price": 8.5,
+        "tag": "Stále"
+      }
+    ],
+    "reviews": [
+      {
+        "author": "Zuzana K.",
+        "stars": 5,
+        "date": "pred 2 dňami",
+        "text": "Najlepšie denné menu na Nivách. Porcie sú poriadne a obsluha rýchla."
+      },
+      {
+        "author": "Peter M.",
+        "stars": 4,
+        "date": "pred týždňom",
+        "text": "Dobré jedlo, v čase obeda je plno. Odporúčam prísť skôr."
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "id": "r_oliva-kitchen",
+    "slug": "oliva-kitchen",
+    "name": "Oliva Kitchen",
+    "initials": "OK",
+    "tagline": "Stredomorská kuchyňa",
+    "cuisines": [
+      "Stredomorská",
+      "Talianska"
+    ],
+    "city": "Bratislava",
+    "district": "Ružinov",
+    "address": "Prievozská 6, Ružinov",
+    "phone": "+421 948 112 390",
+    "email": "ahoj@olivakitchen.sk",
+    "web": "olivakitchen.sk",
+    "rating": 4.6,
+    "ratingCount": 187,
+    "lat": 48.15,
+    "lng": 17.1335,
+    "delivery": {
+      "available": true,
+      "eta": "25 – 40 min"
+    },
+    "hours": [
+      [
+        "Pondelok",
+        "10:30 – 14:30"
+      ],
+      [
+        "Utorok",
+        "10:30 – 14:30"
+      ],
+      [
+        "Streda",
+        "10:30 – 14:30"
+      ],
+      [
+        "Štvrtok",
+        "10:30 – 14:30"
+      ],
+      [
+        "Piatok",
+        "10:30 – 14:30"
+      ],
+      [
+        "Sobota",
+        "12:00 – 20:00"
+      ],
+      [
+        "Nedeľa",
+        "Zatvorené"
+      ]
+    ],
+    "image": "https://images.unsplash.com/photo-1565895405227-31cffbe0cf86?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=900",
+    "gallery": [
+      "https://images.unsplash.com/photo-1565895405227-31cffbe0cf86?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=900",
+      "https://images.unsplash.com/photo-1564759224907-65b945ff0e84?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=900",
+      "https://images.unsplash.com/photo-1564759296729-771e78c26df7?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=900"
+    ],
+    "standard": [
+      {
+        "name": "Margherita",
+        "desc": "Paradajky, mozzarella, bazalka",
+        "weight": "450 g",
+        "allergens": [
+          1,
+          7
+        ],
+        "price": 7.9,
+        "tag": "Stále"
+      },
+      {
+        "name": "Tiramisu",
+        "desc": "Mascarpone, espresso, kakao",
+        "weight": "140 g",
+        "allergens": [
+          1,
+          3,
+          7
+        ],
+        "price": 4.2,
+        "tag": "Dezert"
+      }
+    ],
+    "reviews": [
+      {
+        "author": "Marek D.",
+        "stars": 5,
+        "date": "pred 3 dňami",
+        "text": "Losos bol výborný, kuskus nie je suchý ako inde."
+      },
+      {
+        "author": "Jana S.",
+        "stars": 4,
+        "date": "pred 2 týždňami",
+        "text": "Príjemné prostredie, menu mení každý deň."
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "id": "r_pri-jednom-stole",
+    "slug": "pri-jednom-stole",
+    "name": "Pri jednom stole",
+    "initials": "PJ",
+    "tagline": "Poctivá domáca kuchyňa",
+    "cuisines": [
+      "Slovenská"
+    ],
+    "city": "Bratislava",
+    "district": "Staré Mesto",
+    "address": "Záhradnícka 21, Staré Mesto",
+    "phone": "+421 903 875 221",
+    "email": "rezervacie@jednostol.sk",
+    "web": "jednostol.sk",
+    "rating": 4.9,
+    "ratingCount": 428,
+    "lat": 48.1492,
+    "lng": 17.1235,
+    "delivery": {
+      "available": false,
+      "eta": ""
+    },
+    "hours": [
+      [
+        "Pondelok",
+        "11:00 – 15:30"
+      ],
+      [
+        "Utorok",
+        "11:00 – 15:30"
+      ],
+      [
+        "Streda",
+        "11:00 – 15:30"
+      ],
+      [
+        "Štvrtok",
+        "11:00 – 15:30"
+      ],
+      [
+        "Piatok",
+        "11:00 – 15:30"
+      ],
+      [
+        "Sobota",
+        "Zatvorené"
+      ],
+      [
+        "Nedeľa",
+        "Zatvorené"
+      ]
+    ],
+    "image": "https://images.unsplash.com/photo-1564759224907-65b945ff0e84?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=900",
+    "gallery": [
+      "https://images.unsplash.com/photo-1564759224907-65b945ff0e84?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=900",
+      "https://images.unsplash.com/photo-1564759296729-771e78c26df7?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=900",
+      "https://images.unsplash.com/photo-1565895405227-31cffbe0cf86?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=900"
+    ],
+    "standard": [
+      {
+        "name": "Domáci jablkový závin",
+        "desc": "Orechy, škorica, vanilková poleva",
+        "weight": "150 g",
+        "allergens": [
+          1,
+          3,
+          7,
+          8
+        ],
+        "price": 3.5,
+        "tag": "Dezert"
+      }
+    ],
+    "reviews": [
+      {
+        "author": "Eva H.",
+        "stars": 5,
+        "date": "pred 4 dňami",
+        "text": "Sviečková ako od babičky. Rezervácie nutné."
+      },
+      {
+        "author": "Tomáš R.",
+        "stars": 5,
+        "date": "pred týždňom",
+        "text": "Za tú cenu najlepšia domáca kuchyňa v centre."
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "id": "r_wok-bar-nivy",
+    "slug": "wok-bar-nivy",
+    "name": "Wok Bar Nivy",
+    "initials": "WB",
+    "tagline": "Ázijská kuchyňa",
+    "cuisines": [
+      "Ázijská"
+    ],
+    "city": "Bratislava",
+    "district": "Petržalka",
+    "address": "Einsteinova 24, Petržalka",
+    "phone": "+421 902 444 019",
+    "email": "info@wokbar.sk",
+    "web": "wokbar.sk",
+    "rating": 4.4,
+    "ratingCount": 256,
+    "lat": 48.1287,
+    "lng": 17.1096,
+    "delivery": {
+      "available": true,
+      "eta": "35 – 50 min"
+    },
+    "hours": [
+      [
+        "Pondelok",
+        "11:00 – 21:00"
+      ],
+      [
+        "Utorok",
+        "11:00 – 21:00"
+      ],
+      [
+        "Streda",
+        "11:00 – 21:00"
+      ],
+      [
+        "Štvrtok",
+        "11:00 – 21:00"
+      ],
+      [
+        "Piatok",
+        "11:00 – 21:00"
+      ],
+      [
+        "Sobota",
+        "11:00 – 21:00"
+      ],
+      [
+        "Nedeľa",
+        "12:00 – 20:00"
+      ]
+    ],
+    "image": "https://images.unsplash.com/photo-1565895405227-31cffbe0cf86?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=900",
+    "gallery": [
+      "https://images.unsplash.com/photo-1565895405227-31cffbe0cf86?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=900",
+      "https://images.unsplash.com/photo-1564759296729-771e78c26df7?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=900",
+      "https://images.unsplash.com/photo-1564759224907-65b945ff0e84?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=900"
+    ],
+    "standard": [
+      {
+        "name": "Vietnamské jarné závitky",
+        "desc": "Krevety, mäta, arašidová omáčka",
+        "weight": "4 ks",
+        "allergens": [
+          2,
+          5,
+          6
+        ],
+        "price": 5.9,
+        "tag": "Stále"
+      }
+    ],
+    "reviews": [
+      {
+        "author": "Lucia B.",
+        "stars": 4,
+        "date": "pred 5 dňami",
+        "text": "Rýchle, chutné, trochu bez fantázie. Pad thai je ale top."
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "id": "r_burger-garage",
+    "slug": "burger-garage",
+    "name": "Burger Garage",
+    "initials": "BG",
+    "tagline": "Burgre a grill",
+    "cuisines": [
+      "Burger"
+    ],
+    "city": "Bratislava",
+    "district": "Nové Mesto",
+    "address": "Račianske mýto 2, Nové Mesto",
+    "phone": "+421 905 300 700",
+    "email": "garage@burgergarage.sk",
+    "web": "burgergarage.sk",
+    "rating": 4.5,
+    "ratingCount": 391,
+    "lat": 48.1578,
+    "lng": 17.1186,
+    "delivery": {
+      "available": true,
+      "eta": "30 – 40 min"
+    },
+    "hours": [
+      [
+        "Pondelok",
+        "11:00 – 22:00"
+      ],
+      [
+        "Utorok",
+        "11:00 – 22:00"
+      ],
+      [
+        "Streda",
+        "11:00 – 22:00"
+      ],
+      [
+        "Štvrtok",
+        "11:00 – 22:00"
+      ],
+      [
+        "Piatok",
+        "11:00 – 22:00"
+      ],
+      [
+        "Sobota",
+        "11:00 – 23:00"
+      ],
+      [
+        "Nedeľa",
+        "12:00 – 21:00"
+      ]
+    ],
+    "image": "https://images.unsplash.com/photo-1564759296729-771e78c26df7?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=900",
+    "gallery": [
+      "https://images.unsplash.com/photo-1564759296729-771e78c26df7?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=900",
+      "https://images.unsplash.com/photo-1564759224907-65b945ff0e84?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=900",
+      "https://images.unsplash.com/photo-1565895405227-31cffbe0cf86?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=900"
+    ],
+    "standard": [
+      {
+        "name": "Milkshake vanilka",
+        "desc": "Vanilkový zmrzlinový shake",
+        "weight": "0,4 l",
+        "allergens": [
+          7
+        ],
+        "price": 4.5,
+        "tag": "Nápoj"
+      }
+    ],
+    "reviews": [
+      {
+        "author": "Adam P.",
+        "stars": 5,
+        "date": "pred 2 dňami",
+        "text": "Najlepší burger na obede. Ceny férové."
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "id": "r_zelena-lyzica",
+    "slug": "zelena-lyzica",
+    "name": "Zelená lyžica",
+    "initials": "ZL",
+    "tagline": "Vegánska a vegetariánska kuchyňa",
+    "cuisines": [
+      "Vegánska"
+    ],
+    "city": "Bratislava",
+    "district": "Staré Mesto",
+    "address": "Obchodná 40, Staré Mesto",
+    "phone": "+421 917 100 205",
+    "email": "ahoj@zelenalyzica.sk",
+    "web": "zelenalyzica.sk",
+    "rating": 4.7,
+    "ratingCount": 144,
+    "lat": 48.1496,
+    "lng": 17.1103,
+    "delivery": {
+      "available": false,
+      "eta": ""
+    },
+    "hours": [
+      [
+        "Pondelok",
+        "11:00 – 16:00"
+      ],
+      [
+        "Utorok",
+        "11:00 – 16:00"
+      ],
+      [
+        "Streda",
+        "11:00 – 16:00"
+      ],
+      [
+        "Štvrtok",
+        "11:00 – 16:00"
+      ],
+      [
+        "Piatok",
+        "11:00 – 16:00"
+      ],
+      [
+        "Sobota",
+        "Zatvorené"
+      ],
+      [
+        "Nedeľa",
+        "Zatvorené"
+      ]
+    ],
+    "image": "https://images.unsplash.com/photo-1564759224907-65b945ff0e84?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=900",
+    "gallery": [
+      "https://images.unsplash.com/photo-1564759224907-65b945ff0e84?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=900",
+      "https://images.unsplash.com/photo-1565895405227-31cffbe0cf86?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=900",
+      "https://images.unsplash.com/photo-1564759296729-771e78c26df7?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=900"
+    ],
+    "standard": [
+      {
+        "name": "Smoothie bowl",
+        "desc": "Banán, bobule, granola",
+        "weight": "320 g",
+        "allergens": [
+          8
+        ],
+        "price": 6.5,
+        "tag": "Stále"
+      }
+    ],
+    "reviews": [
+      {
+        "author": "Katarína V.",
+        "stars": 5,
+        "date": "pred 3 dňami",
+        "text": "Konečne vegánske menu, ktoré zasýti."
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "id": "r_trattoria-ponte",
+    "slug": "trattoria-ponte",
+    "name": "Trattoria Ponte",
+    "initials": "TP",
+    "tagline": "Talianska kuchyňa",
+    "cuisines": [
+      "Talianska"
+    ],
+    "city": "Bratislava",
+    "district": "Staré Mesto",
+    "address": "Hviezdoslavovo nám. 18, Staré Mesto",
+    "phone": "+421 911 223 344",
+    "email": "tavolo@trattoriaponte.sk",
+    "web": "trattoriaponte.sk",
+    "rating": 4.3,
+    "ratingCount": 520,
+    "lat": 48.1437,
+    "lng": 17.1066,
+    "delivery": {
+      "available": true,
+      "eta": "40 – 55 min"
+    },
+    "hours": [
+      [
+        "Pondelok",
+        "11:30 – 22:00"
+      ],
+      [
+        "Utorok",
+        "11:30 – 22:00"
+      ],
+      [
+        "Streda",
+        "11:30 – 22:00"
+      ],
+      [
+        "Štvrtok",
+        "11:30 – 22:00"
+      ],
+      [
+        "Piatok",
+        "11:30 – 22:00"
+      ],
+      [
+        "Sobota",
+        "11:30 – 23:00"
+      ],
+      [
+        "Nedeľa",
+        "11:30 – 21:00"
+      ]
+    ],
+    "image": "https://images.unsplash.com/photo-1565895405227-31cffbe0cf86?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=900",
+    "gallery": [
+      "https://images.unsplash.com/photo-1565895405227-31cffbe0cf86?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=900",
+      "https://images.unsplash.com/photo-1564759296729-771e78c26df7?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=900",
+      "https://images.unsplash.com/photo-1564759224907-65b945ff0e84?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=900"
+    ],
+    "standard": [
+      {
+        "name": "Panna cotta",
+        "desc": "Vanilka, malinový coulis",
+        "weight": "130 g",
+        "allergens": [
+          7
+        ],
+        "price": 4.5,
+        "tag": "Dezert"
+      }
+    ],
+    "reviews": [
+      {
+        "author": "Martin Z.",
+        "stars": 4,
+        "date": "pred týždňom",
+        "text": "Centrum, takže ceny vyššie, ale kvalita sedí."
+      }
+    ],
+    "status": "active"
+  },
+  {
+    "id": "r_koliba-hrebenky",
+    "slug": "koliba-hrebenky",
+    "name": "Koliba Hrebienok",
+    "initials": "KH",
+    "tagline": "Slovenská kuchyňa",
+    "cuisines": [
+      "Slovenská"
+    ],
+    "city": "Košice",
+    "district": "Staré Mesto",
+    "address": "Hlavná 52, Košice",
+    "phone": "+421 905 111 202",
+    "email": "obedy@kolibahrebienok.sk",
+    "web": "kolibahrebienok.sk",
+    "rating": 4.6,
+    "ratingCount": 98,
+    "lat": 48.7208,
+    "lng": 21.2581,
+    "delivery": {
+      "available": true,
+      "eta": "30 – 45 min"
+    },
+    "hours": [
+      [
+        "Pondelok",
+        "10:30 – 21:00"
+      ],
+      [
+        "Utorok",
+        "10:30 – 21:00"
+      ],
+      [
+        "Streda",
+        "10:30 – 21:00"
+      ],
+      [
+        "Štvrtok",
+        "10:30 – 21:00"
+      ],
+      [
+        "Piatok",
+        "10:30 – 21:00"
+      ],
+      [
+        "Sobota",
+        "11:00 – 22:00"
+      ],
+      [
+        "Nedeľa",
+        "11:00 – 20:00"
+      ]
+    ],
+    "image": "https://images.unsplash.com/photo-1564759224907-65b945ff0e84?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=900",
+    "gallery": [
+      "https://images.unsplash.com/photo-1564759224907-65b945ff0e84?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=900",
+      "https://images.unsplash.com/photo-1565895405227-31cffbe0cf86?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=900",
+      "https://images.unsplash.com/photo-1564759296729-771e78c26df7?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=900"
+    ],
+    "standard": [
+      {
+        "name": "Bryndzové halušky",
+        "desc": "Bryndza, slanina",
+        "weight": "400 g",
+        "allergens": [
+          1,
+          3,
+          7
+        ],
+        "price": 8.9,
+        "tag": "Stále"
+      }
+    ],
+    "reviews": [
+      {
+        "author": "Ján T.",
+        "stars": 5,
+        "date": "pred 6 dňami",
+        "text": "Pirohy ako doma."
+      }
+    ],
+    "status": "active"
+  }
+]

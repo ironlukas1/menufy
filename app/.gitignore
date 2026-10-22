@@ -3,6 +3,9 @@ dist/
 .vite/
 *.tsbuildinfo
 *.log
+.env
+.env.local
+.env.*.local
 android/build
 android/.gradle
 android/app/build

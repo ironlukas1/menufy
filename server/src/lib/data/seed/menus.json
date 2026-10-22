@@ -1,0 +1,697 @@
+[
+  {
+    "id": "m_bistro-mlyn_0",
+    "restaurantSlug": "bistro-mlyn",
+    "dayIndex": 0,
+    "status": "published",
+    "publishedAtTime": "09:12",
+    "items": [
+      {
+        "id": "mi_bistro-mlyn_0_0",
+        "name": "Tekvicový krém, pražené semienka",
+        "desc": "Hokkaido tekvica, smotana, tekvicový olej",
+        "weight": "0,33 l",
+        "allergens": [
+          7,
+          8
+        ],
+        "price": 3.2,
+        "tag": "Polievka"
+      },
+      {
+        "id": "mi_bistro-mlyn_0_1",
+        "name": "Kuracie supreme, zemiakové pyré, hrášok",
+        "desc": "Kuracie prsia s kožou, maslové pyré, hrášok",
+        "weight": "150 / 200 g",
+        "allergens": [
+          7
+        ],
+        "price": 9.9,
+        "tag": "Menu 1"
+      },
+      {
+        "id": "mi_bistro-mlyn_0_2",
+        "name": "Hubové rizoto s parmezánom",
+        "desc": "Šampiňóny, hliva, parmezán 24 mes.",
+        "weight": "350 g",
+        "allergens": [
+          7,
+          9
+        ],
+        "price": 8.9,
+        "tag": "Vege"
+      }
+    ]
+  },
+  {
+    "id": "m_bistro-mlyn_1",
+    "restaurantSlug": "bistro-mlyn",
+    "dayIndex": 1,
+    "status": "published",
+    "publishedAtTime": "09:12",
+    "items": [
+      {
+        "id": "mi_bistro-mlyn_1_0",
+        "name": "Hrachová polievka s údeným",
+        "desc": "Žltý hrach, údené mäso, majorán",
+        "weight": "0,33 l",
+        "allergens": [
+          1,
+          9
+        ],
+        "price": 2.9,
+        "tag": "Polievka"
+      },
+      {
+        "id": "mi_bistro-mlyn_1_1",
+        "name": "Bravčová pečienka, knedľa, kapusta",
+        "desc": "Pečená krkovička, domáca knedľa",
+        "weight": "150 / 200 g",
+        "allergens": [
+          1,
+          3
+        ],
+        "price": 9.5,
+        "tag": "Menu 1"
+      },
+      {
+        "id": "mi_bistro-mlyn_1_2",
+        "name": "Gnocchi so šalviou a tekvicou",
+        "desc": "Zemiakové gnocchi, maslo, šalvia",
+        "weight": "330 g",
+        "allergens": [
+          1,
+          3,
+          7
+        ],
+        "price": 8.7,
+        "tag": "Vege"
+      }
+    ]
+  },
+  {
+    "id": "m_oliva-kitchen_0",
+    "restaurantSlug": "oliva-kitchen",
+    "dayIndex": 0,
+    "status": "published",
+    "publishedAtTime": "08:40",
+    "items": [
+      {
+        "id": "mi_oliva-kitchen_0_0",
+        "name": "Paradajková polievka s bazalkou",
+        "desc": "Pečené paradajky, bazalka, olivový olej",
+        "weight": "0,33 l",
+        "allergens": [
+          7
+        ],
+        "price": 2.9,
+        "tag": "Polievka"
+      },
+      {
+        "id": "mi_oliva-kitchen_0_1",
+        "name": "Grilovaný losos, kuskus, jogurtový dip",
+        "desc": "Filet z lososa, citrón, mäta",
+        "weight": "150 / 180 g",
+        "allergens": [
+          4,
+          7
+        ],
+        "price": 11.9,
+        "tag": "Menu 1"
+      },
+      {
+        "id": "mi_oliva-kitchen_0_2",
+        "name": "Cícerový šalát s fetou a olivami",
+        "desc": "Cícer, feta, uhorka, červená cibuľa",
+        "weight": "380 g",
+        "allergens": [
+          7
+        ],
+        "price": 8.5,
+        "tag": "Fit"
+      }
+    ]
+  },
+  {
+    "id": "m_oliva-kitchen_1",
+    "restaurantSlug": "oliva-kitchen",
+    "dayIndex": 1,
+    "status": "published",
+    "publishedAtTime": "08:40",
+    "items": [
+      {
+        "id": "mi_oliva-kitchen_1_0",
+        "name": "Minestrone",
+        "desc": "Sezónna zelenina, fazuľa, parmezán",
+        "weight": "0,33 l",
+        "allergens": [
+          7,
+          9
+        ],
+        "price": 2.9,
+        "tag": "Polievka"
+      },
+      {
+        "id": "mi_oliva-kitchen_1_1",
+        "name": "Penne arrabbiata s kuracím",
+        "desc": "Pikantná paradajková omáčka",
+        "weight": "350 g",
+        "allergens": [
+          1
+        ],
+        "price": 9.2,
+        "tag": "Menu 1"
+      },
+      {
+        "id": "mi_oliva-kitchen_1_2",
+        "name": "Falafel tanier s hummusom",
+        "desc": "Falafel, hummus, tahini, pita",
+        "weight": "360 g",
+        "allergens": [
+          1,
+          11
+        ],
+        "price": 8.8,
+        "tag": "Vege"
+      }
+    ]
+  },
+  {
+    "id": "m_pri-jednom-stole_0",
+    "restaurantSlug": "pri-jednom-stole",
+    "dayIndex": 0,
+    "status": "published",
+    "publishedAtTime": "08:05",
+    "items": [
+      {
+        "id": "mi_pri-jednom-stole_0_0",
+        "name": "Slepačí vývar s domácimi rezancami",
+        "desc": "Vývar z domácej slepice, mrkva",
+        "weight": "0,33 l",
+        "allergens": [
+          1,
+          3,
+          9
+        ],
+        "price": 3.1,
+        "tag": "Polievka"
+      },
+      {
+        "id": "mi_pri-jednom-stole_0_1",
+        "name": "Hovädzie líčka, tarhoňa, koreňová zelenina",
+        "desc": "Pomaly dusené 6 hodín",
+        "weight": "150 / 200 g",
+        "allergens": [
+          1,
+          9
+        ],
+        "price": 12.5,
+        "tag": "Menu 1"
+      },
+      {
+        "id": "mi_pri-jednom-stole_0_2",
+        "name": "Pečená cvikla, kozí syr, vlašské orechy",
+        "desc": "Teplý šalát s medovou vinaigrette",
+        "weight": "320 g",
+        "allergens": [
+          7,
+          8
+        ],
+        "price": 8.9,
+        "tag": "Vege"
+      }
+    ]
+  },
+  {
+    "id": "m_pri-jednom-stole_1",
+    "restaurantSlug": "pri-jednom-stole",
+    "dayIndex": 1,
+    "status": "published",
+    "publishedAtTime": "08:05",
+    "items": [
+      {
+        "id": "mi_pri-jednom-stole_1_0",
+        "name": "Kapustnica",
+        "desc": "Tradičná sviatočná kapustnica",
+        "weight": "0,33 l",
+        "allergens": [
+          1
+        ],
+        "price": 3,
+        "tag": "Polievka"
+      },
+      {
+        "id": "mi_pri-jednom-stole_1_1",
+        "name": "Hovädzia sviečková na smotane, knedľa",
+        "desc": "Sviečková, brusnice, šľahačka",
+        "weight": "120 / 200 g",
+        "allergens": [
+          1,
+          3,
+          7,
+          9,
+          10
+        ],
+        "price": 11.9,
+        "tag": "Menu 1"
+      },
+      {
+        "id": "mi_pri-jednom-stole_1_2",
+        "name": "Bryndzové halušky",
+        "desc": "Bryndza, slanina, jarná cibuľka",
+        "weight": "350 g",
+        "allergens": [
+          1,
+          3,
+          7
+        ],
+        "price": 8.2,
+        "tag": "Menu 2"
+      }
+    ]
+  },
+  {
+    "id": "m_wok-bar-nivy_0",
+    "restaurantSlug": "wok-bar-nivy",
+    "dayIndex": 0,
+    "status": "published",
+    "publishedAtTime": "09:05",
+    "items": [
+      {
+        "id": "mi_wok-bar-nivy_0_0",
+        "name": "Miso polievka s tofu",
+        "desc": "Miso pasta, tofu, wakame",
+        "weight": "0,3 l",
+        "allergens": [
+          6
+        ],
+        "price": 3.2,
+        "tag": "Polievka"
+      },
+      {
+        "id": "mi_wok-bar-nivy_0_1",
+        "name": "Kuracie pad thai",
+        "desc": "Ryžové rezance, arašidy, limetka",
+        "weight": "380 g",
+        "allergens": [
+          3,
+          5,
+          6,
+          14
+        ],
+        "price": 9.4,
+        "tag": "Menu 1"
+      },
+      {
+        "id": "mi_wok-bar-nivy_0_2",
+        "name": "Zeleninový wok so sójou",
+        "desc": "Brokolica, paprika, sójové mäso",
+        "weight": "350 g",
+        "allergens": [
+          6,
+          11
+        ],
+        "price": 8.4,
+        "tag": "Vege"
+      }
+    ]
+  },
+  {
+    "id": "m_wok-bar-nivy_1",
+    "restaurantSlug": "wok-bar-nivy",
+    "dayIndex": 1,
+    "status": "published",
+    "publishedAtTime": "09:05",
+    "items": [
+      {
+        "id": "mi_wok-bar-nivy_1_0",
+        "name": "Kokosová polievka",
+        "desc": "Kokosové mlieko, citrónová tráva",
+        "weight": "0,3 l",
+        "allergens": [],
+        "price": 3.2,
+        "tag": "Polievka"
+      },
+      {
+        "id": "mi_wok-bar-nivy_1_1",
+        "name": "Teriyaki losos s ryžou",
+        "desc": "Losos, teriyaki, sezam",
+        "weight": "150 / 200 g",
+        "allergens": [
+          4,
+          6,
+          11
+        ],
+        "price": 11.2,
+        "tag": "Menu 1"
+      },
+      {
+        "id": "mi_wok-bar-nivy_1_2",
+        "name": "Tofu curry",
+        "desc": "Červené curry, tofu, jazmínová ryža",
+        "weight": "380 g",
+        "allergens": [
+          6
+        ],
+        "price": 8.6,
+        "tag": "Vege"
+      }
+    ]
+  },
+  {
+    "id": "m_burger-garage_0",
+    "restaurantSlug": "burger-garage",
+    "dayIndex": 0,
+    "status": "published",
+    "publishedAtTime": "09:20",
+    "items": [
+      {
+        "id": "mi_burger-garage_0_0",
+        "name": "Cibuľová polievka",
+        "desc": "Gratinovaná so syrom",
+        "weight": "0,33 l",
+        "allergens": [
+          1,
+          7
+        ],
+        "price": 3,
+        "tag": "Polievka"
+      },
+      {
+        "id": "mi_burger-garage_0_1",
+        "name": "Classic burger + hranolky",
+        "desc": "Hovädzie, cheddar, kyslá uhorka",
+        "weight": "180 / 150 g",
+        "allergens": [
+          1,
+          3,
+          7,
+          10
+        ],
+        "price": 9.9,
+        "tag": "Menu 1"
+      },
+      {
+        "id": "mi_burger-garage_0_2",
+        "name": "Falafel burger",
+        "desc": "Falafel, hummus, rukola",
+        "weight": "330 g",
+        "allergens": [
+          1,
+          11
+        ],
+        "price": 8.9,
+        "tag": "Vege"
+      }
+    ]
+  },
+  {
+    "id": "m_burger-garage_1",
+    "restaurantSlug": "burger-garage",
+    "dayIndex": 1,
+    "status": "published",
+    "publishedAtTime": "09:20",
+    "items": [
+      {
+        "id": "mi_burger-garage_1_0",
+        "name": "Kuracia polievka",
+        "desc": "S rezancami",
+        "weight": "0,33 l",
+        "allergens": [
+          1,
+          3,
+          9
+        ],
+        "price": 2.8,
+        "tag": "Polievka"
+      },
+      {
+        "id": "mi_burger-garage_1_1",
+        "name": "BBQ chicken burger",
+        "desc": "Kuracie stehno, BBQ, coleslaw",
+        "weight": "300 g",
+        "allergens": [
+          1,
+          3,
+          10
+        ],
+        "price": 9.7,
+        "tag": "Menu 1"
+      },
+      {
+        "id": "mi_burger-garage_1_2",
+        "name": "Batátové hranolky s dipom",
+        "desc": "Aioli dip, sea salt",
+        "weight": "250 g",
+        "allergens": [
+          3
+        ],
+        "price": 6.2,
+        "tag": "Vege"
+      }
+    ]
+  },
+  {
+    "id": "m_zelena-lyzica_0",
+    "restaurantSlug": "zelena-lyzica",
+    "dayIndex": 0,
+    "status": "published",
+    "publishedAtTime": "08:55",
+    "items": [
+      {
+        "id": "mi_zelena-lyzica_0_0",
+        "name": "Šošovicová polievka s kokosom",
+        "desc": "Červená šošovica, kokos, kurkuma",
+        "weight": "0,33 l",
+        "allergens": [
+          9
+        ],
+        "price": 2.9,
+        "tag": "Polievka"
+      },
+      {
+        "id": "mi_zelena-lyzica_0_1",
+        "name": "Quinoa bowl s pečenou zeleninou",
+        "desc": "Quinoa, batáty, avokádo",
+        "weight": "380 g",
+        "allergens": [
+          6,
+          11
+        ],
+        "price": 8.9,
+        "tag": "Vegán"
+      },
+      {
+        "id": "mi_zelena-lyzica_0_2",
+        "name": "Cuketové placky, cesnaková plnka",
+        "desc": "Z cukety a ryžovej múky",
+        "weight": "320 g",
+        "allergens": [
+          3
+        ],
+        "price": 8.2,
+        "tag": "Vege"
+      }
+    ]
+  },
+  {
+    "id": "m_zelena-lyzica_1",
+    "restaurantSlug": "zelena-lyzica",
+    "dayIndex": 1,
+    "status": "published",
+    "publishedAtTime": "08:55",
+    "items": [
+      {
+        "id": "mi_zelena-lyzica_1_0",
+        "name": "Krémová brokolicová",
+        "desc": "Bez smotany, s mandľami",
+        "weight": "0,33 l",
+        "allergens": [
+          8
+        ],
+        "price": 2.9,
+        "tag": "Polievka"
+      },
+      {
+        "id": "mi_zelena-lyzica_1_1",
+        "name": "Pestrý tempeh s ryžou",
+        "desc": "Tempeh, teriyaki, zelenina",
+        "weight": "350 g",
+        "allergens": [
+          6,
+          11
+        ],
+        "price": 9.1,
+        "tag": "Vegán"
+      },
+      {
+        "id": "mi_zelena-lyzica_1_2",
+        "name": "Cícerové curry",
+        "desc": "Kokosové mlieko, špenát",
+        "weight": "380 g",
+        "allergens": [],
+        "price": 8.6,
+        "tag": "Vegán"
+      }
+    ]
+  },
+  {
+    "id": "m_trattoria-ponte_0",
+    "restaurantSlug": "trattoria-ponte",
+    "dayIndex": 0,
+    "status": "published",
+    "publishedAtTime": "09:30",
+    "items": [
+      {
+        "id": "mi_trattoria-ponte_0_0",
+        "name": "Ribollita",
+        "desc": "Toskánska zeleninová polievka",
+        "weight": "0,33 l",
+        "allergens": [
+          1,
+          9
+        ],
+        "price": 3.4,
+        "tag": "Polievka"
+      },
+      {
+        "id": "mi_trattoria-ponte_0_1",
+        "name": "Spaghetti carbonara",
+        "desc": "Guanciale, pecorino, žĺtok",
+        "weight": "350 g",
+        "allergens": [
+          1,
+          3,
+          7
+        ],
+        "price": 10.5,
+        "tag": "Menu 1"
+      },
+      {
+        "id": "mi_trattoria-ponte_0_2",
+        "name": "Pizza funghi",
+        "desc": "Hlivy, šampiňóny, mozzarella",
+        "weight": "430 g",
+        "allergens": [
+          1,
+          7
+        ],
+        "price": 9.4,
+        "tag": "Vege"
+      }
+    ]
+  },
+  {
+    "id": "m_trattoria-ponte_1",
+    "restaurantSlug": "trattoria-ponte",
+    "dayIndex": 1,
+    "status": "published",
+    "publishedAtTime": "09:30",
+    "items": [
+      {
+        "id": "mi_trattoria-ponte_1_0",
+        "name": "Krémová zo sladkej kukurice",
+        "desc": "S pancettou",
+        "weight": "0,33 l",
+        "allergens": [
+          7
+        ],
+        "price": 3.2,
+        "tag": "Polievka"
+      },
+      {
+        "id": "mi_trattoria-ponte_1_1",
+        "name": "Lasagne bolognese",
+        "desc": "Domáce lasagne",
+        "weight": "380 g",
+        "allergens": [
+          1,
+          3,
+          7,
+          9
+        ],
+        "price": 10.2,
+        "tag": "Menu 1"
+      },
+      {
+        "id": "mi_trattoria-ponte_1_2",
+        "name": "Caprese s focaccio",
+        "desc": "Paradajky, mozzarella, bazalka",
+        "weight": "300 g",
+        "allergens": [
+          1,
+          7
+        ],
+        "price": 8.9,
+        "tag": "Vege"
+      }
+    ]
+  },
+  {
+    "id": "m_koliba-hrebenky_0",
+    "restaurantSlug": "koliba-hrebenky",
+    "dayIndex": 0,
+    "status": "published",
+    "publishedAtTime": "08:45",
+    "items": [
+      {
+        "id": "mi_koliba-hrebenky_0_0",
+        "name": "Fazuľová na kyslo",
+        "desc": "S údeným mäsom a klobásou",
+        "weight": "0,33 l",
+        "allergens": [
+          1,
+          9
+        ],
+        "price": 3,
+        "tag": "Polievka"
+      },
+      {
+        "id": "mi_koliba-hrebenky_0_1",
+        "name": "Kapustové pirohy s bryndzou",
+        "desc": "Pirohy, slanina, kyslá smotana",
+        "weight": "350 g",
+        "allergens": [
+          1,
+          3,
+          7
+        ],
+        "price": 8.4,
+        "tag": "Menu 1"
+      }
+    ]
+  },
+  {
+    "id": "m_koliba-hrebenky_1",
+    "restaurantSlug": "koliba-hrebenky",
+    "dayIndex": 1,
+    "status": "published",
+    "publishedAtTime": "08:45",
+    "items": [
+      {
+        "id": "mi_koliba-hrebenky_1_0",
+        "name": "Gulášová polievka",
+        "desc": "Hovädzí guláš, zemiaky",
+        "weight": "0,33 l",
+        "allergens": [
+          1,
+          9
+        ],
+        "price": 3,
+        "tag": "Polievka"
+      },
+      {
+        "id": "mi_koliba-hrebenky_1_1",
+        "name": "Pečená kačica, červená kapusta",
+        "desc": "Kačacie stehno, lokše",
+        "weight": "150 / 250 g",
+        "allergens": [
+          1,
+          3
+        ],
+        "price": 11.5,
+        "tag": "Menu 1"
+      }
+    ]
+  }
+]
