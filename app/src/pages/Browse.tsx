@@ -203,7 +203,6 @@ export default function Browse() {
 
   const pick = (s: string) => {
     setPinned(s);
-    setMapExpanded(false);
     if (!isIndex) nav("/");
     setTimeout(() => feedRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
   };
@@ -388,7 +387,10 @@ export default function Browse() {
           items={mapItems}
           selected={slug ?? pinned}
           expanded={mapExpanded}
-          setExpanded={setMapExpanded}
+          setExpanded={(expanded) => {
+            setMapExpanded(expanded);
+            if (!expanded) setPinned(null);
+          }}
           onPick={pick}
         />
       </section>

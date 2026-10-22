@@ -483,6 +483,7 @@ h1 {
 .content-wrap.map-open {
   grid-template-columns: minmax(420px, .78fr) minmax(0, 1.22fr);
 }
+.results-column { scroll-margin-top: 94px; }
 .results-header { margin-bottom: 23px; display: flex; align-items: end; justify-content: space-between; gap: 24px; }
 .results-header .field { width: 205px; background: var(--paper); }
 .section-kicker { margin-bottom: 5px; color: var(--green); font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
@@ -561,7 +562,7 @@ h3 { margin: 3px 0 1px; font-family: "Manrope", sans-serif; font-size: 20px; let
   z-index: 20;
   box-shadow: 0 24px 80px rgba(24, 45, 32, .2);
 }
-.map-header { height: 60px; padding: 0 17px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
+.map-header { flex-shrink: 0; height: 60px; padding: 0 17px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
 .map-header > div { display: flex; flex-direction: column; }
 .map-header span { font-family: "Manrope", sans-serif; font-size: 14px; font-weight: 700; }
 .map-header small { color: var(--muted); font-size: 10px; }

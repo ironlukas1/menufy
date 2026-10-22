@@ -88,7 +88,7 @@ export default function MapPanel({
         )}
       </div>
       <div
-        className={`map-canvas ${expanded ? "is-open" : ""} ${selected && !expanded ? "has-selection" : ""} ${dark ? "dark-tiles" : ""}`}
+        className={`map-canvas ${expanded ? "is-open" : ""} ${dark ? "dark-tiles" : ""}`}
       >
         <MapContainer
           center={[CITY_CENTER.lat, CITY_CENTER.lng]}
