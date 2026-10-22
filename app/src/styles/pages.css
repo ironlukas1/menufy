@@ -2,8 +2,7 @@
 .top-bar { position: sticky; top: 0; z-index: 1000; background: var(--paper); border-bottom: 1px solid var(--line); }
 .top-bar-inner { width: min(1240px, calc(100% - 40px)); height: 64px; margin-inline: auto; display: flex; align-items: center; gap: 40px; }
 .top-brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; font-family: "Manrope", sans-serif; font-size: 21px; font-weight: 800; letter-spacing: -.8px; }
-.top-brand-mark { width: 30px; height: 30px; display: grid; place-items: center; background: var(--green); border-radius: 50% 50% 46% 50%; transform: rotate(-12deg); }
-.top-brand-mark::before { content: ""; width: 12px; height: 3px; border-radius: 3px; background: #fff; box-shadow: 0 5px 0 #fff; transform: rotate(12deg); }
+.top-brand-mark { width: 26px; height: 30px; background: url("/logo.png") center / contain no-repeat; }
 .top-nav { display: flex; align-self: stretch; gap: 26px; }
 .top-link { position: relative; display: flex; align-items: center; color: var(--muted); font-size: 14px; font-weight: 600; text-decoration: none; }
 .top-link:hover, .top-link.active { color: var(--green); }
