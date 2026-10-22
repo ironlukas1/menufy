@@ -42,6 +42,11 @@ const ErrorMsg = ({ children }: { children: ReactNode }) => (
   </p>
 );
 
+const emailErrorMessage = (error: { code?: string; message: string }) =>
+  error.code === "over_email_send_rate_limit"
+    ? "Odosielanie overovacích e-mailov je dočasne obmedzené. Skúste to neskôr. Opakované pokusy limit neobnovia."
+    : error.message;
+
 export function Login() {
   const [sp, setSp] = useSearchParams();
   const nav = useNavigate();
@@ -63,6 +68,7 @@ export function Login() {
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
+    if (busy) return;
     setError(null);
     setUnconfirmed(false);
     const mail = email.trim();
@@ -88,7 +94,7 @@ export function Login() {
       options: { emailRedirectTo: `${window.location.origin}/verified` },
     });
     setBusy(false);
-    if (err) return setError(err.code === "user_already_exists" ? "E-mailová adresa je už zaregistrovaná." : err.message);
+    if (err) return setError(err.code === "user_already_exists" ? "E-mailová adresa je už zaregistrovaná." : emailErrorMessage(err));
     // with email confirmation on, an existing address returns a user with no identities
     if (data.user && data.user.identities?.length === 0) return setError("E-mailová adresa je už zaregistrovaná.");
     if (data.session) return nav(next);
@@ -96,13 +102,21 @@ export function Login() {
   };
 
   const resend = async () => {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    setResent(false);
+    try {
     const { error: err } = await supabase.auth.resend({
       type: "signup",
       email: email.trim(),
       options: { emailRedirectTo: `${window.location.origin}/verified` },
     });
-    if (err) return setError(err.message);
+    if (err) return setError(emailErrorMessage(err));
     setResent(true);
+    } finally {
+      setBusy(false);
+    }
   };
 
   if (verify)
@@ -110,7 +124,7 @@ export function Login() {
       <AuthShell title="Overte e-mail" sub={`Poslali sme overovací odkaz na ${email.trim()}. Po jeho otvorení budete prihlásený.`}>
         {resent && <p className="success-note" role="status">Odkaz sme poslali znova.</p>}
         {error && <ErrorMsg>{error}</ErrorMsg>}
-        <button className="btn-ghost block" onClick={resend}>Poslať odkaz znova</button>
+        <button className="btn-ghost block" disabled={busy} onClick={resend}>Poslať odkaz znova</button>
         <button type="button" className="inline-link center" onClick={() => setVerify(false)}>
           Späť na prihlásenie
         </button>
@@ -141,7 +155,7 @@ export function Login() {
         {mode === "signup" && <PasswordField label="Potvrdiť heslo" value={pw2} onChange={setPw2} />}
         {error && <ErrorMsg>{error}</ErrorMsg>}
         {unconfirmed && (
-          <button type="button" className="btn-ghost block" onClick={resend}>
+          <button type="button" className="btn-ghost block" disabled={busy} onClick={resend}>
             {resent ? "Odkaz sme poslali znova" : "Poslať overovací e-mail znova"}
           </button>
         )}
