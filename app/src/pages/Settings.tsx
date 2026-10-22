@@ -29,11 +29,10 @@ function Section({ id, title, children, danger }: { id?: string; title: string; 
 }
 
 export default function Settings() {
-  const { loggedIn, setLoggedIn, theme, setTheme, dark, email } = useProto();
+  const { loggedIn, setLoggedIn, theme, setTheme, dark, email, notify: n, setNotify } = useProto();
   const nav = useNavigate();
   const { hash } = useLocation();
   const [modal, setModal] = useState<null | "email" | "delete">(null);
-  const [n, setN] = useState({ daily: true, fav: true, promo: false });
   const [faq, setFaq] = useState<number | null>(null);
   const [sent, setSent] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -119,9 +118,9 @@ export default function Settings() {
           </button>
         )}
         <h4 className="subhead">Push a e-mailové upozornenia</h4>
-        <Toggle label="Denné súhrny menu" desc="Každé ráno prehľad menu vašich obľúbených." on={n.daily} set={(v) => setN({ ...n, daily: v })} />
-        <Toggle label="Upozornenia obľúbených reštaurácií" desc="Keď obľúbená reštaurácia zverejní menu." on={n.fav} set={(v) => setN({ ...n, fav: v })} />
-        <Toggle label="Promo a marketingové novinky" on={n.promo} set={(v) => setN({ ...n, promo: v })} />
+        <Toggle label="Denné súhrny menu" desc="Každé ráno prehľad menu vašich obľúbených." on={n.daily} set={(v) => setNotify({ daily: v })} />
+        <Toggle label="Upozornenia obľúbených reštaurácií" desc="Keď obľúbená reštaurácia zverejní menu." on={n.fav} set={(v) => setNotify({ fav: v })} />
+        <Toggle label="Promo a marketingové novinky" on={n.promo} set={(v) => setNotify({ promo: v })} />
       </Section>
 
       <Section title="Podpora a právne informácie">

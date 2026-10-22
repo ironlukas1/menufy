@@ -18,7 +18,11 @@ type Proto = {
   favorites: string[];
   toggleFavorite: (slug: string) => void;
   email: string;
+  notify: Notify;
+  setNotify: (patch: Partial<Notify>) => void;
 };
+
+export type Notify = { daily: boolean; fav: boolean; promo: boolean };
 
 const Ctx = createContext<Proto | null>(null);
 
@@ -40,14 +44,17 @@ const write = (k: string, v: string) => {
 export function ProtoProvider({ children }: { children: ReactNode }) {
   const [loggedIn, setLoggedInState] = useState(read("menufy-auth") === "1");
   const [email, setEmail] = useState("");
+  const [userId, setUserId] = useState<string | null>(null);
+  const [notify, setNotifyState] = useState<Notify>({ daily: true, fav: true, promo: false });
   const setLoggedIn = (v: boolean) => {
     setLoggedInState(v);
     if (!v) void supabase.auth.signOut();
   };
 
   useEffect(() => {
-    const apply = (s: { user: { email?: string } } | null) => {
+    const apply = (s: { user: { id: string; email?: string } } | null) => {
       setLoggedInState(!!s);
+      setUserId(s?.user.id ?? null);
       setEmail(s?.user.email ?? "");
     };
     supabase.auth.getSession().then(({ data }) => apply(data.session));
@@ -55,7 +62,18 @@ export function ProtoProvider({ children }: { children: ReactNode }) {
     return () => data.subscription.unsubscribe();
   }, []);
   const stored = read("menufy-theme");
-  const [theme, setTheme] = useState<Theme>(stored === "light" || stored === "dark" ? stored : "system");
+  const [theme, setThemeState] = useState<Theme>(stored === "light" || stored === "dark" ? stored : "system");
+  const savePrefs = (patch: Record<string, unknown>) => {
+    if (userId) void supabase.from("preferences").upsert({ user_id: userId, ...patch, updated_at: new Date().toISOString() });
+  };
+  const setTheme = (t: Theme) => {
+    setThemeState(t);
+    savePrefs({ theme: t });
+  };
+  const setNotify = (patch: Partial<Notify>) => {
+    setNotifyState((n) => ({ ...n, ...patch }));
+    savePrefs(Object.fromEntries(Object.entries(patch).map(([k, v]) => [`notify_${k}`, v])));
+  };
   const [geo, setGeo] = useState<Proto["geo"]>("unknown");
   const [userPosition, setUserPosition] = useState<Proto["userPosition"]>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
@@ -96,7 +114,38 @@ export function ProtoProvider({ children }: { children: ReactNode }) {
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 },
     );
   };
-  const [favorites, setFavorites] = useState<string[]>(["bistro-mlyn"]);
+  const [favorites, setFavorites] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!userId) return setFavorites([]);
+    let live = true;
+    Promise.all([
+      supabase.from("favorites").select("restaurant_slug").order("created_at"),
+      supabase.from("preferences").select("*").maybeSingle(),
+    ]).then(([f, p]) => {
+      if (!live) return;
+      if (f.data) setFavorites(f.data.map((r) => r.restaurant_slug));
+      if (p.data) {
+        setThemeState(p.data.theme);
+        setNotifyState({ daily: p.data.notify_daily, fav: p.data.notify_fav, promo: p.data.notify_promo });
+      }
+    });
+    return () => {
+      live = false;
+    };
+  }, [userId]);
+
+  const toggleFavorite = (slug: string) => {
+    const adding = !favorites.includes(slug);
+    setFavorites((f) => (adding ? [...f, slug] : f.filter((x) => x !== slug)));
+    if (!userId) return;
+    const q = adding
+      ? supabase.from("favorites").insert({ restaurant_slug: slug })
+      : supabase.from("favorites").delete().eq("restaurant_slug", slug);
+    void q.then(({ error }) => {
+      if (error) setFavorites((f) => (adding ? f.filter((x) => x !== slug) : [...f, slug]));
+    });
+  };
   const [systemDark, setSystemDark] = useState(
     typeof matchMedia !== "undefined" && matchMedia("(prefers-color-scheme: dark)").matches,
   );
@@ -139,8 +188,9 @@ export function ProtoProvider({ children }: { children: ReactNode }) {
     locationError,
     requestLocation,
     favorites,
-    toggleFavorite: (slug) =>
-      setFavorites((f) => (f.includes(slug) ? f.filter((x) => x !== slug) : [...f, slug])),
+    toggleFavorite,
+    notify,
+    setNotify,
     email,
   };
 
