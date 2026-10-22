@@ -58,12 +58,14 @@ function Interactive({ on }: { on: boolean }) {
 export default function MapPanel({
   items,
   selected,
+  hovered,
   expanded,
   setExpanded,
   onPick,
 }: {
   items: Restaurant[];
   selected: string | null;
+  hovered: string | null;
   expanded: boolean;
   setExpanded: (v: boolean) => void;
   onPick: (slug: string) => void;
@@ -117,7 +119,8 @@ export default function MapPanel({
             <Marker
               key={r.slug + (r.slug === selected)}
               position={[r.lat, r.lng]}
-              icon={pin(r.rating.toFixed(1).replace(".", ","), r.slug === selected)}
+              icon={pin(r.rating.toFixed(1).replace(".", ","), r.slug === selected || r.slug === hovered)}
+              zIndexOffset={r.slug === hovered ? 1000 : 0}
               eventHandlers={{ click: () => onPick(r.slug) }}
               title={r.name}
             />

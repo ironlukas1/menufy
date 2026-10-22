@@ -44,6 +44,7 @@ export type BrowseCtx = {
   setPinned: (s: string | null) => void;
   reset: () => void;
   activeCount: number;
+  setHovered: (s: string | null) => void;
 };
 
 function Search({
@@ -147,6 +148,7 @@ export default function Browse() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [mapExpanded, setMapExpanded] = useState(false);
   const [pinned, setPinned] = useState<string | null>(null);
+  const [hovered, setHovered] = useState<string | null>(null);
   const [bannerOff, setBannerOff] = useState(false);
   const feedRef = useRef<HTMLDivElement>(null);
   const isIndex = loc.pathname === "/";
@@ -213,7 +215,7 @@ export default function Browse() {
     setTimeout(() => feedRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
   };
 
-  const ctx: BrowseCtx = { f, set, query, setQuery, results, pinned, setPinned, reset, activeCount };
+  const ctx: BrowseCtx = { f, set, query, setQuery, results, pinned, setPinned, reset, activeCount, setHovered };
 
   return (
     <>
@@ -392,6 +394,7 @@ export default function Browse() {
         {!slug && <MapPanel
           items={mapItems}
           selected={slug ?? pinned}
+          hovered={hovered}
           expanded={mapExpanded}
           setExpanded={(expanded) => {
             setMapExpanded(expanded);

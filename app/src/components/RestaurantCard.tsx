@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import Icon from "./Icon";
 import { dailyFor, formatPrice, type MenuItem, type Restaurant } from "@/data/restaurants";
@@ -55,6 +56,8 @@ export default function RestaurantCard({
   query,
   distance,
   selected,
+  menuOpen = false,
+  onHover,
 }: {
   r: Restaurant;
   day: number;
@@ -63,6 +66,8 @@ export default function RestaurantCard({
   query: string;
   distance: number;
   selected?: boolean;
+  menuOpen?: boolean;
+  onHover?: (slug: string | null) => void;
 }) {
   const status = openStatus(r);
   const q = query.trim().toLocaleLowerCase("sk");
@@ -70,9 +75,18 @@ export default function RestaurantCard({
     (it) => it.price <= maxPrice && !it.allergens.some((a) => excluded.includes(String(a))),
   );
   const date = day === 0 ? "Dnes" : ["", "Piatok", "Pondelok", "Utorok"][day];
+  const hasHit = !!q && items.some((it) => it.name.toLocaleLowerCase("sk").includes(q));
+  const [open, setOpen] = useState(menuOpen || hasHit);
+  useEffect(() => setOpen(menuOpen || hasHit), [menuOpen, hasHit]);
+  const n = items.length;
+  const noun = n === 1 ? "jedlo" : n >= 2 && n <= 4 ? "jedlá" : "jedál";
 
   return (
-    <article className={`restaurant-card ${selected ? "is-selected" : ""}`}>
+    <article
+      className={`restaurant-card ${selected ? "is-selected" : ""}`}
+      onMouseEnter={onHover && (() => onHover(r.slug))}
+      onMouseLeave={onHover && (() => onHover(null))}
+    >
       <div className="restaurant-top">
         <Link to={`/restaurant/${r.slug}`} className="card-img" aria-label={`Detail ${r.name}`}>
           <img src={r.image} alt={`Jedlo z reštaurácie ${r.name}`} loading="lazy" />
@@ -115,16 +129,20 @@ export default function RestaurantCard({
           </p>
         </div>
       </div>
-      <div className="menu-heading">
+      <button className={`menu-heading ${open ? "open" : ""}`} onClick={() => setOpen(!open)} aria-expanded={open}>
         <span>Denné menu</span>
-        <span className="menu-date">{date}</span>
-      </div>
-      <div className="menu-list">
-        {items.map((it) => (
-          <MenuRow key={it.name} item={it} hit={!!q && it.name.toLocaleLowerCase("sk").includes(q)} />
-        ))}
-        {items.length === 0 && <p className="menu-empty">Žiadne jedlo nevyhovuje filtrom.</p>}
-      </div>
+        <span className="menu-date">
+          {date} · {n} {noun} <Icon name="chevron" size={16} />
+        </span>
+      </button>
+      {open && (
+        <div className="menu-list">
+          {items.map((it) => (
+            <MenuRow key={it.name} item={it} hit={!!q && it.name.toLocaleLowerCase("sk").includes(q)} />
+          ))}
+          {items.length === 0 && <p className="menu-empty">Žiadne jedlo nevyhovuje filtrom.</p>}
+        </div>
+      )}
       <Link className="card-action" to={`/restaurant/${r.slug}`}>
         Zobraziť detail reštaurácie <Icon name="arrow" size={17} />
       </Link>
