@@ -5,7 +5,7 @@ import SelectField from "@/components/SelectField";
 import MapPanel from "@/components/MapPanel";
 import { ALLERGENS, CUISINES, LOCATIONS } from "@/data/allergens";
 import { DAYS, dailyFor, restaurants, type Restaurant } from "@/data/restaurants";
-import { CITY_CENTER, USER_POS, distanceKm } from "@/lib";
+import { CITY_CENTER, distanceKm } from "@/lib";
 import { useProto } from "@/proto/ProtoContext";
 
 export type Filters = {
@@ -140,7 +140,7 @@ export default function Browse() {
   const { slug } = useParams();
   const nav = useNavigate();
   const loc = useLocation();
-  const { geo, favorites } = useProto();
+  const { geo, favorites, userPosition } = useProto();
   const [f, setF] = useState<Filters>(initial);
   const [draft, setDraft] = useState("");
   const [query, setQuery] = useState("");
@@ -152,7 +152,7 @@ export default function Browse() {
   const isIndex = loc.pathname === "/";
 
   const set = (p: Partial<Filters>) => setF((c) => ({ ...c, ...p }));
-  const origin = geo === "granted" ? USER_POS : CITY_CENTER;
+  const origin = geo === "granted" && userPosition ? userPosition : CITY_CENTER;
 
   const results = useMemo(() => {
     const q = query.trim().toLocaleLowerCase("sk");

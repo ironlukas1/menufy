@@ -1,10 +1,10 @@
 import { useEffect } from "react";
-import { CircleMarker, MapContainer, Marker, TileLayer, ZoomControl, useMap } from "react-leaflet";
+import { CircleMarker, MapContainer, Marker, Pane, TileLayer, ZoomControl, useMap } from "react-leaflet";
 import L from "leaflet";
 import Icon from "./Icon";
 import type { Restaurant } from "@/data/restaurants";
 import { useProto } from "@/proto/ProtoContext";
-import { CITY_CENTER, USER_POS } from "@/lib";
+import { CITY_CENTER } from "@/lib";
 
 const pin = (label: string, selected: boolean) =>
   L.divIcon({
@@ -17,7 +17,7 @@ const pin = (label: string, selected: boolean) =>
 const boundsOf = (items: Restaurant[]) =>
   L.latLngBounds(items.map((r) => [r.lat, r.lng] as [number, number])).pad(0.3);
 
-function Fit({ items, selected, expanded }: { items: Restaurant[]; selected: string | null; expanded: boolean }) {
+function Fit({ items, selected, expanded, user }: { items: Restaurant[]; selected: string | null; expanded: boolean; user: { lat: number; lng: number } | null }) {
   const map = useMap();
   useEffect(() => {
     const t = setTimeout(() => {
@@ -25,6 +25,7 @@ function Fit({ items, selected, expanded }: { items: Restaurant[]; selected: str
       map.invalidateSize();
       const sel = items.find((r) => r.slug === selected);
       if (sel) map.flyTo([sel.lat, sel.lng], 15, { duration: 0.5 });
+      else if (expanded && user) map.flyTo([user.lat, user.lng], 14, { duration: 0.5 });
       else if (items.length) map.fitBounds(boundsOf(items), { maxZoom: 14 });
     }, 60);
     return () => {
@@ -35,7 +36,7 @@ function Fit({ items, selected, expanded }: { items: Restaurant[]; selected: str
         /* map already removed */
       }
     };
-  }, [map, items, selected, expanded]);
+  }, [map, items, selected, expanded, user]);
   return null;
 }
 
@@ -67,8 +68,12 @@ export default function MapPanel({
   setExpanded: (v: boolean) => void;
   onPick: (slug: string) => void;
 }) {
-  const { dark, geo } = useProto();
-  const user = geo === "granted" ? USER_POS : null;
+  const { dark, geo, userPosition, locationError, requestLocation } = useProto();
+  const user = geo === "granted" ? userPosition : null;
+  const openMap = () => {
+    setExpanded(true);
+    requestLocation();
+  };
 
   return (
     <aside className={`map-card ${expanded ? "expanded" : ""}`} aria-label="Mapa reštaurácií">
@@ -82,7 +87,7 @@ export default function MapPanel({
             <Icon name="close" size={18} />
           </button>
         ) : (
-          <button className="map-open-btn" onClick={() => setExpanded(true)}>
+          <button className="map-open-btn" onClick={openMap}>
             <Icon name="map" size={16} /> Otvoriť mapu
           </button>
         )}
@@ -104,7 +109,9 @@ export default function MapPanel({
             className="osm-tiles"
           />
           {user && (
-            <CircleMarker center={[user.lat, user.lng]} radius={8} pathOptions={{ color: "#fff", weight: 3, fillColor: "#2f6fe4", fillOpacity: 1 }} />
+            <Pane name="user-location" style={{ zIndex: 625 }}>
+              <CircleMarker center={[user.lat, user.lng]} radius={9} pathOptions={{ color: "#fff", weight: 3, fillColor: "#2f6fe4", fillOpacity: 1 }} />
+            </Pane>
           )}
           {items.map((r) => (
             <Marker
@@ -117,11 +124,14 @@ export default function MapPanel({
           ))}
           <Interactive on={expanded} />
           {expanded && <ZoomControl position="topright" />}
-          <Fit items={items} selected={selected} expanded={expanded} />
+          <Fit items={items} selected={selected} expanded={expanded} user={user} />
         </MapContainer>
-        {!expanded && <div className="map-cover" onClick={() => setExpanded(true)} aria-hidden="true" />}
+        {!expanded && <div className="map-cover" onClick={openMap} aria-hidden="true" />}
       </div>
-      {expanded && <p className="map-tip">Kliknutím na marker vyfiltrujete vybranú reštauráciu.</p>}
+      {expanded && <p className="map-tip" role="status">
+        {geo === "requesting" ? "Zisťujeme vašu polohu. Povoľte prístup v prehliadači." : locationError ?? "Kliknutím na marker vyfiltrujete vybranú reštauráciu."}
+        {locationError && <> <button className="inline-link plain" onClick={requestLocation}>Skúsiť znova</button></>}
+      </p>}
     </aside>
   );
 }

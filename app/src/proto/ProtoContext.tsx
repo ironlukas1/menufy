@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { Navigate, useLocation } from "react-router";
 
 export type Theme = "system" | "light" | "dark";
@@ -9,8 +9,11 @@ type Proto = {
   theme: Theme;
   setTheme: (t: Theme) => void;
   dark: boolean;
-  geo: "granted" | "denied";
+  geo: "unknown" | "requesting" | "granted" | "denied";
   setGeo: (g: "granted" | "denied") => void;
+  userPosition: { lat: number; lng: number } | null;
+  locationError: string | null;
+  requestLocation: () => void;
   favorites: string[];
   toggleFavorite: (slug: string) => void;
   email: string;
@@ -37,7 +40,46 @@ export function ProtoProvider({ children }: { children: ReactNode }) {
   const [loggedIn, setLoggedIn] = useState(read("menufy-auth") === "1");
   const stored = read("menufy-theme");
   const [theme, setTheme] = useState<Theme>(stored === "light" || stored === "dark" ? stored : "system");
-  const [geo, setGeo] = useState<"granted" | "denied">("granted");
+  const [geo, setGeo] = useState<Proto["geo"]>("unknown");
+  const [userPosition, setUserPosition] = useState<Proto["userPosition"]>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const locating = useRef(false);
+
+  const requestLocation = () => {
+    if (locating.current) return;
+    if (!navigator.geolocation) {
+      setGeo("denied");
+      setLocationError("Tento prehliadač nepodporuje zisťovanie polohy.");
+      return;
+    }
+    locating.current = true;
+    setLocationError(null);
+    setGeo("requesting");
+    const onSuccess = ({ coords }: GeolocationPosition) => {
+        locating.current = false;
+        setUserPosition({ lat: coords.latitude, lng: coords.longitude });
+        setGeo("granted");
+      };
+    const onError = (error: GeolocationPositionError) => {
+        locating.current = false;
+        setGeo(userPosition ? "granted" : "denied");
+        setLocationError(error.code === 1
+          ? "Povoľte prístup k polohe v nastaveniach prehliadača a skúste znova."
+          : error.code === 3
+            ? "Zisťovanie polohy trvalo príliš dlho. Skontrolujte lokalizačné služby zariadenia a skúste znova."
+            : "Zariadenie neposkytlo polohu. Zapnite lokalizačné služby a povoľte ich pre tento prehliadač alebo aplikáciu.");
+      };
+    navigator.geolocation.getCurrentPosition(
+      onSuccess,
+      (error) => {
+        if (error.code === 1) return onError(error);
+        navigator.geolocation.getCurrentPosition(onSuccess, onError, {
+          enableHighAccuracy: true, timeout: 15000, maximumAge: 300000,
+        });
+      },
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 },
+    );
+  };
   const [favorites, setFavorites] = useState<string[]>(["bistro-mlyn"]);
   const [systemDark, setSystemDark] = useState(
     typeof matchMedia !== "undefined" && matchMedia("(prefers-color-scheme: dark)").matches,
@@ -77,6 +119,9 @@ export function ProtoProvider({ children }: { children: ReactNode }) {
     dark: theme === "dark" || (theme === "system" && systemDark),
     geo,
     setGeo,
+    userPosition,
+    locationError,
+    requestLocation,
     favorites,
     toggleFavorite: (slug) =>
       setFavorites((f) => (f.includes(slug) ? f.filter((x) => x !== slug) : [...f, slug])),
