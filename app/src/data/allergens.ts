@@ -19,5 +19,5 @@ export const CUISINES = ["Slovenská", "Talianska", "Ázijská", "Vegánska", "B
 
 export const LOCATIONS: Record<string, string[]> = {
   Bratislava: ["Všetky časti", "Staré Mesto", "Ružinov", "Nové Mesto", "Petržalka"],
-  Košice: ["Všetky časti", "Staré Mesto"],
+  Košice: ["Všetky časti", "Staré Mesto", "Sever", "Juh"],
 };

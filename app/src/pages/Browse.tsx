@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Outlet, useLocation, useNavigate, useParams } from "react-router";
 import Icon from "@/components/Icon";
 import SelectField from "@/components/SelectField";
@@ -140,7 +140,7 @@ export default function Browse() {
   const { slug } = useParams();
   const nav = useNavigate();
   const loc = useLocation();
-  const { geo, favorites, userPosition } = useProto();
+  const { geo, favorites, userPosition, requestLocation } = useProto();
   const [f, setF] = useState<Filters>(initial);
   const [draft, setDraft] = useState("");
   const [query, setQuery] = useState("");
@@ -153,6 +153,16 @@ export default function Browse() {
 
   const set = (p: Partial<Filters>) => setF((c) => ({ ...c, ...p }));
   const origin = geo === "granted" && userPosition ? userPosition : CITY_CENTER;
+
+  useEffect(() => {
+    if (geo === "unknown") requestLocation();
+  }, []);
+
+  useEffect(() => {
+    if (!userPosition) return;
+    const near = restaurants.reduce((a, b) => (distanceKm(userPosition, a) <= distanceKm(userPosition, b) ? a : b));
+    set({ city: near.city, district: "Všetky časti", sort: "distance" });
+  }, [userPosition]);
 
   const results = useMemo(() => {
     const q = query.trim().toLocaleLowerCase("sk");

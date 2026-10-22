@@ -1,9 +1,13 @@
-create table if not exists public.favorites (
-  user_id uuid not null references auth.users (id) on delete cascade default auth.uid(),
-  restaurant_slug text not null,
-  created_at timestamptz not null default now(),
-  primary key (user_id, restaurant_slug)
-);
+-- Run after the backend migration (feat/backend server/supabase/migrations/0001_init.sql), which owns
+-- public.favorites (user_id -> profiles, restaurant_id -> restaurants) and the profiles trigger.
+
+-- Accounts created before that migration have no profile row, so their favorites fail the FK.
+insert into public.profiles (id, email)
+select id, coalesce(email, '') from auth.users
+on conflict (id) do nothing;
+
+-- Per-user "cleared" mark; notifications are shared broadcasts, so users hide them instead of deleting.
+alter table public.notification_reads add column if not exists dismissed_at timestamptz;
 
 create table if not exists public.preferences (
   user_id uuid primary key references auth.users (id) on delete cascade default auth.uid(),
@@ -14,14 +18,7 @@ create table if not exists public.preferences (
   updated_at timestamptz not null default now()
 );
 
-alter table public.favorites enable row level security;
 alter table public.preferences enable row level security;
-
-drop policy if exists "own favorites" on public.favorites;
-create policy "own favorites" on public.favorites
-  for all to authenticated
-  using (user_id = (select auth.uid()))
-  with check (user_id = (select auth.uid()));
 
 drop policy if exists "own preferences" on public.preferences;
 create policy "own preferences" on public.preferences
