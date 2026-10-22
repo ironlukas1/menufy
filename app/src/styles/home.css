@@ -597,7 +597,7 @@ footer > span { margin-left: auto; }
   .content-wrap { grid-template-columns: 1fr; }
   .content-wrap.map-open { grid-template-columns: 1fr; }
   .map-card { position: relative; top: 0; grid-row: 1; }
-  .map-card.expanded { width: 100%; margin-left: 0; }
+  .map-card.expanded { width: 100%; margin-left: 0; top: 72px; }
   .primary-filters { grid-template-columns: 1fr 1fr; }
   .advanced-filters { grid-template-columns: 1fr 1fr; }
 }
