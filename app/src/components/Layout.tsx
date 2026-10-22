@@ -1,7 +1,6 @@
 import { Component, useEffect, useState, type ReactNode } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router";
 import Icon from "./Icon";
-import ProtoPanel from "./ProtoPanel";
 import { useProto } from "@/proto/ProtoContext";
 import { isNative } from "@/native";
 
@@ -161,7 +160,6 @@ export default function Layout() {
         </RouteBoundary>
       </main>
       {isNative ? <BottomNav /> : <Footer />}
-      <ProtoPanel />
     </div>
   );
 }

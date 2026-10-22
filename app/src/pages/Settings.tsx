@@ -1,3 +1,4 @@
+import { supabase } from "@/supabase";
 import { useEffect, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import Icon from "@/components/Icon";
@@ -35,6 +36,15 @@ export default function Settings() {
   const [n, setN] = useState({ daily: true, fav: true, promo: false });
   const [faq, setFaq] = useState<number | null>(null);
   const [sent, setSent] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const deleteAccount = async () => {
+    const { error } = await supabase.rpc("delete_user");
+    if (error) return setDeleteError("Účet sa nepodarilo zmazať. Skúste to znova.");
+    setModal(null);
+    setLoggedIn(false);
+    nav("/");
+  };
 
   useEffect(() => {
     if (hash) document.getElementById(hash.slice(1))?.scrollIntoView({ block: "start" });
@@ -162,7 +172,7 @@ export default function Settings() {
             >
               <Icon name="logout" size={16} /> Odhlásiť sa
             </button>
-            <button className="btn-danger" onClick={() => setModal("delete")}>
+            <button className="btn-danger" onClick={() => { setDeleteError(null); setModal("delete"); }}>
               <Icon name="trash" size={16} /> Zmazať účet
             </button>
           </div>
@@ -198,18 +208,12 @@ export default function Settings() {
       {modal === "delete" && (
         <Modal title="Zmazať účet?" onClose={() => setModal(null)}>
           <p className="muted">Tento krok je nevratný. Zmažeme váš účet, obľúbené reštaurácie aj hodnotenia.</p>
+          {deleteError && <p className="form-error" role="alert">{deleteError}</p>}
           <div className="modal-actions">
             <button className="btn-ghost" onClick={() => setModal(null)}>
               Zrušiť
             </button>
-            <button
-              className="btn-danger"
-              onClick={() => {
-                setModal(null);
-                setLoggedIn(false);
-                nav("/");
-              }}
-            >
+            <button className="btn-danger" onClick={deleteAccount}>
               Áno, zmazať účet
             </button>
           </div>

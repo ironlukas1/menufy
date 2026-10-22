@@ -7,7 +7,7 @@ import Detail from "@/pages/Detail";
 import Saved from "@/pages/Saved";
 import Notifications from "@/pages/Notifications";
 import Settings from "@/pages/Settings";
-import { ForgotPassword, Login, ResetPassword } from "@/pages/Auth";
+import { ForgotPassword, Login, ResetPassword, Verified } from "@/pages/Auth";
 import { Privacy, Terms } from "@/pages/Legal";
 
 export default function App() {
@@ -26,6 +26,7 @@ export default function App() {
             <Route path="terms" element={<Terms />} />
             <Route path="privacy" element={<Privacy />} />
             <Route path="login" element={<Login />} />
+            <Route path="verified" element={<Verified />} />
             <Route path="forgot-password" element={<ForgotPassword />} />
             <Route path="reset-password" element={<ResetPassword />} />
             <Route path="*" element={<Navigate to="/" replace />} />

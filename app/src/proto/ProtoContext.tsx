@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { Navigate, useLocation } from "react-router";
+import { supabase } from "@/supabase";
 
 export type Theme = "system" | "light" | "dark";
 
@@ -37,7 +38,22 @@ const write = (k: string, v: string) => {
 };
 
 export function ProtoProvider({ children }: { children: ReactNode }) {
-  const [loggedIn, setLoggedIn] = useState(read("menufy-auth") === "1");
+  const [loggedIn, setLoggedInState] = useState(read("menufy-auth") === "1");
+  const [email, setEmail] = useState("");
+  const setLoggedIn = (v: boolean) => {
+    setLoggedInState(v);
+    if (!v) void supabase.auth.signOut();
+  };
+
+  useEffect(() => {
+    const apply = (s: { user: { email?: string } } | null) => {
+      setLoggedInState(!!s);
+      setEmail(s?.user.email ?? "");
+    };
+    supabase.auth.getSession().then(({ data }) => apply(data.session));
+    const { data } = supabase.auth.onAuthStateChange((_e, s) => apply(s));
+    return () => data.subscription.unsubscribe();
+  }, []);
   const stored = read("menufy-theme");
   const [theme, setTheme] = useState<Theme>(stored === "light" || stored === "dark" ? stored : "system");
   const [geo, setGeo] = useState<Proto["geo"]>("unknown");
@@ -125,7 +141,7 @@ export function ProtoProvider({ children }: { children: ReactNode }) {
     favorites,
     toggleFavorite: (slug) =>
       setFavorites((f) => (f.includes(slug) ? f.filter((x) => x !== slug) : [...f, slug])),
-    email: "zuzana@example.sk",
+    email,
   };
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

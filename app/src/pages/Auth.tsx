@@ -1,9 +1,10 @@
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router";
 import Icon from "@/components/Icon";
+import { supabase } from "@/supabase";
 import { useProto } from "@/proto/ProtoContext";
 
-function AuthShell({ title, sub, children }: { title: string; sub?: string; children: ReactNode }) {
+function AuthShell({ title, sub, children }: { title: string; sub?: string; children?: ReactNode }) {
   return (
     <div className="auth-wrap">
       <div className="auth-card">
@@ -44,22 +45,15 @@ const ErrorMsg = ({ children }: { children: ReactNode }) => (
 export function Login() {
   const [sp, setSp] = useSearchParams();
   const nav = useNavigate();
-  const { setLoggedIn } = useProto();
   const mode = sp.get("mode") === "signup" ? "signup" : "login";
   const next = sp.get("next") || "/";
-  const forced = sp.get("state");
   const [email, setEmail] = useState(sp.get("email") ?? "");
   const [pw, setPw] = useState("");
   const [pw2, setPw2] = useState("");
-  const [error, setError] = useState<string | null>(
-    forced === "error"
-      ? "Zadané heslo nezodpovedá zadanému e-mailu."
-      : forced === "duplicate"
-        ? "E-mailová adresa je už zaregistrovaná."
-        : forced === "mismatch"
-          ? "Zadané heslá sa nezhodujú."
-          : null,
-  );
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [resent, setResent] = useState(false);
+  const [unconfirmed, setUnconfirmed] = useState(false);
   const [verify, setVerify] = useState(false);
 
   const switchMode = (m: string) => {
@@ -67,26 +61,59 @@ export function Login() {
     setSp({ mode: m, ...(next !== "/" ? { next } : {}) });
   };
 
-  const submit = (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
-    if (mode === "login") {
-      if (pw === "wrong") return setError("Zadané heslo nezodpovedá zadanému e-mailu.");
-      setLoggedIn(true);
-      return nav(next);
-    }
-    if (email.trim() === "existing@example.sk") return setError("E-mailová adresa je už zaregistrovaná.");
-    if (pw !== pw2) return setError("Zadané heslá sa nezhodujú.");
     setError(null);
-    setLoggedIn(true);
+    setUnconfirmed(false);
+    const mail = email.trim();
+    if (mode === "signup") {
+      if (pw !== pw2) return setError("Zadané heslá sa nezhodujú.");
+      if (pw.length < 8 || !/[A-Z]/.test(pw) || !/\d/.test(pw))
+        return setError("Heslo musí mať min. 8 znakov, aspoň 1 veľké písmeno a 1 číslo.");
+    }
+    setBusy(true);
+    if (mode === "login") {
+      const { error: err } = await supabase.auth.signInWithPassword({ email: mail, password: pw });
+      setBusy(false);
+      if (!err) return nav(next);
+      if (err.code === "email_not_confirmed") {
+        setUnconfirmed(true);
+        return setError("E-mail ešte nie je overený. Skontrolujte schránku.");
+      }
+      return setError("Zadané heslo nezodpovedá zadanému e-mailu.");
+    }
+    const { data, error: err } = await supabase.auth.signUp({
+      email: mail,
+      password: pw,
+      options: { emailRedirectTo: `${window.location.origin}/verified` },
+    });
+    setBusy(false);
+    if (err) return setError(err.code === "user_already_exists" ? "E-mailová adresa je už zaregistrovaná." : err.message);
+    // with email confirmation on, an existing address returns a user with no identities
+    if (data.user && data.user.identities?.length === 0) return setError("E-mailová adresa je už zaregistrovaná.");
+    if (data.session) return nav(next);
     setVerify(true);
+  };
+
+  const resend = async () => {
+    const { error: err } = await supabase.auth.resend({
+      type: "signup",
+      email: email.trim(),
+      options: { emailRedirectTo: `${window.location.origin}/verified` },
+    });
+    if (err) return setError(err.message);
+    setResent(true);
   };
 
   if (verify)
     return (
-      <AuthShell title="Účet vytvorený" sub="Poslali sme vám overovací e-mail. Medzitým môžete pokračovať.">
-        <Link className="btn-primary block" to={next}>
-          Pokračovať
-        </Link>
+      <AuthShell title="Overte e-mail" sub={`Poslali sme overovací odkaz na ${email.trim()}. Po jeho otvorení budete prihlásený.`}>
+        {resent && <p className="success-note" role="status">Odkaz sme poslali znova.</p>}
+        {error && <ErrorMsg>{error}</ErrorMsg>}
+        <button className="btn-ghost block" onClick={resend}>Poslať odkaz znova</button>
+        <button type="button" className="inline-link center" onClick={() => setVerify(false)}>
+          Späť na prihlásenie
+        </button>
       </AuthShell>
     );
 
@@ -113,7 +140,12 @@ export function Login() {
         />
         {mode === "signup" && <PasswordField label="Potvrdiť heslo" value={pw2} onChange={setPw2} />}
         {error && <ErrorMsg>{error}</ErrorMsg>}
-        <button className="btn-primary block">{mode === "login" ? "Prihlásiť sa" : "Registrovať"}</button>
+        {unconfirmed && (
+          <button type="button" className="btn-ghost block" onClick={resend}>
+            {resent ? "Odkaz sme poslali znova" : "Poslať overovací e-mail znova"}
+          </button>
+        )}
+        <button className="btn-primary block" disabled={busy}>{mode === "login" ? "Prihlásiť sa" : "Registrovať"}</button>
         {mode === "login" && (
           <Link to="/forgot-password" className="inline-link center">
             Zabudli ste heslo?
@@ -122,6 +154,39 @@ export function Login() {
       </form>
     </AuthShell>
   );
+}
+
+export function Verified() {
+  const { loggedIn } = useProto();
+  const err = new URLSearchParams(window.location.hash.slice(1)).get("error_code");
+  const [waited, setWaited] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setWaited(true), 4000);
+    return () => clearTimeout(t);
+  }, []);
+
+  if (loggedIn)
+    return (
+      <AuthShell title="E-mail overený" sub="Váš účet je aktívny a ste prihlásený.">
+        <Link className="btn-primary block" to="/">
+          Pokračovať
+        </Link>
+      </AuthShell>
+    );
+  if (err || waited)
+    return (
+      <AuthShell title="Overenie zlyhalo">
+        <ErrorMsg>
+          {err === "otp_expired"
+            ? "Odkaz je neplatný alebo už bol použitý. Ak ste ho už otvorili, e-mail je pravdepodobne overený – skúste sa prihlásiť."
+            : "E-mail sa nepodarilo overiť. Skúste sa prihlásiť alebo si nechajte poslať nový odkaz."}
+        </ErrorMsg>
+        <Link className="btn-primary block" to="/login">
+          Prihlásiť sa
+        </Link>
+      </AuthShell>
+    );
+  return <AuthShell title="Overujeme e-mail…" />;
 }
 
 export function ForgotPassword() {
