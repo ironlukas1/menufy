@@ -1,6 +1,8 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import Icon, { type IconName } from "@/components/Icon";
-import { notices } from "@/data/notifications";
+import { api, type Notice as ApiNotice } from "@/api/client";
+import { notices as bundledNotices, type Notice } from "@/data/notifications";
 
 const kinds: Record<string, { icon: IconName; label: string }> = {
   menu: { icon: "calendar", label: "Denné menu" },
@@ -8,7 +10,31 @@ const kinds: Record<string, { icon: IconName; label: string }> = {
   system: { icon: "bell", label: "Systém" },
 };
 
+const fromApi = (notice: ApiNotice): Notice => ({
+  id: notice.id,
+  kind: notice.kind,
+  title: notice.title,
+  body: notice.body,
+  time: notice.time,
+  slug: notice.slug ?? undefined,
+});
+
 export default function Notifications() {
+  const [notices, setNotices] = useState<Notice[]>(bundledNotices);
+
+  useEffect(() => {
+    let cancelled = false;
+    api.notifications
+      .list()
+      .then(({ data }) => {
+        if (!cancelled && data.length) setNotices(data.map(fromApi));
+      })
+      .catch((error) => console.warn("[menufy] upozornenia z API sa nepodarilo načítať:", error));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <div className="page">
       <div className="page-head page-head-row">

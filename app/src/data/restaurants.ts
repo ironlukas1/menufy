@@ -33,6 +33,13 @@ export type Restaurant = {
   daily: MenuItem[][];
   standard: MenuItem[];
   reviews: Review[];
+  /** Optional fields present when the object came from the API. */
+  id?: string;
+  status?: "pending" | "active" | "hidden";
+  hasMenuToday?: boolean;
+  menuUpdatedAt?: string | null;
+  avgPrice?: number | null;
+  distanceKm?: number;
 };
 
 export const DAYS = [

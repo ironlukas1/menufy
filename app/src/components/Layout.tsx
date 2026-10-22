@@ -21,7 +21,7 @@ function Brand() {
 }
 
 function TopBar() {
-  const { loggedIn } = useProto();
+  const { loggedIn, email } = useProto();
   const [open, setOpen] = useState(false);
   const loc = useLocation();
 
@@ -75,7 +75,7 @@ function TopBar() {
             ))}
             <div className="drawer-foot">
               {loggedIn ? (
-                <span className="drawer-user">zuzana@example.sk</span>
+                <span className="drawer-user">{email}</span>
               ) : (
                 <Link to="/login" className="btn-primary">
                   Prihlásiť sa
@@ -124,7 +124,11 @@ class RouteBoundary extends Component<{ children: ReactNode }, { failed: boolean
 
 export default function Layout() {
   const loc = useLocation();
-  useEffect(() => window.scrollTo({ top: 0 }), [loc.pathname]);
+  useEffect(() => {
+    // Keep the body in braces: scrollTo with options returns a Promise in newer
+    // Chromium builds, and React would treat it as an effect cleanup.
+    window.scrollTo({ top: 0 });
+  }, [loc.pathname]);
   return (
     <div className="app-shell">
       <TopBar />

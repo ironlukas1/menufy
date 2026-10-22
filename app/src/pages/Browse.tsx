@@ -4,7 +4,8 @@ import Icon from "@/components/Icon";
 import SelectField from "@/components/SelectField";
 import MapPanel from "@/components/MapPanel";
 import { ALLERGENS, CUISINES, LOCATIONS } from "@/data/allergens";
-import { DAYS, dailyFor, restaurants, type Restaurant } from "@/data/restaurants";
+import { DAYS, dailyFor, type Restaurant } from "@/data/restaurants";
+import { useRestaurants } from "@/api/RestaurantsContext";
 import { CITY_CENTER, USER_POS, distanceKm } from "@/lib";
 import { useProto } from "@/proto/ProtoContext";
 
@@ -56,6 +57,7 @@ function Search({
   onOpen: (slug: string) => void;
 }) {
   const [focus, setFocus] = useState(false);
+  const { restaurants } = useRestaurants();
   const q = query.trim().toLocaleLowerCase("sk");
   const places = q ? restaurants.filter((r) => r.name.toLocaleLowerCase("sk").includes(q)).slice(0, 4) : [];
   const dishes = useMemo(() => {
@@ -132,6 +134,7 @@ export default function Browse() {
   const nav = useNavigate();
   const loc = useLocation();
   const { geo } = useProto();
+  const { restaurants } = useRestaurants();
   const [f, setF] = useState<Filters>(initial);
   const [query, setQuery] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -170,7 +173,7 @@ export default function Browse() {
         }
         return b.r.rating - a.r.rating;
       });
-  }, [f, query, pinned, origin]);
+  }, [f, query, pinned, origin, restaurants]);
 
   const activeCount = [
     f.delivery,
@@ -187,7 +190,7 @@ export default function Browse() {
     setPinned(null);
   };
 
-  const mapItems = useMemo(() => restaurants.filter((r) => r.city === f.city), [f.city]);
+  const mapItems = useMemo(() => restaurants.filter((r) => r.city === f.city), [restaurants, f.city]);
 
   const pick = (s: string) => {
     setPinned(s);

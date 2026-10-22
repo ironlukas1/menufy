@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { useProto } from "@/proto/ProtoContext";
+import { useRestaurants } from "@/api/RestaurantsContext";
 
 const states = [
   { label: "Login – chyba hesla", to: "/login?state=error" },
@@ -13,6 +14,7 @@ const states = [
 
 export default function ProtoPanel() {
   const { loggedIn, setLoggedIn, geo, setGeo } = useProto();
+  const { source, loading, reload, error } = useRestaurants();
   const [open, setOpen] = useState(false);
   const nav = useNavigate();
 
@@ -38,6 +40,10 @@ export default function ProtoPanel() {
               Zamietnutá
             </button>
           </div>
+          <span className="proto-label">Dáta</span>
+          <button className="proto-link" onClick={reload} disabled={loading} title={error ?? undefined}>
+            {loading ? "Načítavam…" : source === "api" ? "API pripojené · obnoviť" : "API nedostupné · skúsiť znova"}
+          </button>
           <span className="proto-label">Stavy obrazoviek</span>
           {states.map((s) => (
             <button key={s.to} className="proto-link" onClick={() => nav(s.to)}>

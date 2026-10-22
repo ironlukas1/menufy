@@ -2,14 +2,22 @@ import { useState } from "react";
 import { Link, useParams } from "react-router";
 import Icon from "@/components/Icon";
 import { HeartButton, MenuRow } from "@/components/RestaurantCard";
-import { DAYS, bySlug, dailyFor } from "@/data/restaurants";
+import { DAYS, dailyFor } from "@/data/restaurants";
+import { useRestaurant } from "@/api/RestaurantsContext";
 import { openStatus, stars } from "@/lib";
 
 export default function Detail() {
   const { slug } = useParams();
-  const r = bySlug(slug);
+  const { restaurant: r, loading } = useRestaurant(slug);
   const [tab, setTab] = useState<"daily" | "standard">("daily");
   const [day, setDay] = useState(0);
+
+  if (loading && !r)
+    return (
+      <div className="empty-state">
+        <h3>Načítavam reštauráciu…</h3>
+      </div>
+    );
 
   if (!r)
     return (

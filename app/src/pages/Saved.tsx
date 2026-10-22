@@ -1,12 +1,13 @@
 import { Link } from "react-router";
 import Icon from "@/components/Icon";
 import RestaurantCard from "@/components/RestaurantCard";
-import { restaurants } from "@/data/restaurants";
+import { useRestaurants } from "@/api/RestaurantsContext";
 import { USER_POS, distanceKm } from "@/lib";
 import { useProto } from "@/proto/ProtoContext";
 
 export default function Saved() {
   const { favorites } = useProto();
+  const { restaurants } = useRestaurants();
   const list = restaurants.filter((r) => favorites.includes(r.slug));
 
   return (
