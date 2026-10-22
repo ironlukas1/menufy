@@ -36,6 +36,9 @@ function PasswordField({ label, value, onChange, hint }: { label: string; value:
   );
 }
 
+const authError = (code?: string, fallback = "Niečo sa pokazilo. Skúste to znova.") =>
+  code === "over_email_send_rate_limit" ? "Príliš veľa e-mailov. Skúste to o chvíľu." : fallback;
+
 const ErrorMsg = ({ children }: { children: ReactNode }) => (
   <p className="form-error" role="alert">
     {children}
@@ -88,7 +91,7 @@ export function Login() {
       options: { emailRedirectTo: `${window.location.origin}/verified` },
     });
     setBusy(false);
-    if (err) return setError(err.code === "user_already_exists" ? "E-mailová adresa je už zaregistrovaná." : err.message);
+    if (err) return setError(err.code === "user_already_exists" ? "E-mailová adresa je už zaregistrovaná." : authError(err.code, err.message));
     // with email confirmation on, an existing address returns a user with no identities
     if (data.user && data.user.identities?.length === 0) return setError("E-mailová adresa je už zaregistrovaná.");
     if (data.session) return nav(next);
@@ -101,7 +104,7 @@ export function Login() {
       email: email.trim(),
       options: { emailRedirectTo: `${window.location.origin}/verified` },
     });
-    if (err) return setError(err.message);
+    if (err) return setError(authError(err.code, err.message));
     setResent(true);
   };
 
