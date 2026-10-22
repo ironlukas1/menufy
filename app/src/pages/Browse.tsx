@@ -358,7 +358,7 @@ export default function Browse() {
         </section>
       )}
 
-      <section className={`content-wrap ${mapExpanded ? "map-open" : ""}`}>
+      <section className={`content-wrap ${slug ? "restaurant-view" : mapExpanded ? "map-open" : ""}`}>
         <div className="results-column" ref={feedRef}>
           {geo === "denied" && isIndex && !bannerOff && (
             <div className="geo-banner" role="status">
@@ -379,7 +379,7 @@ export default function Browse() {
           )}
           <Outlet context={ctx} />
         </div>
-        <MapPanel
+        {!slug && <MapPanel
           items={mapItems}
           selected={slug ?? pinned}
           expanded={mapExpanded}
@@ -388,7 +388,7 @@ export default function Browse() {
             if (!expanded) setPinned(null);
           }}
           onPick={pick}
-        />
+        />}
       </section>
     </>
   );
