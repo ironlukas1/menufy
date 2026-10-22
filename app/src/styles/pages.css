@@ -295,3 +295,34 @@ a { color: inherit; }
   .proto-toggle { padding: 8px 12px; }
   .map-canvas:not(.is-open) { height: 200px; }
 }
+
+/* ---------- native app shell (Capacitor) ---------- */
+.bottom-nav { display: none; }
+html.native {
+  --safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  overscroll-behavior: none;
+}
+html.native body { -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; touch-action: manipulation; }
+html.native input, html.native textarea { -webkit-user-select: text; user-select: text; }
+html.native .top-bar { padding-top: var(--safe-top); }
+html.native .top-bar-inner { height: 56px; width: calc(100% - 28px); }
+html.native .top-nav, html.native .top-burger { display: none; }
+html.native .top-brand { font-size: 19px; }
+html.native .top-signin { height: 36px; padding: 0 13px; }
+html.native .bottom-nav {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 1000; display: flex;
+  padding-bottom: var(--safe-bottom); background: var(--paper); border-top: 1px solid var(--line);
+}
+html.native .bottom-tab {
+  flex: 1; min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  color: var(--muted); font-size: 11px; font-weight: 600; text-decoration: none;
+}
+html.native .bottom-tab.active { color: var(--green); }
+html.native .bottom-tab:active { background: var(--green-soft); }
+html.native main { padding-bottom: calc(56px + var(--safe-bottom) + 12px); }
+html.native .proto { bottom: calc(var(--safe-bottom) + 68px); }
+html.native .map-card.expanded { top: calc(var(--safe-top) + 64px); }
+html.native .btn-primary, html.native .btn-ghost, html.native .btn-danger, html.native .map-open-btn { min-height: 46px; }
+html.native .map-close { width: 40px; height: 40px; }
+html.native button:active, html.native a:active { opacity: .85; }

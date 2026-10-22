@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useLocation } from "react-router";
 import Icon from "./Icon";
 import ProtoPanel from "./ProtoPanel";
 import { useProto } from "@/proto/ProtoContext";
+import { isNative } from "@/native";
 
 const links = [
   { to: "/", label: "Domov", icon: "search", auth: false, end: true },
@@ -95,6 +96,19 @@ function TopBar() {
   );
 }
 
+function BottomNav() {
+  return (
+    <nav className="bottom-nav" aria-label="Hlavná navigácia">
+      {links.map((l) => (
+        <NavLink key={l.to} to={l.to} end={l.end} className="bottom-tab">
+          <Icon name={l.icon} size={22} />
+          <span>{l.label}</span>
+        </NavLink>
+      ))}
+    </nav>
+  );
+}
+
 export function Footer() {
   return (
     <footer>
@@ -146,7 +160,7 @@ export default function Layout() {
           <Outlet />
         </RouteBoundary>
       </main>
-      <Footer />
+      {isNative ? <BottomNav /> : <Footer />}
       <ProtoPanel />
     </div>
   );
