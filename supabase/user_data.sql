@@ -17,11 +17,13 @@ create table if not exists public.preferences (
 alter table public.favorites enable row level security;
 alter table public.preferences enable row level security;
 
+drop policy if exists "own favorites" on public.favorites;
 create policy "own favorites" on public.favorites
   for all to authenticated
   using (user_id = (select auth.uid()))
   with check (user_id = (select auth.uid()));
 
+drop policy if exists "own preferences" on public.preferences;
 create policy "own preferences" on public.preferences
   for all to authenticated
   using (user_id = (select auth.uid()))
