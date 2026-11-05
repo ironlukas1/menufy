@@ -18,6 +18,7 @@ type Proto = {
   favorites: string[];
   toggleFavorite: (slug: string) => void;
   email: string;
+  displayName: string;
   userId: string | null;
   notify: Notify;
   setNotify: (patch: Partial<Notify>) => void;
@@ -45,6 +46,7 @@ const write = (k: string, v: string) => {
 export function ProtoProvider({ children }: { children: ReactNode }) {
   const [loggedIn, setLoggedInState] = useState(read("menufy-auth") === "1");
   const [email, setEmail] = useState("");
+  const [displayName, setDisplayName] = useState("Člen menufy");
   const [userId, setUserId] = useState<string | null>(null);
   const [notify, setNotifyState] = useState<Notify>({ daily: true, fav: true, promo: false });
   const setLoggedIn = (v: boolean) => {
@@ -53,10 +55,14 @@ export function ProtoProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    const apply = (s: { user: { id: string; email?: string } } | null) => {
+    const apply = (s: { user: { id: string; email?: string; user_metadata?: Record<string, unknown> } } | null) => {
       setLoggedInState(!!s);
       setUserId(s?.user.id ?? null);
       setEmail(s?.user.email ?? "");
+      const metadata = s?.user.user_metadata;
+      const name = [metadata?.display_name, metadata?.full_name, metadata?.name, metadata?.user_name, metadata?.preferred_username]
+        .find((value): value is string => typeof value === "string" && value.trim().length >= 2);
+      setDisplayName(name ? Array.from(name.trim()).slice(0, 60).join("") : "Člen menufy");
     };
     supabase.auth.getSession().then(({ data }) => apply(data.session));
     const { data } = supabase.auth.onAuthStateChange((_e, s) => apply(s));
@@ -197,6 +203,7 @@ export function ProtoProvider({ children }: { children: ReactNode }) {
     notify,
     setNotify,
     email,
+    displayName,
     userId,
   };
 

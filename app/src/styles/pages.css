@@ -318,3 +318,19 @@ html.native .map-card.expanded { top: calc(var(--safe-top) + 64px); }
 html.native .btn-primary, html.native .btn-ghost, html.native .btn-danger, html.native .map-open-btn { min-height: 46px; }
 html.native .map-close { width: 40px; height: 40px; }
 html.native button:active, html.native a:active { opacity: .85; }
+
+.review-invite, .review-form { margin: 18px 0; padding: 18px; border: 1px solid var(--soft-line); border-radius: 10px; background: var(--subtle); }
+.review-invite p { margin: 0 0 12px; }
+.review-form h4 { margin: 0; }
+.review-fields { min-width: 0; display: grid; gap: 14px; margin: 0; padding: 0; border: 0; }
+.review-fields > button { justify-self: start; }
+.review-rating { margin: 0; padding: 0; border: 0; }
+.review-rating legend { margin-bottom: 6px; font-size: 12px; font-weight: 700; }
+.review-stars { display: flex; gap: 8px; }
+.review-stars label { position: relative; cursor: pointer; }
+.review-stars input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.review-stars span[aria-hidden] { display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid var(--line); border-radius: 8px; color: var(--muted); font-size: 28px; background: var(--canvas); }
+.review-stars span.selected { color: var(--amber); border-color: var(--amber); }
+.review-stars input:focus-visible + span { outline: 2px solid var(--green); outline-offset: 3px; }
+.review-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.review p { white-space: pre-wrap; overflow-wrap: anywhere; }

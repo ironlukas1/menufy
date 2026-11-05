@@ -53,6 +53,7 @@ export function Login() {
   const mode = sp.get("mode") === "signup" ? "signup" : "login";
   const next = sp.get("next") || "/";
   const [email, setEmail] = useState(sp.get("email") ?? "");
+  const [username, setUsername] = useState("");
   const [pw, setPw] = useState("");
   const [pw2, setPw2] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -73,6 +74,8 @@ export function Login() {
     setUnconfirmed(false);
     const mail = email.trim();
     if (mode === "signup") {
+      if (username.trim().length < 2 || username.trim().length > 60)
+        return setError("Používateľské meno musí mať 2 až 60 znakov.");
       if (pw !== pw2) return setError("Zadané heslá sa nezhodujú.");
       if (pw.length < 8 || !/[A-Z]/.test(pw) || !/\d/.test(pw))
         return setError("Heslo musí mať min. 8 znakov, aspoň 1 veľké písmeno a 1 číslo.");
@@ -91,7 +94,10 @@ export function Login() {
     const { data, error: err } = await supabase.auth.signUp({
       email: mail,
       password: pw,
-      options: { emailRedirectTo: `${window.location.origin}/verified` },
+      options: {
+        emailRedirectTo: `${window.location.origin}/verified`,
+        data: { display_name: username.trim() },
+      },
     });
     setBusy(false);
     if (err) return setError(err.code === "user_already_exists" ? "E-mailová adresa je už zaregistrovaná." : emailErrorMessage(err));
@@ -142,6 +148,14 @@ export function Login() {
         </button>
       </div>
       <form className="form" onSubmit={submit} noValidate>
+        {mode === "signup" && (
+          <label>
+            Používateľské meno
+            <input type="text" autoComplete="nickname" required minLength={2} maxLength={60} value={username}
+              onChange={(e) => setUsername(e.target.value)} placeholder="Vaše meno alebo prezývka" />
+            <small>Toto meno sa zobrazí pri vašich recenziách.</small>
+          </label>
+        )}
         <label>
           E-mail
           <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="meno@domena.sk" autoComplete="email" />

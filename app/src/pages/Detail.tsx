@@ -4,7 +4,8 @@ import Icon from "@/components/Icon";
 import Lightbox from "@/components/Lightbox";
 import { HeartButton, MenuRow } from "@/components/RestaurantCard";
 import { DAYS, bySlug, dailyFor } from "@/data/restaurants";
-import { openStatus, stars } from "@/lib";
+import { openStatus } from "@/lib";
+import RestaurantReviews from "@/components/RestaurantReviews";
 
 export default function Detail() {
   const { slug } = useParams();
@@ -155,40 +156,7 @@ export default function Detail() {
         )}
       </section>
 
-      {r.reviews.length > 0 && <section className="panel">
-        <h3>Hodnotenia</h3>
-        <div className="rating-split">
-          <div className="rating-box">
-            <span className="rating-src">Google</span>
-            <strong>{r.rating.toFixed(1).replace(".", ",")}</strong>
-            <span className="rating-stars">{stars(r.rating)}</span>
-            <small>{r.ratingCount} hodnotení</small>
-          </div>
-          <div className="rating-box">
-            <span className="rating-src">Komunita menufy</span>
-            <strong>
-              {(r.reviews.reduce((s, x) => s + x.stars, 0) / r.reviews.length).toFixed(1).replace(".", ",")}
-            </strong>
-            <span className="rating-stars">
-              {stars(r.reviews.reduce((s, x) => s + x.stars, 0) / r.reviews.length)}
-            </span>
-            <small>{r.reviews.length} recenzií</small>
-          </div>
-        </div>
-        <div className="reviews">
-          {r.reviews.map((v) => (
-            <div className="review" key={v.author + v.date}>
-              <div className="review-top">
-                <span className="mini-logo">{v.author[0]}</span>
-                <strong>{v.author}</strong>
-                <span className="rating-stars">{stars(v.stars)}</span>
-                <small>{v.date}</small>
-              </div>
-              <p>{v.text}</p>
-            </div>
-          ))}
-        </div>
-      </section>}
+      <RestaurantReviews key={r.slug} restaurant={r} />
     </article>
   );
 }

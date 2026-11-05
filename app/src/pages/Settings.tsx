@@ -1,5 +1,5 @@
 import { supabase } from "@/supabase";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode, type FormEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import Icon from "@/components/Icon";
 import Modal from "@/components/Modal";
@@ -29,13 +29,44 @@ function Section({ id, title, children, danger }: { id?: string; title: string; 
 }
 
 export default function Settings() {
-  const { loggedIn, setLoggedIn, theme, setTheme, dark, email, notify: n, setNotify } = useProto();
+  const { loggedIn, setLoggedIn, theme, setTheme, dark, email, displayName, userId, notify: n, setNotify } = useProto();
   const nav = useNavigate();
   const { hash } = useLocation();
   const [modal, setModal] = useState<null | "email" | "delete">(null);
   const [faq, setFaq] = useState<number | null>(null);
   const [sent, setSent] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const [username, setUsername] = useState(displayName === "Člen menufy" ? "" : displayName);
+  const [nameBusy, setNameBusy] = useState(false);
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [nameSaved, setNameSaved] = useState(false);
+
+  useEffect(() => {
+    setUsername(displayName === "Člen menufy" ? "" : displayName);
+    setNameError(null);
+    setNameSaved(false);
+  }, [displayName, userId]);
+
+  const saveName = async (event: FormEvent) => {
+    event.preventDefault();
+    if (nameBusy || !userId) return;
+    setNameError(null);
+    setNameSaved(false);
+    const name = username.trim();
+    if (name.length < 2 || name.length > 60)
+      return setNameError("Používateľské meno musí mať 2 až 60 znakov.");
+    setNameBusy(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ data: { display_name: name } });
+      if (error) setNameError("Meno sa nepodarilo uložiť. Skúste znova.");
+      else setNameSaved(true);
+    } catch {
+      setNameError("Meno sa nepodarilo uložiť. Skúste znova.");
+    } finally {
+      setNameBusy(false);
+    }
+  };
 
   const deleteAccount = async () => {
     const { error } = await supabase.rpc("delete_user");
@@ -65,6 +96,18 @@ export default function Settings() {
       {loggedIn ? (
         <>
           <Section title="Účet">
+            <form className="form" onSubmit={saveName}>
+              <label>
+                Používateľské meno
+                <input type="text" autoComplete="nickname" required minLength={2} maxLength={60} value={username}
+                  disabled={nameBusy} onChange={(e) => { setUsername(e.target.value); setNameSaved(false); }}
+                  placeholder="Vaše meno alebo prezývka" />
+                <small>Toto meno sa zobrazí pri nových recenziách.</small>
+              </label>
+              {nameError && <p className="form-error" role="alert">{nameError}</p>}
+              {nameSaved && <p className="success-note" role="status">Používateľské meno bolo uložené.</p>}
+              <button className="btn-primary" disabled={nameBusy || !userId}>{nameBusy ? "Ukladáme…" : "Uložiť meno"}</button>
+            </form>
             <div className="kv">
               <span>Aktuálny e-mail</span>
               <strong>{email}</strong>
