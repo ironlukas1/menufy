@@ -90,7 +90,7 @@ a { color: inherit; }
 /* ---------- map ---------- */
 .map-canvas { position: relative; isolation: isolate; height: calc(100dvh - 170px); overflow: hidden; background: var(--map-bg); transition: height .3s ease; }
 .map-card.expanded .map-canvas { height: calc(100dvh - 210px); }
-.map-canvas:not(.is-open) .leaflet-container { filter: blur(2.5px); pointer-events: none; }
+.map-canvas:not(.is-open) .leaflet-container { pointer-events: none; }
 .map-canvas:not(.is-open) .leaflet-marker-icon,
 .map-canvas:not(.is-open) .leaflet-interactive { pointer-events: none !important; }
 .leaflet-container { font-family: "DM Sans", sans-serif; background: var(--map-bg); }
