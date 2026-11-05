@@ -3,16 +3,20 @@ import { Link, useParams } from "react-router";
 import Icon from "@/components/Icon";
 import Lightbox from "@/components/Lightbox";
 import { HeartButton, MenuRow } from "@/components/RestaurantCard";
-import { DAYS, bySlug, dailyFor } from "@/data/restaurants";
+import { DAYS, dailyFor } from "@/data/restaurants";
 import { openStatus } from "@/lib";
+import { useRestaurants } from "@/proto/RestaurantContext";
 import RestaurantReviews from "@/components/RestaurantReviews";
 
 export default function Detail() {
   const { slug } = useParams();
-  const r = bySlug(slug);
+  const { restaurants, loading } = useRestaurants();
+  const r = restaurants.find((place) => place.slug === slug);
   const [tab, setTab] = useState<"daily" | "standard">("daily");
   const [day, setDay] = useState(0);
   const [photo, setPhoto] = useState<number | null>(null);
+
+  if (!r && loading) return <p className="page" role="status">Načítavame reštauráciu…</p>;
 
   if (!r)
     return (
@@ -75,6 +79,7 @@ export default function Detail() {
         </section>
         <section className="panel">
           <h3>Otváracie hodiny</h3>
+          {r.hours.length === 0 && <p className="muted">Otváracie hodiny zatiaľ neboli uvedené.</p>}
           <table className="hours">
             <tbody>
               {r.hours.map(([d, h], i) => (
@@ -125,14 +130,16 @@ export default function Detail() {
                 </button>
               ))}
             </div>
+            {dailyFor(r, day).length === 0 && <p className="muted">Na tento deň zatiaľ nebolo zverejnené menu.</p>}
             <div className="menu-list flush">
               {dailyFor(r, day).map((it) => (
                 <MenuRow key={it.name} item={it} />
               ))}
             </div>
-            <p className="menu-note">Denné menu sa aktualizuje automaticky každé ráno.</p>
+            <p className="menu-note">{r.live ? "Menu zverejňuje reštaurácia." : "Denné menu sa aktualizuje automaticky každé ráno."}</p>
           </>
         )}
+        {tab === "standard" && r.standard.length === 0 && <p className="muted">Stále menu zatiaľ nebolo zverejnené.</p>}
         {tab === "standard" && (
           <div className="menu-list flush">
             {r.standard.map((it) => (
@@ -144,6 +151,7 @@ export default function Detail() {
 
       <section className="panel">
         <h3>Fotogaléria</h3>
+        {r.gallery.length === 0 && <p className="muted">Reštaurácia zatiaľ nepridala fotografie.</p>}
         <div className="gallery">
           {r.gallery.map((g, i) => (
             <button key={i} className="gallery-item" onClick={() => setPhoto(i)} aria-label={`Zväčšiť fotku ${i + 1}`}>

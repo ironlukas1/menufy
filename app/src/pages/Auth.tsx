@@ -47,11 +47,15 @@ const emailErrorMessage = (error: { code?: string; message: string }) =>
     ? "Odosielanie overovacích e-mailov je dočasne obmedzené. Skúste to neskôr. Opakované pokusy limit neobnovia."
     : error.message;
 
+const safeNext = (value: string | null) => value?.startsWith("/") && !value.startsWith("//") && !value.includes("\\") ? value : "/";
+
 export function Login() {
   const [sp, setSp] = useSearchParams();
   const nav = useNavigate();
   const mode = sp.get("mode") === "signup" ? "signup" : "login";
-  const next = sp.get("next") || "/";
+  const owner = sp.get("owner") === "1";
+  const next = safeNext(sp.get("next") ?? (owner ? "/owners" : "/"));
+  const verificationUrl = `${window.location.origin}/verified?next=${encodeURIComponent(next)}`;
   const [email, setEmail] = useState(sp.get("email") ?? "");
   const [username, setUsername] = useState("");
   const [pw, setPw] = useState("");
@@ -64,7 +68,7 @@ export function Login() {
 
   const switchMode = (m: string) => {
     setError(null);
-    setSp({ mode: m, ...(next !== "/" ? { next } : {}) });
+    setSp({ mode: m, ...(owner ? { owner: "1" } : {}), ...(next !== "/" ? { next } : {}) });
   };
 
   const submit = async (e: FormEvent) => {
@@ -95,8 +99,8 @@ export function Login() {
       email: mail,
       password: pw,
       options: {
-        emailRedirectTo: `${window.location.origin}/verified`,
-        data: { display_name: username.trim() },
+        emailRedirectTo: verificationUrl,
+        data: { display_name: username.trim(), ...(owner ? { account_type: "restaurant_owner" } : {}) },
       },
     });
     setBusy(false);
@@ -116,7 +120,7 @@ export function Login() {
     const { error: err } = await supabase.auth.resend({
       type: "signup",
       email: email.trim(),
-      options: { emailRedirectTo: `${window.location.origin}/verified` },
+      options: { emailRedirectTo: verificationUrl },
     });
     if (err) return setError(emailErrorMessage(err));
     setResent(true);
@@ -138,7 +142,7 @@ export function Login() {
     );
 
   return (
-    <AuthShell title={mode === "login" ? "Vitajte späť" : "Vytvoriť účet"} sub={next !== "/" ? "Pre túto akciu sa musíte prihlásiť." : undefined}>
+    <AuthShell title={mode === "login" ? (owner ? "Prihlásenie majiteľa" : "Vitajte späť") : (owner ? "Účet majiteľa reštaurácie" : "Vytvoriť účet")} sub={owner ? "Po prihlásení pridáte svoju reštauráciu a pripravíte menu. Podnik zverejníme po schválení." : next !== "/" ? "Pre túto akciu sa musíte prihlásiť." : undefined}>
       <div className="tabs wide" role="tablist">
         <button role="tab" aria-selected={mode === "login"} className={mode === "login" ? "on" : ""} onClick={() => switchMode("login")}>
           Prihlásiť sa
@@ -185,6 +189,8 @@ export function Login() {
 }
 
 export function Verified() {
+  const [sp] = useSearchParams();
+  const next = safeNext(sp.get("next"));
   const { loggedIn } = useProto();
   const err = new URLSearchParams(window.location.hash.slice(1)).get("error_code");
   const [waited, setWaited] = useState(false);
@@ -196,7 +202,7 @@ export function Verified() {
   if (loggedIn)
     return (
       <AuthShell title="E-mail overený" sub="Váš účet je aktívny a ste prihlásený.">
-        <Link className="btn-primary block" to="/">
+        <Link className="btn-primary block" to={next}>
           Pokračovať
         </Link>
       </AuthShell>
@@ -209,7 +215,7 @@ export function Verified() {
             ? "Odkaz je neplatný alebo už bol použitý. Ak ste ho už otvorili, e-mail je pravdepodobne overený – skúste sa prihlásiť."
             : "E-mail sa nepodarilo overiť. Skúste sa prihlásiť alebo si nechajte poslať nový odkaz."}
         </ErrorMsg>
-        <Link className="btn-primary block" to="/login">
+        <Link className="btn-primary block" to={`/login?next=${encodeURIComponent(next)}`}>
           Prihlásiť sa
         </Link>
       </AuthShell>

@@ -6,6 +6,8 @@ import Feed from "@/pages/Feed";
 import Detail from "@/pages/Detail";
 import Saved from "@/pages/Saved";
 import Notifications from "@/pages/Notifications";
+import Owners from "@/pages/Owners";
+import { RestaurantProvider } from "@/proto/RestaurantContext";
 import Settings from "@/pages/Settings";
 import { ForgotPassword, Login, ResetPassword, Verified } from "@/pages/Auth";
 import { Privacy, Terms } from "@/pages/Legal";
@@ -13,6 +15,7 @@ import { Privacy, Terms } from "@/pages/Legal";
 export default function App() {
   return (
     <ProtoProvider>
+      <RestaurantProvider>
       <BrowserRouter>
         <Routes>
           <Route element={<Layout />}>
@@ -22,6 +25,7 @@ export default function App() {
             </Route>
             <Route path="saved" element={<RequireAuth><Saved /></RequireAuth>} />
             <Route path="notifications" element={<RequireAuth><Notifications /></RequireAuth>} />
+            <Route path="owners" element={<Owners />} />
             <Route path="settings" element={<Settings />} />
             <Route path="terms" element={<Terms />} />
             <Route path="privacy" element={<Privacy />} />
@@ -33,6 +37,7 @@ export default function App() {
           </Route>
         </Routes>
       </BrowserRouter>
+      </RestaurantProvider>
     </ProtoProvider>
   );
 }

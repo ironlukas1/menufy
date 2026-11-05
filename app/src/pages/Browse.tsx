@@ -4,8 +4,9 @@ import Icon from "@/components/Icon";
 import SelectField from "@/components/SelectField";
 import MapPanel from "@/components/MapPanel";
 import { ALLERGENS, CUISINES, LOCATIONS } from "@/data/allergens";
-import { DAYS, dailyFor, restaurants, type Restaurant } from "@/data/restaurants";
+import { DAYS, dailyFor, type Restaurant } from "@/data/restaurants";
 import { CITY_CENTER, distanceKm, nextAt, openStatus } from "@/lib";
+import { useRestaurants } from "@/proto/RestaurantContext";
 import { useProto } from "@/proto/ProtoContext";
 
 export type Filters = {
@@ -60,6 +61,7 @@ function Search({
   onSubmit: () => void;
   onOpen: (slug: string) => void;
 }) {
+  const { restaurants } = useRestaurants();
   const [focus, setFocus] = useState(false);
   const q = query.trim().toLocaleLowerCase("sk");
   const places = q ? restaurants.filter((r) => r.name.toLocaleLowerCase("sk").includes(q)).slice(0, 4) : [];
@@ -72,7 +74,7 @@ function Search({
       }),
     );
     return [...seen.values()].slice(0, 5);
-  }, [q]);
+  }, [q, restaurants]);
   const show = focus && q && (places.length > 0 || dishes.length > 0);
 
   return (
@@ -140,6 +142,7 @@ function Search({
 }
 
 export default function Browse() {
+  const { restaurants } = useRestaurants();
   const { slug } = useParams();
   const nav = useNavigate();
   const loc = useLocation();
@@ -166,7 +169,7 @@ export default function Browse() {
     if (!userPosition) return;
     const near = restaurants.reduce((a, b) => (distanceKm(userPosition, a) <= distanceKm(userPosition, b) ? a : b));
     set({ city: near.city, district: "Všetky časti", sort: "distance" });
-  }, [userPosition]);
+  }, [userPosition, restaurants]);
 
   const results = useMemo(() => {
     const q = query.trim().toLocaleLowerCase("sk");
@@ -180,7 +183,8 @@ export default function Browse() {
       .filter((r) => !pinned || r.slug === pinned)
       .filter((r) => f.sort !== "favorites" || favorites.includes(r.slug))
       .filter((r) => {
-        const items = dailyFor(r, f.day).filter(
+        const dayMenu = dailyFor(r, f.day);
+        const items = (r.live && !dayMenu.length ? r.standard : dayMenu).filter(
           (it) => it.price <= f.maxPrice && !it.allergens.some((a) => f.excluded.includes(String(a))),
         );
         const publishesMenu = r.daily.some((d) => d.length) || r.standard.length > 0;
@@ -200,7 +204,7 @@ export default function Browse() {
         }
         return b.r.rating - a.r.rating;
       });
-  }, [f, query, pinned, origin, favorites]);
+  }, [f, query, pinned, origin, favorites, restaurants]);
 
   const activeCount =
     [f.delivery, f.maxPrice < MAX_PRICE, f.minRating > 0, !!f.openAt, !!pinned].filter(Boolean).length +
@@ -214,7 +218,7 @@ export default function Browse() {
     setPinned(null);
   };
 
-  const mapItems = useMemo(() => restaurants.filter((r) => r.city === f.city), [f.city]);
+  const mapItems = useMemo(() => restaurants.filter((r) => r.city === f.city), [f.city, restaurants]);
 
   const pick = (s: string) => {
     setPinned(s);

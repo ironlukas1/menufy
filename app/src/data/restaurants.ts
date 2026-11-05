@@ -1,3 +1,5 @@
+import { upcomingMenuDays } from "./owner";
+
 export type MenuItem = {
   name: string;
   desc: string;
@@ -10,6 +12,7 @@ export type MenuItem = {
 export type Review = { author: string; stars: number; date: string; text: string };
 
 export type Restaurant = {
+  live?: boolean;
   slug: string;
   name: string;
   initials: string;
@@ -35,12 +38,7 @@ export type Restaurant = {
   reviews: Review[];
 };
 
-export const DAYS = [
-  { label: "Dnes, štvrtok 8. 10.", short: "Dnes" },
-  { label: "Zajtra, piatok 9. 10.", short: "Piatok" },
-  { label: "Pondelok 12. 10.", short: "Pondelok" },
-  { label: "Utorok 13. 10.", short: "Utorok" },
-];
+export const DAYS = upcomingMenuDays();
 
 const IMG = [
   "https://images.unsplash.com/photo-1564759296729-771e78c26df7?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&q=85&w=900",
@@ -881,8 +879,8 @@ export const bySlug = (slug: string | undefined) => restaurants.find((r) => r.sl
 export const formatPrice = (n: number) => n.toFixed(2).replace(".", ",") + " €";
 
 export const avgPrice = (r: Restaurant, day = 0) => {
-  const m = r.daily[day === 0 ? 0 : 1];
+  const m = r.live ? (r.daily[day] ?? []) : (r.daily[day === 0 ? 0 : 1] ?? []);
   return m.reduce((s, x) => s + x.price, 0) / m.length;
 };
 
-export const dailyFor = (r: Restaurant, day: number) => r.daily[day === 0 ? 0 : 1];
+export const dailyFor = (r: Restaurant, day: number) => r.live ? (r.daily[day] ?? []) : (r.daily[day === 0 ? 0 : 1] ?? []);

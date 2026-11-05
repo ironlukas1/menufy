@@ -36,3 +36,7 @@ test("nextAt picks the next occurrence", () => {
   assert.equal(nextAt("18:00", now).getDate(), 22);
   assert.equal(nextAt("now", now), now);
 });
+
+test("missing restaurant hours are shown as unknown rather than closed", () => {
+  assert.equal(openStatus({ hours: [] }, at(22, "12:00")).label, "Otváracie hodiny neuvedené");
+});

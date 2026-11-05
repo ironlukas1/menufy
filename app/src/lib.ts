@@ -26,6 +26,7 @@ const range = (r: Pick<Restaurant, "hours">, day: number) => {
 
 // hours are Monday-first; a range like 20:00 – 04:00 runs past midnight into the next day
 export function openStatus(r: Pick<Restaurant, "hours">, now = new Date()) {
+  if (!r.hours.length) return { open: false, label: "Otváracie hodiny neuvedené" };
   const day = (now.getDay() + 6) % 7;
   const cur = now.getHours() * 60 + now.getMinutes();
   const prev = range(r, (day + 6) % 7);

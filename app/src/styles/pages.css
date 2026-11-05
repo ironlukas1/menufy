@@ -334,3 +334,53 @@ html.native button:active, html.native a:active { opacity: .85; }
 .review-stars input:focus-visible + span { outline: 2px solid var(--green); outline-offset: 3px; }
 .review-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .review p { white-space: pre-wrap; overflow-wrap: anywhere; }
+
+/* Restaurant owner portal */
+.owner-page { max-width: 1040px; }
+.owner-hero { padding: 38px; border: 1px solid var(--green-line); border-radius: 20px; background: linear-gradient(135deg, var(--green-soft), var(--paper)); }
+.owner-hero h2 { font: 800 clamp(28px, 4vw, 42px) "Manrope", sans-serif; margin: 10px 0; letter-spacing: -1px; }
+.owner-hero > p:not(.section-kicker) { color: var(--muted); max-width: 570px; line-height: 1.7; }
+.owner-hero-icon { display: grid; place-items: center; width: 64px; height: 64px; margin-bottom: 22px; color: var(--green); background: var(--paper); border: 1px solid var(--green-line); border-radius: 16px; }
+.owner-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.owner-hero .owner-actions { margin-top: 24px; }
+.owner-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; padding: 28px 0; }
+.owner-steps > div { padding: 16px; }
+.owner-steps > div > span { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--green-soft); color: var(--green); font-weight: 800; }
+.owner-steps h3 { font: 700 15px "Manrope", sans-serif; margin: 12px 0 8px; }
+.owner-steps p { color: var(--muted); font-size: 13px; line-height: 1.7; margin: 0; }
+.owner-dashboard-head { margin: 16px 0; }
+.owner-dashboard-head h3 { margin: 0; }
+.owner-fields { display: grid; gap: 16px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.owner-fields > button { justify-self: start; }
+.owner-fields legend { margin-bottom: 8px; font-weight: 700; font-size: 13px; }
+.owner-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.owner-page select { width: 100%; min-height: 44px; padding: 0 12px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: var(--canvas); font: inherit; }
+.owner-page select:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+.owner-restaurants { display: grid; gap: 10px; margin: 20px 0; }
+.owner-place { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; padding: 20px; border: 1px solid var(--line); background: var(--paper); border-radius: 12px; color: var(--ink); text-align: left; }
+.owner-place.selected { border-color: var(--green); background: var(--green-soft); }
+.owner-place > span:first-of-type { display: grid; flex: 1; gap: 5px; }
+.owner-place small { color: var(--muted); }
+.owner-status { display: inline-block; padding: 6px 10px; border-radius: 20px; background: var(--tag-bg); color: var(--tag-fg); font-size: 11px; font-weight: 700; }
+.owner-status.active { color: var(--green); background: var(--green-soft); }
+.owner-status.hidden { color: var(--danger); background: var(--danger-soft); }
+.owner-notice { padding: 14px; background: var(--tag-bg); color: var(--tag-fg); border-radius: 8px; line-height: 1.7; font-size: 13px; }
+.owner-selection-note { margin-bottom: 16px; }
+.owner-dish { display: grid; gap: 14px; padding: 20px; border: 1px solid var(--line); border-radius: 12px; background: var(--subtle); }
+.owner-dish h4 { margin: 0; }
+.owner-allergens { margin: 0; padding: 0; border: 0; }
+.owner-allergens > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.owner-allergens label { display: flex; align-items: center; gap: 7px; font-weight: 400; }
+.owner-allergens input { min-height: 18px; width: 18px; height: 18px; margin: 0; accent-color: var(--green); flex-shrink: 0; }
+.owner-application { padding: 20px 0; border-top: 1px solid var(--soft-line); }
+.owner-application h4 { margin: 0 0 8px; }
+.owner-application p { overflow-wrap: anywhere; font-size: 13px; }
+@media (max-width: 640px) {
+  .owner-hero { padding: 24px; }
+  .owner-steps { grid-template-columns: 1fr; gap: 0; padding: 16px 0; }
+  .owner-steps > div { padding: 12px; }
+  .owner-form-grid, .owner-allergens > div { grid-template-columns: 1fr; }
+  .owner-dish { padding: 14px; }
+  .owner-place { padding: 14px; }
+}
+.owner-location-map { height: 280px; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); isolation: isolate; }

@@ -3,12 +3,14 @@ import { useOutletContext } from "react-router";
 import Icon from "@/components/Icon";
 import SelectField from "@/components/SelectField";
 import RestaurantCard from "@/components/RestaurantCard";
-import { DAYS, bySlug } from "@/data/restaurants";
+import { DAYS } from "@/data/restaurants";
+import { useRestaurants } from "@/proto/RestaurantContext";
 import type { BrowseCtx } from "./Browse";
 import { useProto } from "@/proto/ProtoContext";
 
 export default function Feed() {
   const { f, set, results, query, pinned, setPinned, reset, setHovered } = useOutletContext<BrowseCtx>();
+  const { restaurants } = useRestaurants();
   const { geo } = useProto();
   const [allOpen, setAllOpen] = useState(false);
   const n = results.length;
@@ -41,7 +43,7 @@ export default function Feed() {
       {pinned && (
         <div className="active-filter">
           <span>
-            Reštaurácia: <strong>{bySlug(pinned)?.name}</strong>
+            Reštaurácia: <strong>{restaurants.find((place) => place.slug === pinned)?.name}</strong>
           </span>
           <button onClick={() => setPinned(null)}>
             <Icon name="close" size={16} /> Zrušiť

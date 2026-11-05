@@ -8,6 +8,7 @@ const links = [
   { to: "/", label: "Domov", icon: "search", auth: false, end: true },
   { to: "/saved", label: "Uložené", icon: "heart", auth: true, end: false },
   { to: "/notifications", label: "Upozornenia", icon: "bell", auth: true, end: false },
+  { to: "/owners", label: "Vlastníš reštauráciu?", icon: "store", auth: false, end: false },
   { to: "/settings", label: "Nastavenia", icon: "settings", auth: false, end: false },
 ] as const;
 
@@ -25,7 +26,7 @@ function Brand() {
 }
 
 function TopBar() {
-  const { loggedIn } = useProto();
+  const { loggedIn, email } = useProto();
   const [open, setOpen] = useState(false);
   const loc = useLocation();
 
@@ -81,7 +82,7 @@ function TopBar() {
             ))}
             <div className="drawer-foot">
               {loggedIn ? (
-                <span className="drawer-user">zuzana@example.sk</span>
+                <span className="drawer-user">{email}</span>
               ) : (
                 <Link to="/login" className="btn-primary">
                   Prihlásiť sa
@@ -101,7 +102,7 @@ function BottomNav() {
       {links.map((l) => (
         <NavLink key={l.to} to={l.to} end={l.end} className="bottom-tab">
           <Icon name={l.icon} size={22} />
-          <span>{l.label}</span>
+          <span>{l.to === "/owners" ? "Môj podnik" : l.label}</span>
         </NavLink>
       ))}
     </nav>
@@ -117,6 +118,7 @@ export function Footer() {
       </Link>
       <p>Každý deň dobrá voľba.</p>
       <div className="footer-links" role="navigation" aria-label="Právne informácie">
+        <Link to="/owners">Vlastníš reštauráciu?</Link>
         <Link to="/terms">Podmienky používania</Link>
         <Link to="/privacy">Ochrana osobných údajov</Link>
       </div>
