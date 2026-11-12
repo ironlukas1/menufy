@@ -1,6 +1,21 @@
 /* ---------- top bar ---------- */
-.top-bar { position: sticky; top: 0; z-index: 1000; background: var(--paper); border-bottom: 1px solid var(--line); }
-.top-bar-inner { width: min(1240px, calc(100% - 40px)); height: 64px; margin-inline: auto; display: flex; align-items: center; gap: 40px; }
+:root { --top-bar-h: 65px; }
+.top-bar {
+  position: sticky; top: 0; z-index: 1000;
+  border-bottom: 1px solid var(--line);
+  border-bottom-color: color-mix(in srgb, var(--line) 65%, transparent);
+}
+/* The frosted layer lives on a pseudo-element: backdrop-filter on .top-bar
+   itself would turn it into a containing block and trap the fixed search
+   backdrop and mobile drawer inside the 65px bar. */
+.top-bar::before {
+  content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: var(--bar-surface);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  backdrop-filter: blur(22px) saturate(180%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .28);
+}
+.top-bar-inner { position: relative; z-index: 1; width: min(1240px, calc(100% - 40px)); height: 64px; margin-inline: auto; display: flex; align-items: center; gap: 40px; }
 .top-brand { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; font-family: "Manrope", sans-serif; font-size: 21px; font-weight: 800; letter-spacing: -.8px; }
 .top-brand-mark { width: 26px; height: 30px; background: url("/logo.png") center / contain no-repeat; }
 .top-nav { display: flex; align-self: stretch; gap: 26px; }
@@ -12,6 +27,54 @@
 .top-signin:hover { background: var(--green-dark); }
 .top-avatar { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--line); color: var(--green); background: var(--green-soft); }
 .top-burger { display: none; width: 40px; height: 40px; place-items: center; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
+.top-icon-btn {
+  position: relative; width: 42px; height: 42px; display: grid; place-items: center;
+  border: 1px solid var(--glass-border); border-radius: 50%; color: var(--ink);
+  background:
+    linear-gradient(155deg, var(--glass-sheen), rgba(255, 255, 255, 0) 58%),
+    var(--glass-surface);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  backdrop-filter: blur(16px) saturate(180%);
+  box-shadow:
+    inset 0 1px 0 var(--glass-edge),
+    inset 0 -1px 1px rgba(0, 0, 0, .04),
+    var(--glass-shadow);
+  transition: color .16s ease, background .16s ease, border-color .16s ease, box-shadow .16s ease, transform .12s ease;
+}
+@media (hover: hover) {
+  .top-icon-btn:hover {
+    color: var(--green);
+    border-color: var(--green-line);
+    background:
+      linear-gradient(155deg, var(--glass-sheen), rgba(255, 255, 255, 0) 58%),
+      var(--glass-hover);
+  }
+}
+.top-icon-btn:active { transform: scale(.94); }
+.top-icon-btn.active {
+  color: var(--green);
+  border-color: var(--green-line);
+  background:
+    linear-gradient(155deg, var(--glass-sheen), rgba(255, 255, 255, 0) 58%),
+    var(--glass-active);
+  box-shadow:
+    inset 0 1px 0 var(--glass-edge),
+    inset 0 -1px 1px rgba(0, 0, 0, .04),
+    var(--glass-shadow);
+  box-shadow:
+    inset 0 1px 0 var(--glass-edge),
+    inset 0 -1px 1px rgba(0, 0, 0, .04),
+    0 0 0 1px color-mix(in srgb, var(--green-line) 55%, transparent),
+    var(--glass-shadow);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .top-bar::before { background: var(--paper); }
+}
+.top-action-count { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; padding: 0 4px; display: grid; place-items: center; border-radius: 999px; color: var(--on-green); background: var(--green); font-size: 10px; font-weight: 700; }
+.search-backdrop { position: fixed; top: var(--top-bar-h); left: 0; right: 0; bottom: 0; z-index: 1; background: rgba(8, 20, 13, .35); }
+.top-search { position: absolute; top: 100%; left: 0; right: 0; z-index: 2; padding: 12px 20px 14px; background: var(--paper); border-bottom: 1px solid var(--line); box-shadow: var(--shadow); animation: search-in .18s ease-out; }
+@keyframes search-in { from { opacity: 0; transform: translateY(-6px); } }
+.top-search .search-box { width: min(720px, 100%); margin-inline: auto; }
 .drawer-backdrop { position: fixed; inset: 0; z-index: 1100; background: rgba(8, 20, 13, .45); }
 .drawer { position: absolute; top: 0; right: 0; bottom: 0; width: min(320px, 86vw); padding: 16px; display: flex; flex-direction: column; gap: 4px; background: var(--paper); box-shadow: var(--shadow); animation: drawer-in .2s ease-out; }
 @keyframes drawer-in { from { transform: translateX(30px); opacity: 0; } }
@@ -61,8 +124,6 @@ a { color: inherit; }
 .search-menu button:hover { background: var(--green-soft); }
 .search-menu small { display: block; color: var(--muted); font-size: 11px; font-weight: 400; }
 .mini-logo { flex: 0 0 auto; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 8px; color: var(--green); background: var(--green-soft); font: 800 10px "Manrope", sans-serif; }
-.hero-inner { padding: 48px 0 64px; }
-.hero-filter-button span:not(.filter-count) { display: inline; }
 
 /* ---------- filters (extra) ---------- */
 .filter-block { padding: 12px; border-top: 1px solid var(--soft-line); }
@@ -88,8 +149,7 @@ a { color: inherit; }
 .geo-banner button { padding: 7px 12px; border: 0; border-radius: 6px; color: var(--on-green); background: var(--green); font-weight: 700; font-size: 12px; }
 
 /* ---------- map ---------- */
-.map-canvas { position: relative; isolation: isolate; height: calc(100dvh - 170px); overflow: hidden; background: var(--map-bg); transition: height .3s ease; }
-.map-card.expanded .map-canvas { height: calc(100dvh - 210px); }
+.map-canvas { position: relative; isolation: isolate; height: calc(100dvh - 170px); overflow: hidden; background: var(--map-bg); }
 .map-canvas:not(.is-open) .leaflet-container { pointer-events: none; }
 .map-canvas:not(.is-open) .leaflet-marker-icon,
 .map-canvas:not(.is-open) .leaflet-interactive { pointer-events: none !important; }
@@ -234,6 +294,39 @@ a { color: inherit; }
 .danger-zone { border-color: #e5b4ae; }
 .action-row { display: flex; gap: 10px; flex-wrap: wrap; }
 
+/* ---------- account ---------- */
+.account-card { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.account-avatar {
+  width: 60px;
+  height: 60px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--on-green);
+  background: var(--green);
+  font-family: "Manrope", sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -.5px;
+}
+.account-avatar.guest { color: var(--green); background: var(--green-soft); }
+.account-id { flex: 1; min-width: 180px; display: grid; gap: 3px; }
+.account-id strong { font-family: "Manrope", sans-serif; font-size: 19px; letter-spacing: -.3px; }
+.account-id span { color: var(--muted); font-size: 13px; }
+.account-card .btn-primary { margin-left: auto; }
+.account-links { padding: 6px; display: grid; gap: 2px; }
+.account-link { display: flex; align-items: center; gap: 12px; padding: 12px 10px; border-radius: 9px; color: var(--ink); text-decoration: none; }
+@media (hover: hover) {
+  .account-link:hover { background: var(--green-soft); }
+}
+.account-link-icon { width: 38px; height: 38px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 10px; color: var(--green); background: var(--green-soft); }
+.account-link > span:nth-child(2) { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.account-link strong { font-size: 14px; }
+.account-link small { color: var(--muted); font-size: 12px; }
+.account-link > svg { flex: 0 0 auto; color: var(--faint); }
+.account-actions { margin-top: 4px; }
+
 /* modal */
 .modal-backdrop { position: fixed; inset: 0; z-index: 2000; display: grid; place-items: center; padding: 16px; background: rgba(8, 20, 13, .5); }
 .modal { width: min(440px, 100%); padding: 20px; border-radius: 14px; background: var(--paper); box-shadow: 0 24px 80px rgba(0,0,0,.3); }
@@ -255,10 +348,12 @@ a { color: inherit; }
 @media (max-width: 980px) {
   .detail-grid { grid-template-columns: 1fr 1fr; }
   .advanced-filters { grid-template-columns: 1fr 1fr; }
-  .map-canvas, .map-card.expanded .map-canvas { height: min(420px, calc(100dvh - 180px)); }
+  .map-canvas { height: min(420px, calc(100dvh - 180px)); }
+  .map-card.expanded .map-canvas { height: auto; }
 }
 
 @media (max-width: 680px) {
+  :root { --top-bar-h: 59px; }
   .top-bar-inner { width: min(100% - 24px, 1240px); height: 58px; gap: 12px; }
   .top-nav, .top-signin { display: none; }
   .top-burger { display: grid; }
@@ -268,7 +363,6 @@ a { color: inherit; }
   .card-img img { width: 82px; height: 96px; }
   .restaurant-top > .card-img { width: 82px; }
   .card-logo { display: none; }
-  .hero-filter-button span:not(.filter-count) { display: none; }
   .detail-grid { grid-template-columns: 1fr; }
   .detail-banner { height: 130px; }
   .detail-id { flex-wrap: wrap; padding-inline: 14px; }
@@ -291,6 +385,7 @@ a { color: inherit; }
 html.native {
   --safe-top: var(--safe-area-inset-top, env(safe-area-inset-top, 0px));
   --safe-bottom: var(--safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  --top-bar-h: calc(var(--safe-top) + 57px);
   overscroll-behavior: none;
 }
 html.native body { -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; touch-action: manipulation; }
@@ -299,7 +394,12 @@ html.native .top-bar { padding-top: var(--safe-top); }
 html.native .top-bar-inner { height: 56px; width: calc(100% - 28px); }
 html.native .top-nav, html.native .top-burger { display: none; }
 html.native .top-brand { font-size: 19px; }
-html.native .top-signin { height: 36px; padding: 0 13px; }
+html.native .top-actions { gap: 8px; }
+html.native .top-icon-btn { width: 44px; height: 44px; }
+/* The native shell replaces these with real UIKit glass buttons. Keep them in
+   the layout so the web bar keeps its spacing, but hide and disable the DOM. */
+html.native-glass .top-icon-btn { visibility: hidden; pointer-events: none; }
+html.native .top-signin { height: 36px; padding: 0 10px; font-size: 12px; }
 html.native .bottom-nav {
   position: fixed; left: 14px; right: 14px; bottom: calc(var(--safe-bottom) + 10px); z-index: 1000; display: flex; gap: 2px;
   padding: 5px; border-radius: 30px; border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
@@ -314,7 +414,8 @@ html.native .bottom-tab {
 html.native .bottom-tab.active { color: var(--green); background: color-mix(in srgb, var(--green) 14%, transparent); }
 html.native .bottom-tab:active { background: color-mix(in srgb, var(--green) 22%, transparent); }
 html.native main { padding-bottom: calc(62px + 10px + var(--safe-bottom) + 12px); }
-html.native .map-card.expanded { top: calc(var(--safe-top) + 64px); }
+html.native-tabbar main { padding-bottom: calc(var(--safe-bottom) + 80px); }
+html.native .map-card.expanded .map-tip { padding-bottom: calc(12px + var(--safe-bottom)); }
 html.native .btn-primary, html.native .btn-ghost, html.native .btn-danger, html.native .map-open-btn { min-height: 46px; }
 html.native .map-close { width: 40px; height: 40px; }
 html.native button:active, html.native a:active { opacity: .85; }
