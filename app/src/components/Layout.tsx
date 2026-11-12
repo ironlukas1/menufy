@@ -1,4 +1,4 @@
-import { Component, useEffect, useRef, useState, type ReactNode } from "react";
+import { Component, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router";
 import Icon from "./Icon";
 import { useProto } from "@/proto/ProtoContext";
@@ -11,8 +11,10 @@ const links = [
   { to: "/saved", label: "Uložené", icon: "heart", auth: true, end: false },
   { to: "/notifications", label: "Upozornenia", icon: "bell", auth: true, end: false },
   { to: "/owners", label: "Vlastníš reštauráciu?", icon: "store", auth: false, end: false },
-  { to: "/settings", label: "Nastavenia", icon: "settings", auth: false, end: false },
+  { to: "/account", label: "Účet", icon: "user", auth: false, end: false },
 ] as const;
+
+const bottomLinks = links.filter((link) => link.to !== "/owners");
 
 function Brand() {
   const loc = useLocation();
@@ -147,54 +149,99 @@ function TopBar() {
   const mapBtnRef = useRef<HTMLButtonElement>(null);
   const filterBtnRef = useRef<HTMLButtonElement>(null);
   const searchBtnRef = useRef<HTMLButtonElement>(null);
+  const lockedScroll = useRef<number | null>(null);
 
   useEffect(() => {
     setOpen(false);
-    setSearchOpen(false);
-  }, [loc.pathname]);
+    if (loc.pathname !== "/") {
+      setSearchOpen(false);
+      setFiltersOpen(false);
+      setMapOpen(false);
+    }
+  }, [loc.pathname, setSearchOpen, setFiltersOpen, setMapOpen]);
+
+  useEffect(() => {
+    const panelOpen = searchOpen || filtersOpen || mapOpen;
+    if (panelOpen && lockedScroll.current === null) {
+      lockedScroll.current = window.scrollY;
+      document.body.style.top = `-${lockedScroll.current}px`;
+      document.documentElement.classList.add("panel-open");
+    } else if (!panelOpen && lockedScroll.current !== null) {
+      const scrollY = lockedScroll.current;
+      lockedScroll.current = null;
+      document.documentElement.classList.remove("panel-open");
+      document.body.style.top = "";
+      window.scrollTo({ top: scrollY });
+    }
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setSearchOpen(false);
+      setFiltersOpen(false);
+      setMapOpen(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [searchOpen || filtersOpen || mapOpen, setSearchOpen, setFiltersOpen, setMapOpen]);
+
+  useEffect(() => () => {
+    document.documentElement.classList.remove("panel-open");
+    document.body.style.top = "";
+  }, []);
 
   // Search, filters and map are mutually exclusive: opening one closes the
   // other two, so the top bar never shows two panels at once.
   const toggleSearch = () => {
-    const next = !searchOpen;
-    setSearchOpen(next);
-    if (next) {
-      setFiltersOpen(false);
-      setMapOpen(false);
-    }
+    setSearchOpen(!searchOpen);
   };
 
   const toggleFilters = () => {
     const next = !filtersOpen;
     if (!isBrowse) nav("/");
     setFiltersOpen(next);
-    if (next) {
-      setMapOpen(false);
-      setSearchOpen(false);
-    }
   };
 
   const toggleMap = () => {
     const next = !mapOpen;
     if (!isBrowse) nav("/");
     setMapOpen(next);
-    if (next) {
-      setFiltersOpen(false);
-      setSearchOpen(false);
-    }
   };
 
-  // The Expo shell draws the three top-bar buttons with UIKit's real Liquid
-  // Glass material (expo-glass-effect) and drives them through this bridge.
-  const chromeHandlers = useRef({ toggleSearch, toggleFilters, toggleMap });
-  chromeHandlers.current = { toggleSearch, toggleFilters, toggleMap };
+  const nativeTabIndex = Math.max(0, bottomLinks.findIndex((link) =>
+    link.to === "/"
+      ? loc.pathname === "/" || loc.pathname.startsWith("/restaurant/")
+      : loc.pathname === link.to || loc.pathname.startsWith(`${link.to}/`),
+  ));
+  const chromeHandlers = useRef({
+    toggleSearch,
+    toggleFilters,
+    toggleMap,
+    navigate: (path: string) => nav(path),
+  });
+  chromeHandlers.current = {
+    toggleSearch,
+    toggleFilters,
+    toggleMap,
+    navigate: (path) => {
+      if (path === "/" && loc.pathname === "/") window.scrollTo({ top: 0, behavior: "smooth" });
+      else nav(path);
+    },
+  };
 
   useEffect(() => {
-    const w = window as Window & { __menufyChrome?: Record<string, () => void> };
+    const w = window as Window & {
+      __menufyChrome?: {
+        toggleSearch: () => void;
+        toggleFilters: () => void;
+        toggleMap: () => void;
+        navigate: (path: string) => void;
+        closeAll: () => void;
+      };
+    };
     w.__menufyChrome = {
       toggleSearch: () => chromeHandlers.current.toggleSearch(),
       toggleFilters: () => chromeHandlers.current.toggleFilters(),
       toggleMap: () => chromeHandlers.current.toggleMap(),
+      navigate: (path) => chromeHandlers.current.navigate(path),
       closeAll: () => {
         setSearchOpen(false);
         setFiltersOpen(false);
@@ -219,10 +266,12 @@ function TopBar() {
     };
     const send = () => {
       frame = 0;
-      const bridge = (window as Window & { ReactNativeWebView?: { postMessage: (m: string) => void } }).ReactNativeWebView;
+      const bridge = (window as Window & {
+        webkit?: { messageHandlers?: { menufyNativeChrome?: { postMessage: (message: unknown) => void } } };
+      }).webkit?.messageHandlers?.menufyNativeChrome;
       if (!bridge) return;
       bridge.postMessage(
-        JSON.stringify({
+        {
           type: "menufy:chrome",
           rects: {
             map: rect(mapBtnRef.current),
@@ -232,7 +281,9 @@ function TopBar() {
           open: { map: mapOpen, filters: filtersOpen, search: searchOpen },
           count: activeFilters,
           dark,
-        }),
+          activeTab: nativeTabIndex,
+          browse: isBrowse,
+        },
       );
     };
     const schedule = () => {
@@ -248,7 +299,7 @@ function TopBar() {
       window.removeEventListener("resize", schedule);
       observer?.disconnect();
     };
-  }, [mapOpen, filtersOpen, searchOpen, activeFilters, dark, isBrowse, loggedIn]);
+  }, [mapOpen, filtersOpen, searchOpen, activeFilters, dark, isBrowse, loggedIn, nativeTabIndex, loc.pathname]);
 
   return (
     <header className="top-bar">
@@ -347,12 +398,100 @@ function TopBar() {
 }
 
 function BottomNav() {
+  const loc = useLocation();
+  const nav = useNavigate();
+  const barRef = useRef<HTMLElement>(null);
+  const dragRef = useRef<{ pointerId: number; startX: number; startY: number; moved: boolean } | null>(null);
+  const suppressClick = useRef(false);
+  const [dragging, setDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState(0);
+  const routeIndex = bottomLinks.findIndex((link) =>
+    link.to === "/"
+      ? loc.pathname === "/" || loc.pathname.startsWith("/restaurant/")
+      : loc.pathname === link.to || loc.pathname.startsWith(`${link.to}/`),
+  );
+  const activeIndex = routeIndex < 0 ? 0 : routeIndex;
+
+  const measure = () => {
+    const rect = barRef.current?.getBoundingClientRect();
+    if (!rect) return null;
+    const gap = 2;
+    const tabWidth = (rect.width - 10 - gap * (bottomLinks.length - 1)) / bottomLinks.length;
+    return { rect, tabWidth, step: tabWidth + gap };
+  };
+
+  const onPointerDown = (event: ReactPointerEvent<HTMLElement>) => {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    dragRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, moved: false };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const onPointerMove = (event: ReactPointerEvent<HTMLElement>) => {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    const dx = event.clientX - drag.startX;
+    const dy = event.clientY - drag.startY;
+    if (!drag.moved && Math.abs(dx) < 8) return;
+    if (Math.abs(dx) <= Math.abs(dy)) return;
+    drag.moved = true;
+    setDragging(true);
+    const layout = measure();
+    if (!layout) return;
+    const left = event.clientX - layout.rect.left - 5 - layout.tabWidth / 2;
+    const maxLeft = layout.step * (bottomLinks.length - 1);
+    setDragOffset(Math.max(0, Math.min(maxLeft, left)) - activeIndex * layout.step);
+  };
+
+  const finishPointer = (event: ReactPointerEvent<HTMLElement>) => {
+    const drag = dragRef.current;
+    if (!drag || drag.pointerId !== event.pointerId) return;
+    if (drag.moved) {
+      const layout = measure();
+      if (layout) {
+        const position = event.clientX - layout.rect.left - 5 - layout.tabWidth / 2;
+        const targetIndex = Math.max(0, Math.min(bottomLinks.length - 1, Math.round(position / layout.step)));
+        suppressClick.current = true;
+        nav(bottomLinks[targetIndex].to);
+        window.setTimeout(() => { suppressClick.current = false; }, 0);
+      }
+    }
+    dragRef.current = null;
+    setDragging(false);
+    setDragOffset(0);
+  };
+
+  const cancelPointer = () => {
+    dragRef.current = null;
+    suppressClick.current = false;
+    setDragging(false);
+    setDragOffset(0);
+  };
+
   return (
-    <nav className="bottom-nav" aria-label="Hlavná navigácia">
-      {links.map((l) => (
+    <nav
+      ref={barRef}
+      className={`bottom-nav ${dragging ? "dragging" : ""}`}
+      aria-label="Hlavná navigácia"
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={finishPointer}
+      onPointerCancel={cancelPointer}
+      onClickCapture={(event) => {
+        if (!suppressClick.current) return;
+        event.preventDefault();
+        event.stopPropagation();
+        suppressClick.current = false;
+      }}
+    >
+      <span
+        className="bottom-indicator"
+        aria-hidden="true"
+        style={{ transform: `translateX(${activeIndex * (measure()?.step ?? 0) + dragOffset}px)` }}
+      />
+      {bottomLinks.map((l) => (
         <NavLink key={l.to} to={l.to} end={l.end} className="bottom-tab">
           <Icon name={l.icon} size={22} />
-          <span>{l.to === "/owners" ? "Môj podnik" : l.label}</span>
+          <span>{l.label}</span>
         </NavLink>
       ))}
     </nav>

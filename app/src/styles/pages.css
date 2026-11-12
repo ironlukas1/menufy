@@ -75,6 +75,44 @@
 .top-search { position: absolute; top: 100%; left: 0; right: 0; z-index: 2; padding: 12px 20px 14px; background: var(--paper); border-bottom: 1px solid var(--line); box-shadow: var(--shadow); animation: search-in .18s ease-out; }
 @keyframes search-in { from { opacity: 0; transform: translateY(-6px); } }
 .top-search .search-box { width: min(720px, 100%); margin-inline: auto; }
+.top-icon-btn:focus-visible, .bottom-tab:focus-visible { outline: 2px solid var(--green); outline-offset: 3px; }
+.top-search { background: color-mix(in srgb, var(--paper) 84%, transparent); -webkit-backdrop-filter: blur(24px) saturate(180%); backdrop-filter: blur(24px) saturate(180%); }
+.panel-backdrop { position: fixed; inset: var(--top-bar-h) 0 0; width: 100%; height: auto; padding: 0; border: 0; background: rgba(8, 20, 13, .36); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
+.filters-backdrop { z-index: 1001; }
+.filters-wrap.filters-sheet {
+  position: fixed; z-index: 1002; top: calc(var(--top-bar-h) + 10px); left: 50%;
+  width: min(720px, calc(100% - 24px)); max-height: calc(100dvh - var(--top-bar-h) - 24px - var(--safe-bottom, 0px));
+  margin: 0; overflow: auto; overscroll-behavior: contain; transform: translateX(-50%);
+  border-radius: 20px; background: color-mix(in srgb, var(--paper) 90%, transparent);
+  -webkit-backdrop-filter: blur(26px) saturate(175%); backdrop-filter: blur(26px) saturate(175%);
+  box-shadow: 0 24px 70px rgba(8, 20, 13, .22), inset 0 1px 0 rgba(255, 255, 255, .5);
+  animation: filters-panel-in .2s cubic-bezier(.2,.8,.2,1);
+}
+.filters-wrap.filters-sheet .filters-heading { position: sticky; top: 0; z-index: 1; padding: 17px 18px 14px; background: color-mix(in srgb, var(--paper) 90%, transparent); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
+.filters-wrap.filters-sheet .filters-heading strong { font-size: 16px; }
+.filters-wrap.filters-sheet .filters-heading span { font-size: 12px; }
+.filters-wrap.filters-sheet .filters-heading button { width: 38px; height: 38px; }
+.filters-wrap.filters-sheet .primary-filters { grid-template-columns: 1fr; }
+.filters-wrap.filters-sheet .advanced-filters { padding: 0 14px 16px; }
+.filters-wrap.filters-sheet .filter-block { padding-inline: 14px; }
+.map-overlay { position: fixed; z-index: 1001; inset: var(--top-bar-h) 0 0; }
+.map-backdrop { z-index: 0; }
+.map-overlay .map-card.expanded {
+  position: absolute; z-index: 1; inset: 10px 12px calc(10px + var(--safe-bottom, 0px));
+  width: auto; height: auto; margin: 0; display: flex; flex-direction: column;
+  border-radius: 22px; background: color-mix(in srgb, var(--paper) 91%, transparent);
+  -webkit-backdrop-filter: blur(24px) saturate(175%); backdrop-filter: blur(24px) saturate(175%);
+  box-shadow: 0 24px 70px rgba(8, 20, 13, .24), inset 0 1px 0 rgba(255, 255, 255, .48);
+  animation: map-panel-in .2s cubic-bezier(.2,.8,.2,1);
+}
+.map-overlay .map-header { flex: 0 0 60px; }
+.map-overlay .map-canvas { flex: 1 1 auto; min-height: 0; height: auto; }
+.map-overlay .map-tip { flex: 0 0 auto; padding-bottom: calc(12px + var(--safe-bottom, 0px)); }
+@keyframes filters-panel-in { from { opacity: 0; transform: translate(-50%, -7px) scale(.99); } to { opacity: 1; transform: translate(-50%, 0) scale(1); } }
+@keyframes map-panel-in { from { opacity: 0; transform: translateY(8px) scale(.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
+html.panel-open, html.panel-open body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+html.panel-open body { position: fixed; width: 100%; }
+.panel-open .top-bar { z-index: 1003; }
 .drawer-backdrop { position: fixed; inset: 0; z-index: 1100; background: rgba(8, 20, 13, .45); }
 .drawer { position: absolute; top: 0; right: 0; bottom: 0; width: min(320px, 86vw); padding: 16px; display: flex; flex-direction: column; gap: 4px; background: var(--paper); box-shadow: var(--shadow); animation: drawer-in .2s ease-out; }
 @keyframes drawer-in { from { transform: translateX(30px); opacity: 0; } }
@@ -396,29 +434,47 @@ html.native .top-nav, html.native .top-burger { display: none; }
 html.native .top-brand { font-size: 19px; }
 html.native .top-actions { gap: 8px; }
 html.native .top-icon-btn { width: 44px; height: 44px; }
-/* The native shell replaces these with real UIKit glass buttons. Keep them in
-   the layout so the web bar keeps its spacing, but hide and disable the DOM. */
+/* iOS positions native UIKit glass controls over these hidden DOM controls. */
 html.native-glass .top-icon-btn { visibility: hidden; pointer-events: none; }
 html.native .top-signin { height: 36px; padding: 0 10px; font-size: 12px; }
 html.native .bottom-nav {
   position: fixed; left: 14px; right: 14px; bottom: calc(var(--safe-bottom) + 10px); z-index: 1000; display: flex; gap: 2px;
-  padding: 5px; border-radius: 30px; border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
-  background: color-mix(in srgb, var(--paper) 58%, transparent);
-  -webkit-backdrop-filter: blur(22px) saturate(180%); backdrop-filter: blur(22px) saturate(180%);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, .18), inset 0 1px 0 rgba(255, 255, 255, .28);
+  padding: 5px; border-radius: 30px; border: 1px solid var(--glass-border); isolation: isolate;
+  background: color-mix(in srgb, var(--paper) 54%, transparent);
+  -webkit-backdrop-filter: blur(28px) saturate(190%); backdrop-filter: blur(28px) saturate(190%);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, .2), inset 0 1px 0 var(--glass-edge), inset 0 -1px 1px rgba(0, 0, 0, .05);
+  touch-action: pan-y; user-select: none; -webkit-user-select: none;
+  transition: box-shadow .22s ease, background .22s ease;
 }
+html.native-tabbar .bottom-nav { display: none; }
+html.native .bottom-nav::before { content: ""; position: absolute; inset: 0; z-index: -1; border-radius: inherit; pointer-events: none; background: linear-gradient(145deg, var(--glass-sheen), transparent 55%); }
+html.native .bottom-nav.dragging { background: color-mix(in srgb, var(--paper) 68%, transparent); box-shadow: 0 16px 42px rgba(0,0,0,.24), inset 0 1px 0 var(--glass-edge); }
+html.native .bottom-indicator { position: absolute; left: 5px; top: 5px; bottom: 5px; width: calc((100% - 16px) / 4); z-index: -1; border: 1px solid color-mix(in srgb, var(--glass-border) 85%, var(--green-line)); border-radius: 25px; background: linear-gradient(150deg, color-mix(in srgb, var(--paper) 82%, transparent), color-mix(in srgb, var(--green) 12%, transparent)); box-shadow: 0 4px 14px rgba(15, 45, 25, .1), inset 0 1px 0 var(--glass-edge); transition: transform .36s cubic-bezier(.2,.9,.25,1.12); pointer-events: none; }
+html.native .bottom-nav.dragging .bottom-indicator { transition-duration: .08s; }
 html.native .bottom-tab {
-  flex: 1; min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
-  border-radius: 25px; color: var(--muted); font-size: 11px; font-weight: 600; text-decoration: none; transition: background .2s, color .2s;
+  position: relative; z-index: 1; flex: 1; min-height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  border-radius: 25px; color: var(--muted); font-size: 11px; font-weight: 600; text-decoration: none; transition: color .18s ease, transform .2s ease;
 }
-html.native .bottom-tab.active { color: var(--green); background: color-mix(in srgb, var(--green) 14%, transparent); }
-html.native .bottom-tab:active { background: color-mix(in srgb, var(--green) 22%, transparent); }
+html.native .bottom-tab.active { color: var(--green); }
+html.native .bottom-tab:active { transform: scale(.95); }
+html.native .bottom-tab.active svg { filter: drop-shadow(0 1px 4px color-mix(in srgb, var(--green) 28%, transparent)); }
 html.native main { padding-bottom: calc(62px + 10px + var(--safe-bottom) + 12px); }
 html.native-tabbar main { padding-bottom: calc(var(--safe-bottom) + 80px); }
 html.native .map-card.expanded .map-tip { padding-bottom: calc(12px + var(--safe-bottom)); }
 html.native .btn-primary, html.native .btn-ghost, html.native .btn-danger, html.native .map-open-btn { min-height: 46px; }
 html.native .map-close { width: 40px; height: 40px; }
 html.native button:active, html.native a:active { opacity: .85; }
+
+@media (max-width: 680px) {
+  .top-icon-btn { width: 40px; height: 40px; }
+  .top-actions { gap: 6px; }
+  .filters-wrap.filters-sheet { top: calc(var(--top-bar-h) + 7px); max-height: calc(100dvh - var(--top-bar-h) - 14px - var(--safe-bottom, 0px)); }
+  .map-overlay .map-card.expanded { inset: 7px 7px calc(7px + var(--safe-bottom, 0px)); border-radius: 18px; }
+  .filters-wrap.filters-sheet .filter-block { padding-top: 12px; padding-bottom: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .top-icon-btn, .bottom-indicator, .bottom-tab, .filters-sheet, .map-overlay .map-card { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
 
 .review-invite, .review-form { margin: 18px 0; padding: 18px; border: 1px solid var(--soft-line); border-radius: 10px; background: var(--subtle); }
 .review-invite p { margin: 0 0 12px; }

@@ -8,6 +8,7 @@ import { DAYS, dailyFor, type Restaurant } from "@/data/restaurants";
 import { CITY_CENTER, distanceKm, nextAt, openStatus } from "@/lib";
 import { useRestaurants } from "@/proto/RestaurantContext";
 import { useProto } from "@/proto/ProtoContext";
+import { useUi } from "@/proto/UiContext";
 
 export type Filters = {
   day: number;
@@ -50,108 +51,14 @@ export type BrowseCtx = {
   setHovered: (s: string | null) => void;
 };
 
-function Search({
-  query,
-  setQuery,
-  onSubmit,
-  onOpen,
-}: {
-  query: string;
-  setQuery: (q: string, apply?: boolean) => void;
-  onSubmit: () => void;
-  onOpen: (slug: string) => void;
-}) {
-  const { restaurants } = useRestaurants();
-  const [focus, setFocus] = useState(false);
-  const q = query.trim().toLocaleLowerCase("sk");
-  const places = q ? restaurants.filter((r) => r.name.toLocaleLowerCase("sk").includes(q)).slice(0, 4) : [];
-  const dishes = useMemo(() => {
-    if (!q) return [];
-    const seen = new Map<string, { name: string; place: string }>();
-    restaurants.forEach((r) =>
-      [...r.daily.flat(), ...r.standard].forEach((it) => {
-        if (it.name.toLocaleLowerCase("sk").includes(q) && !seen.has(it.name)) seen.set(it.name, { name: it.name, place: r.name });
-      }),
-    );
-    return [...seen.values()].slice(0, 5);
-  }, [q, restaurants]);
-  const show = focus && q && (places.length > 0 || dishes.length > 0);
-
-  return (
-    <form
-      className="search-box"
-      onSubmit={(e) => {
-        e.preventDefault();
-        setFocus(false);
-        onSubmit();
-      }}
-    >
-      <Icon name="search" size={22} />
-      <input
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        onFocus={() => setFocus(true)}
-        onBlur={() => setTimeout(() => setFocus(false), 120)}
-        placeholder="Hľadať jedlo (napr. sviečková) alebo reštauráciu…"
-        aria-label="Hľadať jedlo alebo reštauráciu"
-        role="combobox"
-        aria-expanded={!!show}
-      />
-      {query && (
-        <button type="button" className="clear-search" onClick={() => setQuery("", true)} aria-label="Vymazať vyhľadávanie">
-          <Icon name="close" size={17} />
-        </button>
-      )}
-      <button type="submit" className="search-action">Hľadať</button>
-      {show && (
-        <div className="search-menu" role="listbox">
-          {places.length > 0 && (
-            <>
-              <span className="search-group">Reštaurácie</span>
-              {places.map((r) => (
-                <button key={r.slug} onMouseDown={() => onOpen(r.slug)} role="option">
-                  <span className="mini-logo">{r.initials}</span>
-                  <span>
-                    {r.name}
-                    <small>{r.address}</small>
-                  </span>
-                </button>
-              ))}
-            </>
-          )}
-          {dishes.length > 0 && (
-            <>
-              <span className="search-group">Jedlá</span>
-              {dishes.map((d) => (
-                <button key={d.name} onMouseDown={() => setQuery(d.name, true)} role="option">
-                  <span className="mini-logo dish">
-                    <Icon name="search" size={14} />
-                  </span>
-                  <span>
-                    {d.name}
-                    <small>napr. {d.place}</small>
-                  </span>
-                </button>
-              ))}
-            </>
-          )}
-        </div>
-      )}
-    </form>
-  );
-}
-
 export default function Browse() {
   const { restaurants } = useRestaurants();
   const { slug } = useParams();
   const nav = useNavigate();
   const loc = useLocation();
   const { geo, favorites, userPosition, requestLocation } = useProto();
+  const { query, setQuery, filtersOpen, setFiltersOpen, mapOpen, setMapOpen, setActiveFilters } = useUi();
   const [f, setF] = useState<Filters>(initial);
-  const [draft, setDraft] = useState("");
-  const [query, setQuery] = useState("");
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [mapExpanded, setMapExpanded] = useState(false);
   const [pinned, setPinned] = useState<string | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
   const [bannerOff, setBannerOff] = useState(false);
@@ -211,10 +118,11 @@ export default function Browse() {
     f.excluded.length +
     f.cuisines.length;
 
+  useEffect(() => setActiveFilters(activeCount), [activeCount, setActiveFilters]);
+
   const reset = () => {
     setF({ ...initial, city: f.city });
     setQuery("");
-    setDraft("");
     setPinned(null);
   };
 
@@ -230,44 +138,10 @@ export default function Browse() {
 
   return (
     <>
-      {isIndex && (
-        <section className="hero">
-          <div className="hero-bg">
-            <div className="hero-orb hero-orb-one" />
-            <div className="hero-orb hero-orb-two" />
-          </div>
-          <div className="hero-inner">
-            <p className="eyebrow">Dobrý obed je bližšie, než si myslíte</p>
-            <h1>Čo si dáte dnes?</h1>
-            <p className="hero-copy">Objavte najlepšie denné menu vo vašom okolí. Čerstvé, prehľadné a bez zdĺhavého hľadania.</p>
-            <div className="search-controls">
-              <Search
-                query={draft}
-                setQuery={(q, apply) => {
-                  setDraft(q);
-                  if (apply) setQuery(q);
-                }}
-                onSubmit={() => {
-                  setQuery(draft);
-                  setTimeout(() => feedRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
-                }}
-                onOpen={(s) => nav(`/restaurant/${s}`)} />
-              <button
-                className={`hero-filter-button ${filtersOpen ? "active" : ""}`}
-                onClick={() => setFiltersOpen(!filtersOpen)}
-                aria-expanded={filtersOpen}
-              >
-                <Icon name="filter" size={19} />
-                <span>Filtre</span>
-                {activeCount > 0 && <span className="filter-count">{activeCount}</span>}
-              </button>
-            </div>
-          </div>
-        </section>
-      )}
-
       {isIndex && filtersOpen && (
-        <section className="filters-wrap open" aria-label="Filtre">
+        <>
+        <button className="panel-backdrop filters-backdrop" onClick={() => setFiltersOpen(false)} aria-label="Zavrieť filtre" />
+        <section className="filters-wrap filters-sheet open" aria-label="Filtre" role="dialog" aria-modal="true">
           <div className="filters-heading">
             <div>
               <strong>Filtrovať ponuku</strong>
@@ -388,9 +262,10 @@ export default function Browse() {
             </button>
           </div>
         </section>
+        </>
       )}
 
-      <section className={`content-wrap ${slug ? "restaurant-view" : mapExpanded ? "map-open" : ""}`}>
+      <section className={`content-wrap ${slug ? "restaurant-view" : "browse-results"}`}>
         <div className="results-column" ref={feedRef}>
           {geo === "denied" && isIndex && !bannerOff && (
             <div className="geo-banner" role="status">
@@ -411,18 +286,23 @@ export default function Browse() {
           )}
           <Outlet context={ctx} />
         </div>
-        {!slug && <MapPanel
-          items={mapItems}
-          selected={slug ?? pinned}
-          hovered={hovered}
-          expanded={mapExpanded}
-          setExpanded={(expanded) => {
-            setMapExpanded(expanded);
-            if (!expanded) setPinned(null);
-          }}
-          onPick={pick}
-        />}
       </section>
+      {isIndex && mapOpen && (
+        <div className="map-overlay" role="dialog" aria-modal="true" aria-label="Mapa reštaurácií">
+          <button className="panel-backdrop map-backdrop" onClick={() => setMapOpen(false)} aria-label="Zavrieť mapu" />
+          <MapPanel
+            items={mapItems}
+            selected={slug ?? pinned}
+            hovered={hovered}
+            expanded
+            setExpanded={(expanded) => {
+              setMapOpen(expanded);
+              if (!expanded) setPinned(null);
+            }}
+            onPick={pick}
+          />
+        </div>
+      )}
     </>
   );
 }

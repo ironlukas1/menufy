@@ -7,7 +7,9 @@ import Detail from "@/pages/Detail";
 import Saved from "@/pages/Saved";
 import Notifications from "@/pages/Notifications";
 import Owners from "@/pages/Owners";
+import Account from "@/pages/Account";
 import { RestaurantProvider } from "@/proto/RestaurantContext";
+import { UiProvider } from "@/proto/UiContext";
 import Settings from "@/pages/Settings";
 import { ForgotPassword, Login, ResetPassword, Verified } from "@/pages/Auth";
 import { Privacy, Terms } from "@/pages/Legal";
@@ -15,29 +17,32 @@ import { Privacy, Terms } from "@/pages/Legal";
 export default function App() {
   return (
     <ProtoProvider>
-      <RestaurantProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route element={<Layout />}>
-            <Route element={<Browse />}>
-              <Route index element={<Feed />} />
-              <Route path="restaurant/:slug" element={<Detail />} />
-            </Route>
-            <Route path="saved" element={<RequireAuth><Saved /></RequireAuth>} />
-            <Route path="notifications" element={<RequireAuth><Notifications /></RequireAuth>} />
-            <Route path="owners" element={<Owners />} />
-            <Route path="settings" element={<Settings />} />
-            <Route path="terms" element={<Terms />} />
-            <Route path="privacy" element={<Privacy />} />
-            <Route path="login" element={<Login />} />
-            <Route path="verified" element={<Verified />} />
-            <Route path="forgot-password" element={<ForgotPassword />} />
-            <Route path="reset-password" element={<ResetPassword />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-      </RestaurantProvider>
+      <UiProvider>
+        <RestaurantProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route element={<Layout />}>
+                <Route element={<Browse />}>
+                  <Route index element={<Feed />} />
+                  <Route path="restaurant/:slug" element={<Detail />} />
+                </Route>
+                <Route path="saved" element={<RequireAuth><Saved /></RequireAuth>} />
+                <Route path="notifications" element={<RequireAuth><Notifications /></RequireAuth>} />
+                <Route path="owners" element={<Owners />} />
+                <Route path="account" element={<Account />} />
+                <Route path="settings" element={<Settings />} />
+                <Route path="terms" element={<Terms />} />
+                <Route path="privacy" element={<Privacy />} />
+                <Route path="login" element={<Login />} />
+                <Route path="verified" element={<Verified />} />
+                <Route path="forgot-password" element={<ForgotPassword />} />
+                <Route path="reset-password" element={<ResetPassword />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </RestaurantProvider>
+      </UiProvider>
     </ProtoProvider>
   );
 }
