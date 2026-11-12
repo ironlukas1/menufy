@@ -89,20 +89,21 @@ export default function Owners() {
     finally { setDecisionBusy(false); }
   };
   const selected = restaurants.find((place) => place.id === selectedId);
+  const dashboard = !!userId && (loading || restaurants.length > 0 || admin);
   const patch = (key: keyof typeof fields, value: string) => setForm((current) => ({ ...current, [key]: value }));
 
   return (
     <div className="page owner-page">
-      <div className="owner-hero">
+      <div className={`owner-hero ${dashboard ? "owner-hero-compact" : ""}`}>
         <span className="owner-hero-icon"><Icon name="store" size={34} /></span>
         <p className="section-kicker">Menufy pre reštaurácie</p>
-        <h2>Vlastníš reštauráciu?</h2>
-        <p>Pridajte svoj podnik a dostaňte svoje menu k ľuďom vo vašom okolí.</p>
+        <h2>{dashboard ? "Správa reštaurácie" : "Vlastníš reštauráciu?"}</h2>
+        <p>{dashboard ? "Vaše reštaurácie a menu na jednom mieste." : "Pridajte svoj podnik a dostaňte svoje menu k ľuďom vo vašom okolí."}</p>
         {!userId && <div className="owner-actions"><Link className="btn-primary" to="/login?mode=signup&owner=1&next=%2Fowners">Vytvoriť účet majiteľa</Link><Link className="btn-ghost" to="/login?owner=1&next=%2Fowners">Už mám účet</Link></div>}
       </div>
-      <div className="owner-steps">
+      {!dashboard && <div className="owner-steps">
         {[ ["1", "Zaregistrujte svoj podnik", "Vyplňte údaje o reštaurácii, IČO a kontakt."], ["2", "Overíme vašu žiadosť", "Reštaurácia sa zobrazí návštevníkom až po schválení."], ["3", "Spravujte svoje menu", "Pridávajte jedlá, ceny a alergény. Koncepty si pripravíte vopred."] ].map(([number, title, body]) => <div key={number}><span>{number}</span><h3>{title}</h3><p>{body}</p></div>)}
-      </div>
+      </div>}
       {userId && <>
         {message && <p className="success-note" role="status">{message}</p>}
         {error && <p className="form-error" role="alert">{error}</p>}
