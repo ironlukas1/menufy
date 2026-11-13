@@ -59,14 +59,22 @@ export default function Browse() {
   const { geo, favorites, userPosition, requestLocation } = useProto();
   const { query, setQuery, filtersOpen, setFiltersOpen, mapOpen, setMapOpen, setActiveFilters } = useUi();
   const [f, setF] = useState<Filters>(initial);
+  const [draftF, setDraftF] = useState<Filters>(initial);
   const [pinned, setPinned] = useState<string | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
   const [bannerOff, setBannerOff] = useState(false);
   const feedRef = useRef<HTMLDivElement>(null);
+  const previousFiltersOpen = useRef(false);
   const isIndex = loc.pathname === "/";
 
   const set = (p: Partial<Filters>) => setF((c) => ({ ...c, ...p }));
+  const setDraft = (p: Partial<Filters>) => setDraftF((c) => ({ ...c, ...p }));
   const origin = geo === "granted" && userPosition ? userPosition : CITY_CENTER;
+
+  useEffect(() => {
+    if (filtersOpen && !previousFiltersOpen.current) setDraftF(f);
+    previousFiltersOpen.current = filtersOpen;
+  }, [filtersOpen, f]);
 
   useEffect(() => {
     if (geo === "unknown") requestLocation();
@@ -122,8 +130,18 @@ export default function Browse() {
 
   const reset = () => {
     setF({ ...initial, city: f.city });
+    setDraftF({ ...initial, city: draftF.city });
     setQuery("");
     setPinned(null);
+  };
+
+  const resetDraft = () => {
+    setDraftF({ ...initial, city: draftF.city });
+  };
+
+  const applyFilters = () => {
+    setF({ ...draftF, sort: f.sort });
+    setFiltersOpen(false);
   };
 
   const mapItems = useMemo(() => restaurants.filter((r) => r.city === f.city), [f.city, restaurants]);
@@ -152,7 +170,7 @@ export default function Browse() {
             </button>
           </div>
           <div className="primary-filters">
-            <SelectField icon="calendar" label="Deň" value={String(f.day)} onChange={(v) => set({ day: Number(v) })}>
+            <SelectField icon="calendar" label="Deň" value={String(draftF.day)} onChange={(v) => setDraft({ day: Number(v) })}>
               {DAYS.map((d, i) => (
                 <option key={d.label} value={i}>
                   {d.label}
@@ -162,15 +180,15 @@ export default function Browse() {
             <SelectField
               icon="location"
               label="Mesto"
-              value={f.city}
-              onChange={(v) => set({ city: v, district: "Všetky časti" })}
+              value={draftF.city}
+              onChange={(v) => setDraft({ city: v, district: "Všetky časti" })}
             >
               {Object.keys(LOCATIONS).map((c) => (
                 <option key={c}>{c}</option>
               ))}
             </SelectField>
-            <SelectField label="Mestská časť" value={f.district} onChange={(v) => set({ district: v })}>
-              {LOCATIONS[f.city].map((d) => (
+            <SelectField label="Mestská časť" value={draftF.district} onChange={(v) => setDraft({ district: v })}>
+              {LOCATIONS[draftF.city].map((d) => (
                 <option key={d}>{d}</option>
               ))}
             </SelectField>
@@ -181,10 +199,10 @@ export default function Browse() {
               {CUISINES.map((c) => (
                 <button
                   key={c}
-                  className={`chip ${f.cuisines.includes(c) ? "on" : ""}`}
-                  aria-pressed={f.cuisines.includes(c)}
+                  className={`chip ${draftF.cuisines.includes(c) ? "on" : ""}`}
+                  aria-pressed={draftF.cuisines.includes(c)}
                   onClick={() =>
-                    set({ cuisines: f.cuisines.includes(c) ? f.cuisines.filter((x) => x !== c) : [...f.cuisines, c] })
+                    setDraft({ cuisines: draftF.cuisines.includes(c) ? draftF.cuisines.filter((x) => x !== c) : [...draftF.cuisines, c] })
                   }
                 >
                   {c}
@@ -200,13 +218,13 @@ export default function Browse() {
               {ALLERGENS.map((a) => (
                 <button
                   key={a.code}
-                  className={`chip ${f.excluded.includes(a.code) ? "on danger" : ""}`}
-                  aria-pressed={f.excluded.includes(a.code)}
+                  className={`chip ${draftF.excluded.includes(a.code) ? "on danger" : ""}`}
+                  aria-pressed={draftF.excluded.includes(a.code)}
                   onClick={() =>
-                    set({
-                      excluded: f.excluded.includes(a.code)
-                        ? f.excluded.filter((x) => x !== a.code)
-                        : [...f.excluded, a.code],
+                    setDraft({
+                      excluded: draftF.excluded.includes(a.code)
+                        ? draftF.excluded.filter((x) => x !== a.code)
+                        : [...draftF.excluded, a.code],
                     })
                   }
                 >
@@ -218,19 +236,19 @@ export default function Browse() {
           <div className="advanced-filters">
             <label className="range-field">
               <span>
-                Max. cena: <strong>{f.maxPrice >= MAX_PRICE ? "bez limitu" : `${f.maxPrice} €`}</strong>
+                Max. cena: <strong>{draftF.maxPrice >= MAX_PRICE ? "bez limitu" : `${draftF.maxPrice} €`}</strong>
               </span>
               <input
                 type="range"
                 min={6}
                 max={MAX_PRICE}
                 step={1}
-                value={f.maxPrice}
-                onChange={(e) => set({ maxPrice: Number(e.target.value) })}
+                value={draftF.maxPrice}
+                onChange={(e) => setDraft({ maxPrice: Number(e.target.value) })}
                 aria-label="Maximálna cena"
               />
             </label>
-            <SelectField icon="clock" label="Otvorené o" value={f.openAt} onChange={(v) => set({ openAt: v })}>
+            <SelectField icon="clock" label="Otvorené o" value={draftF.openAt} onChange={(v) => setDraft({ openAt: v })}>
               <option value="">Kedykoľvek</option>
               <option value="now">Teraz</option>
               {Array.from({ length: 24 }, (_, h) => `${String(h).padStart(2, "0")}:00`).map((t) => (
@@ -239,7 +257,7 @@ export default function Browse() {
                 </option>
               ))}
             </SelectField>
-            <SelectField label="Hodnotenie" value={String(f.minRating)} onChange={(v) => set({ minRating: Number(v) })}>
+            <SelectField label="Hodnotenie" value={String(draftF.minRating)} onChange={(v) => setDraft({ minRating: Number(v) })}>
               <option value="0">Akékoľvek hodnotenie</option>
               {[1, 2, 3, 4, 5].map((n) => (
                 <option key={n} value={n} label={n === 5 ? "5 hviezdičiek" : `${n} ${n === 1 ? "hviezdička" : "hviezdičky"} a viac`}>
@@ -253,12 +271,17 @@ export default function Browse() {
               ))}
             </SelectField>
             <label className="check-field">
-              <input type="checkbox" checked={f.delivery} onChange={(e) => set({ delivery: e.target.checked })} />
-              <span className="custom-check">{f.delivery && <Icon name="check" size={14} />}</span>
+              <input type="checkbox" checked={draftF.delivery} onChange={(e) => setDraft({ delivery: e.target.checked })} />
+              <span className="custom-check">{draftF.delivery && <Icon name="check" size={14} />}</span>
               <Icon name="truck" size={19} /> Len s donáškou
             </label>
-            <button className="reset-button" onClick={reset}>
+            <button className="reset-button" onClick={resetDraft}>
               Zrušiť filtre
+            </button>
+          </div>
+          <div className="filter-actions">
+            <button className="btn-primary block" onClick={applyFilters}>
+              Použiť filtre
             </button>
           </div>
         </section>

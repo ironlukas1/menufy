@@ -95,6 +95,13 @@
 .filters-wrap.filters-sheet .primary-filters { grid-template-columns: 1fr; }
 .filters-wrap.filters-sheet .advanced-filters { padding: 0 14px 16px; }
 .filters-wrap.filters-sheet .filter-block { padding-inline: 14px; }
+.filters-wrap.filters-sheet .filter-actions {
+  position: sticky; bottom: 0; z-index: 2; padding: 12px 14px;
+  border-top: 1px solid var(--soft-line);
+  background: color-mix(in srgb, var(--paper) 90%, transparent);
+  -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
+}
+.filters-wrap.filters-sheet .filter-actions .btn-primary { min-height: 46px; }
 .map-overlay { position: fixed; z-index: 1001; inset: var(--top-bar-h) 0 0; }
 .map-backdrop { z-index: 0; }
 .map-overlay .map-card.expanded {
