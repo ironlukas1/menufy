@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { Navigate, useLocation } from "react-router";
-import { supabase } from "@/supabase";
+import { isSupabaseConfigured, supabase } from "@/supabase";
 
 export type Theme = "system" | "light" | "dark";
 
@@ -44,17 +44,18 @@ const write = (k: string, v: string) => {
 };
 
 export function ProtoProvider({ children }: { children: ReactNode }) {
-  const [loggedIn, setLoggedInState] = useState(read("menufy-auth") === "1");
+  const [loggedIn, setLoggedInState] = useState(isSupabaseConfigured && read("menufy-auth") === "1");
   const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("Člen menufy");
   const [userId, setUserId] = useState<string | null>(null);
   const [notify, setNotifyState] = useState<Notify>({ daily: true, fav: true, promo: false });
   const setLoggedIn = (v: boolean) => {
     setLoggedInState(v);
-    if (!v) void supabase.auth.signOut();
+    if (!v && isSupabaseConfigured) void supabase.auth.signOut();
   };
 
   useEffect(() => {
+    if (!isSupabaseConfigured) return;
     const apply = (s: { user: { id: string; email?: string; user_metadata?: Record<string, unknown> } } | null) => {
       setLoggedInState(!!s);
       setUserId(s?.user.id ?? null);
@@ -71,7 +72,7 @@ export function ProtoProvider({ children }: { children: ReactNode }) {
   const stored = read("menufy-theme");
   const [theme, setThemeState] = useState<Theme>(stored === "light" || stored === "dark" ? stored : "system");
   const savePrefs = (patch: Record<string, unknown>) => {
-    if (userId) void supabase.from("preferences").upsert({ user_id: userId, ...patch, updated_at: new Date().toISOString() });
+    if (isSupabaseConfigured && userId) void supabase.from("preferences").upsert({ user_id: userId, ...patch, updated_at: new Date().toISOString() });
   };
   const setTheme = (t: Theme) => {
     setThemeState(t);

@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { DAYS, restaurants as prototypeRestaurants, type Restaurant, type MenuItem } from "@/data/restaurants";
 import type { StoredMenu } from "@/data/owner";
-import { supabase } from "@/supabase";
+import { isSupabaseConfigured, supabase } from "@/supabase";
 
 type PublicRestaurantRow = {
   slug: string; name: string; initials: string; tagline: string; city: string; district: string; address: string;
@@ -31,6 +31,10 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
   const [revision, setRevision] = useState(0);
   const refresh = useCallback(() => setRevision((value) => value + 1), []);
   useEffect(() => {
+    if (!isSupabaseConfigured) {
+      setLoading(false);
+      return;
+    }
     let live = true;
     void (async () => {
       try {

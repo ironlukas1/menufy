@@ -60,6 +60,7 @@ export default function MapPanel({
   selected,
   hovered,
   expanded,
+  returnLabel,
   setExpanded,
   onPick,
 }: {
@@ -67,6 +68,7 @@ export default function MapPanel({
   selected: string | null;
   hovered: string | null;
   expanded: boolean;
+  returnLabel?: string;
   setExpanded: (v: boolean) => void;
   onPick: (slug: string) => void;
 }) {
@@ -85,8 +87,9 @@ export default function MapPanel({
           <small>{items.length} miest</small>
         </div>
         {expanded ? (
-          <button className="map-close" onClick={() => setExpanded(false)} aria-label="Zavrieť mapu">
-            <Icon name="close" size={18} />
+          <button className={`map-close ${returnLabel ? "map-return" : ""}`} onClick={() => setExpanded(false)} aria-label={returnLabel ?? "Zavrieť mapu"}>
+            <Icon name={returnLabel ? "back" : "close"} size={18} />
+            {returnLabel && <span>{returnLabel}</span>}
           </button>
         ) : (
           <button className="map-open-btn" onClick={openMap}>

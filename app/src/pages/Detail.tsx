@@ -1,16 +1,20 @@
 import { useState } from "react";
-import { Link, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import Icon from "@/components/Icon";
 import Lightbox from "@/components/Lightbox";
+import MapPanel from "@/components/MapPanel";
 import { HeartButton, MenuRow } from "@/components/RestaurantCard";
 import { DAYS, dailyFor } from "@/data/restaurants";
 import { openStatus } from "@/lib";
 import { useRestaurants } from "@/proto/RestaurantContext";
+import { useUi } from "@/proto/UiContext";
 import RestaurantReviews from "@/components/RestaurantReviews";
 
 export default function Detail() {
   const { slug } = useParams();
   const { restaurants, loading } = useRestaurants();
+  const { mapOpen, setMapOpen } = useUi();
+  const navigate = useNavigate();
   const r = restaurants.find((place) => place.slug === slug);
   const [tab, setTab] = useState<"daily" | "standard">("daily");
   const [day, setDay] = useState(0);
@@ -58,7 +62,14 @@ export default function Detail() {
           <h3>Kontakt</h3>
           <ul className="contact-list">
             <li>
-              <Icon name="location" size={16} /> {r.address}
+              <button
+                type="button"
+                className="contact-address"
+                onClick={() => setMapOpen(true)}
+                aria-label={`Zobraziť polohu reštaurácie ${r.name} na mape`}
+              >
+                <Icon name="location" size={16} /> <span>{r.address}</span>
+              </button>
             </li>
             {r.phone && (
               <li>
@@ -165,6 +176,24 @@ export default function Detail() {
       </section>
 
       <RestaurantReviews key={r.slug} restaurant={r} />
+
+      {mapOpen && (
+        <div className="map-overlay" role="dialog" aria-modal="true" aria-label={`Poloha reštaurácie ${r.name}`}>
+          <button className="panel-backdrop map-backdrop" onClick={() => setMapOpen(false)} aria-label="Zavrieť mapu" />
+          <MapPanel
+            items={restaurants}
+            selected={r.slug}
+            hovered={null}
+            expanded
+            returnLabel="Späť k reštaurácii"
+            setExpanded={setMapOpen}
+            onPick={(placeSlug) => {
+              setMapOpen(false);
+              if (placeSlug !== r.slug) navigate(`/restaurant/${placeSlug}`);
+            }}
+          />
+        </div>
+      )}
     </article>
   );
 }
