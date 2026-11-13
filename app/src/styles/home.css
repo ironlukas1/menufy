@@ -2,10 +2,15 @@
 
 * { box-sizing: border-box; }
 
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  overflow-x: clip;
+  overscroll-behavior-x: none;
+}
 
 body {
   margin: 0;
+  overflow-x: clip;
   color: var(--ink);
   background: var(--canvas);
   font-family: "DM Sans", sans-serif;
