@@ -132,7 +132,7 @@ export default function MapPanel({
         {!expanded && <div className="map-cover" onClick={openMap} aria-hidden="true" />}
       </div>
       {expanded && <p className="map-tip" role="status">
-        {geo === "requesting" ? "Zisťujeme vašu polohu. Povoľte prístup v prehliadači." : locationError ?? "Kliknutím na marker vyfiltrujete vybranú reštauráciu."}
+        {geo === "requesting" ? "Zisťujeme vašu polohu. Povoľte prístup v prehliadači." : locationError ?? "Kliknutím na marker otvoríte detail reštaurácie."}
         {locationError && <> <button className="inline-link plain" onClick={requestLocation}>Skúsiť znova</button></>}
       </p>}
     </aside>
