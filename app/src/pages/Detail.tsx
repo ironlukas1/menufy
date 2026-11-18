@@ -13,7 +13,7 @@ import RestaurantReviews from "@/components/RestaurantReviews";
 export default function Detail() {
   const { slug } = useParams();
   const { restaurants, loading } = useRestaurants();
-  const { mapOpen, setMapOpen } = useUi();
+  const { panel, setPanel } = useUi();
   const navigate = useNavigate();
   const r = restaurants.find((place) => place.slug === slug);
   const [tab, setTab] = useState<"daily" | "standard">("daily");
@@ -65,7 +65,7 @@ export default function Detail() {
               <button
                 type="button"
                 className="contact-address"
-                onClick={() => setMapOpen(true)}
+                onClick={() => setPanel("map")}
                 aria-label={`Zobraziť polohu reštaurácie ${r.name} na mape`}
               >
                 <Icon name="location" size={16} /> <span>{r.address}</span>
@@ -177,19 +177,17 @@ export default function Detail() {
 
       <RestaurantReviews key={r.slug} restaurant={r} />
 
-      {mapOpen && (
+      {panel === "map" && (
         <div className="map-overlay" role="dialog" aria-modal="true" aria-label={`Poloha reštaurácie ${r.name}`}>
-          <button className="panel-backdrop map-backdrop" onClick={() => setMapOpen(false)} aria-label="Zavrieť mapu" />
+          <button className="panel-backdrop map-backdrop" onClick={() => setPanel(null)} aria-label="Zavrieť mapu" />
           <MapPanel
             items={restaurants}
             selected={r.slug}
             hovered={null}
-            expanded
-            returnLabel="Späť k reštaurácii"
-            setExpanded={setMapOpen}
+            onClose={() => setPanel(null)}
             onPick={(placeSlug) => {
-              setMapOpen(false);
-              if (placeSlug !== r.slug) navigate(`/restaurant/${placeSlug}`);
+              setPanel(null);
+              navigate(`/restaurant/${placeSlug}`);
             }}
           />
         </div>
