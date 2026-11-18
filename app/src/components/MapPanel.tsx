@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { CircleMarker, MapContainer, Marker, Pane, TileLayer, ZoomControl, useMap } from "react-leaflet";
 import L from "leaflet";
+import Icon from "@/components/Icon";
 import type { Restaurant } from "@/data/restaurants";
 import { useProto } from "@/proto/ProtoContext";
 import { CITY_CENTER } from "@/lib";
@@ -83,6 +84,9 @@ export default function MapPanel({
           <span>Mapa reštaurácií</span>
           <small>{items.length} miest</small>
         </div>
+        <button className="map-close-btn" type="button" onClick={onClose} aria-label="Zavrieť mapu">
+          <Icon name="close" size={18} />
+        </button>
       </div>
       <div className={`map-canvas ${dark ? "dark-tiles" : ""}`}>
         <MapContainer
