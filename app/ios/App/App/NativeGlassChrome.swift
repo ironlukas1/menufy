@@ -372,7 +372,7 @@ private final class NativeGlassChrome: UIView, UITabBarDelegate {
         }
         bottomBar.frame = CGRect(
             x: (bounds.width - barWidth) / 2,
-            y: bounds.height - safeInsets.bottom + 4 - barHeight,
+            y: bounds.height - safeInsets.bottom + 16 - barHeight,
             width: barWidth,
             height: barHeight
         )
