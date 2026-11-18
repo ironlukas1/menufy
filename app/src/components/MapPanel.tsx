@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { CircleMarker, MapContainer, Marker, Pane, TileLayer, ZoomControl, useMap } from "react-leaflet";
 import L from "leaflet";
-import Icon from "./Icon";
 import type { Restaurant } from "@/data/restaurants";
 import { useProto } from "@/proto/ProtoContext";
 import { CITY_CENTER } from "@/lib";
@@ -17,7 +16,7 @@ const pin = (label: string, selected: boolean) =>
 const boundsOf = (items: Restaurant[]) =>
   L.latLngBounds(items.map((r) => [r.lat, r.lng] as [number, number])).pad(0.3);
 
-function Fit({ items, selected, expanded, user }: { items: Restaurant[]; selected: string | null; expanded: boolean; user: { lat: number; lng: number } | null }) {
+function Fit({ items, selected, user }: { items: Restaurant[]; selected: string | null; user: { lat: number; lng: number } | null }) {
   const map = useMap();
   useEffect(() => {
     const t = setTimeout(() => {
@@ -25,7 +24,7 @@ function Fit({ items, selected, expanded, user }: { items: Restaurant[]; selecte
       map.invalidateSize();
       const sel = items.find((r) => r.slug === selected);
       if (sel) map.flyTo([sel.lat, sel.lng], 15, { duration: 0.5 });
-      else if (expanded && user) map.flyTo([user.lat, user.lng], 14, { duration: 0.5 });
+      else if (user) map.flyTo([user.lat, user.lng], 14, { duration: 0.5 });
       else if (items.length) map.fitBounds(boundsOf(items), { maxZoom: 14 });
     }, 60);
     return () => {
@@ -36,11 +35,11 @@ function Fit({ items, selected, expanded, user }: { items: Restaurant[]; selecte
         /* map already removed */
       }
     };
-  }, [map, items, selected, expanded, user]);
+  }, [map, items, selected, user]);
   return null;
 }
 
-function Interactive({ on }: { on: boolean }) {
+function Interactive() {
   const map = useMap();
   useEffect(() => {
     const el = map.getContainer();
@@ -48,55 +47,44 @@ function Interactive({ on }: { on: boolean }) {
     ro.observe(el);
     return () => ro.disconnect();
   }, [map]);
-  useEffect(() => {
-    const handlers = [map.dragging, map.touchZoom, map.scrollWheelZoom, map.doubleClickZoom, map.boxZoom, map.keyboard];
-    handlers.forEach((h) => (on ? h.enable() : h.disable()));
-  }, [map, on]);
   return null;
 }
 
+/**
+ * Full interactive map, shown in a floating glass overlay from the top-bar
+ * map button. Clicking a marker pins that restaurant to the results.
+ */
 export default function MapPanel({
   items,
   selected,
   hovered,
-  expanded,
-  setExpanded,
   onPick,
+  onClose,
 }: {
   items: Restaurant[];
   selected: string | null;
   hovered: string | null;
-  expanded: boolean;
-  setExpanded: (v: boolean) => void;
   onPick: (slug: string) => void;
+  onClose: () => void;
 }) {
   const { dark, geo, userPosition, locationError, requestLocation } = useProto();
   const user = geo === "granted" ? userPosition : null;
-  const openMap = () => {
-    setExpanded(true);
-    requestLocation();
-  };
+
+  useEffect(() => {
+    const on = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", on);
+    return () => window.removeEventListener("keydown", on);
+  }, [onClose]);
 
   return (
-    <aside className={`map-card ${expanded ? "expanded" : ""}`} aria-label="Mapa reštaurácií">
+    <div className="map-panel" aria-label="Mapa reštaurácií">
       <div className="map-header">
         <div>
           <span>Mapa reštaurácií</span>
           <small>{items.length} miest</small>
         </div>
-        {expanded ? (
-          <button className="map-close" onClick={() => setExpanded(false)} aria-label="Zavrieť mapu">
-            <Icon name="close" size={18} />
-          </button>
-        ) : (
-          <button className="map-open-btn" onClick={openMap}>
-            <Icon name="map" size={16} /> Otvoriť mapu
-          </button>
-        )}
       </div>
-      <div
-        className={`map-canvas ${expanded ? "is-open" : ""} ${dark ? "dark-tiles" : ""}`}
-      >
+      <div className={`map-canvas ${dark ? "dark-tiles" : ""}`}>
         <MapContainer
           center={[CITY_CENTER.lat, CITY_CENTER.lng]}
           zoom={13}
@@ -125,16 +113,15 @@ export default function MapPanel({
               title={r.name}
             />
           ))}
-          <Interactive on={expanded} />
-          {expanded && <ZoomControl position="topright" />}
-          <Fit items={items} selected={selected} expanded={expanded} user={user} />
+          <Interactive />
+          <ZoomControl position="topright" />
+          <Fit items={items} selected={selected} user={user} />
         </MapContainer>
-        {!expanded && <div className="map-cover" onClick={openMap} aria-hidden="true" />}
       </div>
-      {expanded && <p className="map-tip" role="status">
+      <p className="map-tip" role="status">
         {geo === "requesting" ? "Zisťujeme vašu polohu. Povoľte prístup v prehliadači." : locationError ?? "Kliknutím na marker vyfiltrujete vybranú reštauráciu."}
         {locationError && <> <button className="inline-link plain" onClick={requestLocation}>Skúsiť znova</button></>}
-      </p>}
-    </aside>
+      </p>
+    </div>
   );
 }

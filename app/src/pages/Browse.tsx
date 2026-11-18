@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Outlet, useLocation, useNavigate, useParams } from "react-router";
+import { Outlet, useLocation, useParams } from "react-router";
 import Icon from "@/components/Icon";
 import SelectField from "@/components/SelectField";
 import MapPanel from "@/components/MapPanel";
@@ -8,6 +8,7 @@ import { DAYS, dailyFor, type Restaurant } from "@/data/restaurants";
 import { CITY_CENTER, distanceKm, nextAt, openStatus } from "@/lib";
 import { useRestaurants } from "@/proto/RestaurantContext";
 import { useProto } from "@/proto/ProtoContext";
+import { useUi } from "@/proto/UiContext";
 
 export type Filters = {
   day: number;
@@ -41,7 +42,6 @@ export type BrowseCtx = {
   f: Filters;
   set: (p: Partial<Filters>) => void;
   query: string;
-  setQuery: (q: string) => void;
   results: { r: Restaurant; distance: number }[];
   pinned: string | null;
   setPinned: (s: string | null) => void;
@@ -50,108 +50,13 @@ export type BrowseCtx = {
   setHovered: (s: string | null) => void;
 };
 
-function Search({
-  query,
-  setQuery,
-  onSubmit,
-  onOpen,
-}: {
-  query: string;
-  setQuery: (q: string, apply?: boolean) => void;
-  onSubmit: () => void;
-  onOpen: (slug: string) => void;
-}) {
-  const { restaurants } = useRestaurants();
-  const [focus, setFocus] = useState(false);
-  const q = query.trim().toLocaleLowerCase("sk");
-  const places = q ? restaurants.filter((r) => r.name.toLocaleLowerCase("sk").includes(q)).slice(0, 4) : [];
-  const dishes = useMemo(() => {
-    if (!q) return [];
-    const seen = new Map<string, { name: string; place: string }>();
-    restaurants.forEach((r) =>
-      [...r.daily.flat(), ...r.standard].forEach((it) => {
-        if (it.name.toLocaleLowerCase("sk").includes(q) && !seen.has(it.name)) seen.set(it.name, { name: it.name, place: r.name });
-      }),
-    );
-    return [...seen.values()].slice(0, 5);
-  }, [q, restaurants]);
-  const show = focus && q && (places.length > 0 || dishes.length > 0);
-
-  return (
-    <form
-      className="search-box"
-      onSubmit={(e) => {
-        e.preventDefault();
-        setFocus(false);
-        onSubmit();
-      }}
-    >
-      <Icon name="search" size={22} />
-      <input
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        onFocus={() => setFocus(true)}
-        onBlur={() => setTimeout(() => setFocus(false), 120)}
-        placeholder="Hľadať jedlo (napr. sviečková) alebo reštauráciu…"
-        aria-label="Hľadať jedlo alebo reštauráciu"
-        role="combobox"
-        aria-expanded={!!show}
-      />
-      {query && (
-        <button type="button" className="clear-search" onClick={() => setQuery("", true)} aria-label="Vymazať vyhľadávanie">
-          <Icon name="close" size={17} />
-        </button>
-      )}
-      <button type="submit" className="search-action">Hľadať</button>
-      {show && (
-        <div className="search-menu" role="listbox">
-          {places.length > 0 && (
-            <>
-              <span className="search-group">Reštaurácie</span>
-              {places.map((r) => (
-                <button key={r.slug} onMouseDown={() => onOpen(r.slug)} role="option">
-                  <span className="mini-logo">{r.initials}</span>
-                  <span>
-                    {r.name}
-                    <small>{r.address}</small>
-                  </span>
-                </button>
-              ))}
-            </>
-          )}
-          {dishes.length > 0 && (
-            <>
-              <span className="search-group">Jedlá</span>
-              {dishes.map((d) => (
-                <button key={d.name} onMouseDown={() => setQuery(d.name, true)} role="option">
-                  <span className="mini-logo dish">
-                    <Icon name="search" size={14} />
-                  </span>
-                  <span>
-                    {d.name}
-                    <small>napr. {d.place}</small>
-                  </span>
-                </button>
-              ))}
-            </>
-          )}
-        </div>
-      )}
-    </form>
-  );
-}
-
 export default function Browse() {
   const { restaurants } = useRestaurants();
   const { slug } = useParams();
-  const nav = useNavigate();
   const loc = useLocation();
-  const { geo, favorites, userPosition, requestLocation } = useProto();
+  const { geo, favorites, userPosition, requestLocation, loggedIn } = useProto();
+  const { panel, setPanel, query, setQuery, setActiveFilters } = useUi();
   const [f, setF] = useState<Filters>(initial);
-  const [draft, setDraft] = useState("");
-  const [query, setQuery] = useState("");
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [mapExpanded, setMapExpanded] = useState(false);
   const [pinned, setPinned] = useState<string | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
   const [bannerOff, setBannerOff] = useState(false);
@@ -161,15 +66,29 @@ export default function Browse() {
   const set = (p: Partial<Filters>) => setF((c) => ({ ...c, ...p }));
   const origin = geo === "granted" && userPosition ? userPosition : CITY_CENTER;
 
+  // "Len obľúbené" only makes sense signed in; fall back instead of showing
+  // an empty list without explanation.
   useEffect(() => {
-    if (geo === "unknown") requestLocation();
-  }, []);
+    if (!loggedIn && f.sort === "favorites") set({ sort: "rating" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loggedIn, f.sort]);
 
   useEffect(() => {
-    if (!userPosition) return;
+    if (geo === "unknown") requestLocation();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // When a fresh position arrives, jump to the nearest city once. Deliberately
+  // not re-run on `restaurants` changes: the list refreshes on every window
+  // focus, and re-applying would clobber the user's chosen city and sorting.
+  const appliedPosition = useRef<{ lat: number; lng: number } | null>(null);
+  useEffect(() => {
+    if (!userPosition || appliedPosition.current === userPosition) return;
+    appliedPosition.current = userPosition;
     const near = restaurants.reduce((a, b) => (distanceKm(userPosition, a) <= distanceKm(userPosition, b) ? a : b));
     set({ city: near.city, district: "Všetky časti", sort: "distance" });
-  }, [userPosition, restaurants]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userPosition]);
 
   const results = useMemo(() => {
     const q = query.trim().toLocaleLowerCase("sk");
@@ -211,10 +130,31 @@ export default function Browse() {
     f.excluded.length +
     f.cuisines.length;
 
+  useEffect(() => setActiveFilters(activeCount), [activeCount, setActiveFilters]);
+
+  // Lock background scrolling while any chrome window is open. Only the root
+  // element is locked — hiding overflow on body too would turn body into a
+  // scroll container, so the sticky top bar would stick to the document top
+  // and disappear instead of staying pinned to the viewport.
+  useEffect(() => {
+    const lock = panel === "filters" || panel === "map" || panel === "search";
+    document.documentElement.style.overflow = lock ? "hidden" : "";
+    return () => {
+      document.documentElement.style.overflow = "";
+    };
+  }, [panel]);
+
+  // Escape closes the filters window (the map handles its own).
+  useEffect(() => {
+    if (panel !== "filters") return;
+    const on = (e: KeyboardEvent) => e.key === "Escape" && setPanel(null);
+    window.addEventListener("keydown", on);
+    return () => window.removeEventListener("keydown", on);
+  }, [panel, setPanel]);
+
   const reset = () => {
     setF({ ...initial, city: f.city });
     setQuery("");
-    setDraft("");
     setPinned(null);
   };
 
@@ -222,186 +162,157 @@ export default function Browse() {
 
   const pick = (s: string) => {
     setPinned(s);
-    if (!isIndex) nav("/");
+    setPanel(null);
     setTimeout(() => feedRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
   };
 
-  const ctx: BrowseCtx = { f, set, query, setQuery, results, pinned, setPinned, reset, activeCount, setHovered };
+  const ctx: BrowseCtx = { f, set, query, results, pinned, setPinned, reset, activeCount, setHovered };
 
   return (
     <>
-      {isIndex && (
-        <section className="hero">
-          <div className="hero-bg">
-            <div className="hero-orb hero-orb-one" />
-            <div className="hero-orb hero-orb-two" />
-          </div>
-          <div className="hero-inner">
-            <p className="eyebrow">Dobrý obed je bližšie, než si myslíte</p>
-            <h1>Čo si dáte dnes?</h1>
-            <p className="hero-copy">Objavte najlepšie denné menu vo vašom okolí. Čerstvé, prehľadné a bez zdĺhavého hľadania.</p>
-            <div className="search-controls">
-              <Search
-                query={draft}
-                setQuery={(q, apply) => {
-                  setDraft(q);
-                  if (apply) setQuery(q);
-                }}
-                onSubmit={() => {
-                  setQuery(draft);
-                  setTimeout(() => feedRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
-                }}
-                onOpen={(s) => nav(`/restaurant/${s}`)} />
-              <button
-                className={`hero-filter-button ${filtersOpen ? "active" : ""}`}
-                onClick={() => setFiltersOpen(!filtersOpen)}
-                aria-expanded={filtersOpen}
-              >
-                <Icon name="filter" size={19} />
-                <span>Filtre</span>
-                {activeCount > 0 && <span className="filter-count">{activeCount}</span>}
-              </button>
+      {isIndex && panel === "filters" && (
+        <div className="filters-overlay" onClick={() => setPanel(null)}>
+          <div
+            className="filters-overlay-card glass"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Filtre"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="filters-heading">
+              <div>
+                <strong>Filtrovať ponuku</strong>
+                <span>Prispôsobte si výsledky podľa vašich preferencií</span>
+              </div>
             </div>
-          </div>
-        </section>
-      )}
-
-      {isIndex && filtersOpen && (
-        <section className="filters-wrap open" aria-label="Filtre">
-          <div className="filters-heading">
-            <div>
-              <strong>Filtrovať ponuku</strong>
-              <span>Prispôsobte si výsledky podľa vašich preferencií</span>
-            </div>
-            <button onClick={() => setFiltersOpen(false)} aria-label="Zavrieť filtre">
-              <Icon name="close" size={18} />
-            </button>
-          </div>
-          <div className="primary-filters">
-            <SelectField icon="calendar" label="Deň" value={String(f.day)} onChange={(v) => set({ day: Number(v) })}>
-              {DAYS.map((d, i) => (
-                <option key={d.label} value={i}>
-                  {d.label}
-                </option>
-              ))}
-            </SelectField>
-            <SelectField
-              icon="location"
-              label="Mesto"
-              value={f.city}
-              onChange={(v) => set({ city: v, district: "Všetky časti" })}
-            >
-              {Object.keys(LOCATIONS).map((c) => (
-                <option key={c}>{c}</option>
-              ))}
-            </SelectField>
-            <SelectField label="Mestská časť" value={f.district} onChange={(v) => set({ district: v })}>
-              {LOCATIONS[f.city].map((d) => (
-                <option key={d}>{d}</option>
-              ))}
-            </SelectField>
-          </div>
-          <div className="filter-block">
-            <span className="filter-title">Kuchyňa</span>
-            <div className="chips">
-              {CUISINES.map((c) => (
-                <button
-                  key={c}
-                  className={`chip ${f.cuisines.includes(c) ? "on" : ""}`}
-                  aria-pressed={f.cuisines.includes(c)}
-                  onClick={() =>
-                    set({ cuisines: f.cuisines.includes(c) ? f.cuisines.filter((x) => x !== c) : [...f.cuisines, c] })
-                  }
+            <div className="filters-scroll">
+              <div className="primary-filters">
+                <SelectField icon="calendar" label="Deň" value={String(f.day)} onChange={(v) => set({ day: Number(v) })}>
+                  {DAYS.map((d, i) => (
+                    <option key={d.label} value={i}>
+                      {d.label}
+                    </option>
+                  ))}
+                </SelectField>
+                <SelectField
+                  icon="location"
+                  label="Mesto"
+                  value={f.city}
+                  onChange={(v) => set({ city: v, district: "Všetky časti" })}
                 >
-                  {c}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="filter-block">
-            <span className="filter-title">
-              Bez alergénov <small>(vylúčiť jedlá obsahujúce)</small>
-            </span>
-            <div className="chips allergen-grid">
-              {ALLERGENS.map((a) => (
-                <button
-                  key={a.code}
-                  className={`chip ${f.excluded.includes(a.code) ? "on danger" : ""}`}
-                  aria-pressed={f.excluded.includes(a.code)}
-                  onClick={() =>
-                    set({
-                      excluded: f.excluded.includes(a.code)
-                        ? f.excluded.filter((x) => x !== a.code)
-                        : [...f.excluded, a.code],
-                    })
-                  }
-                >
-                  <b>{a.code}</b> {a.name}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="advanced-filters">
-            <label className="range-field">
-              <span>
-                Max. cena: <strong>{f.maxPrice >= MAX_PRICE ? "bez limitu" : `${f.maxPrice} €`}</strong>
-              </span>
-              <input
-                type="range"
-                min={6}
-                max={MAX_PRICE}
-                step={1}
-                value={f.maxPrice}
-                onChange={(e) => set({ maxPrice: Number(e.target.value) })}
-                aria-label="Maximálna cena"
-              />
-            </label>
-            <SelectField icon="clock" label="Otvorené o" value={f.openAt} onChange={(v) => set({ openAt: v })}>
-              <option value="">Kedykoľvek</option>
-              <option value="now">Teraz</option>
-              {Array.from({ length: 24 }, (_, h) => `${String(h).padStart(2, "0")}:00`).map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </SelectField>
-            <SelectField label="Hodnotenie" value={String(f.minRating)} onChange={(v) => set({ minRating: Number(v) })}>
-              <option value="0">Akékoľvek hodnotenie</option>
-              {[1, 2, 3, 4, 5].map((n) => (
-                <option key={n} value={n} label={n === 5 ? "5 hviezdičiek" : `${n} ${n === 1 ? "hviezdička" : "hviezdičky"} a viac`}>
-                  <span className="star-row" aria-hidden="true">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <Icon key={i} name="star" size={14} filled={i <= n} />
-                    ))}
+                  {Object.keys(LOCATIONS).map((c) => (
+                    <option key={c}>{c}</option>
+                  ))}
+                </SelectField>
+                <SelectField label="Mestská časť" value={f.district} onChange={(v) => set({ district: v })}>
+                  {LOCATIONS[f.city].map((d) => (
+                    <option key={d}>{d}</option>
+                  ))}
+                </SelectField>
+              </div>
+              <div className="filter-block">
+                <span className="filter-title">Kuchyňa</span>
+                <div className="chips">
+                  {CUISINES.map((c) => (
+                    <button
+                      key={c}
+                      className={`chip ${f.cuisines.includes(c) ? "on" : ""}`}
+                      aria-pressed={f.cuisines.includes(c)}
+                      onClick={() =>
+                        set({ cuisines: f.cuisines.includes(c) ? f.cuisines.filter((x) => x !== c) : [...f.cuisines, c] })
+                      }
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="filter-block">
+                <span className="filter-title">
+                  Bez alergénov <small>(vylúčiť jedlá obsahujúce)</small>
+                </span>
+                <div className="chips allergen-grid">
+                  {ALLERGENS.map((a) => (
+                    <button
+                      key={a.code}
+                      className={`chip ${f.excluded.includes(a.code) ? "on danger" : ""}`}
+                      aria-pressed={f.excluded.includes(a.code)}
+                      onClick={() =>
+                        set({
+                          excluded: f.excluded.includes(a.code)
+                            ? f.excluded.filter((x) => x !== a.code)
+                            : [...f.excluded, a.code],
+                        })
+                      }
+                    >
+                      <b>{a.code}</b> {a.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="advanced-filters">
+                <label className="range-field">
+                  <span>
+                    Max. cena: <strong>{f.maxPrice >= MAX_PRICE ? "bez limitu" : `${f.maxPrice} €`}</strong>
                   </span>
-                  {n === 5 ? "5" : `${n} a viac`}
-                </option>
-              ))}
-            </SelectField>
-            <label className="check-field">
-              <input type="checkbox" checked={f.delivery} onChange={(e) => set({ delivery: e.target.checked })} />
-              <span className="custom-check">{f.delivery && <Icon name="check" size={14} />}</span>
-              <Icon name="truck" size={19} /> Len s donáškou
-            </label>
-            <button className="reset-button" onClick={reset}>
-              Zrušiť filtre
-            </button>
+                  <input
+                    type="range"
+                    min={6}
+                    max={MAX_PRICE}
+                    step={1}
+                    value={f.maxPrice}
+                    onChange={(e) => set({ maxPrice: Number(e.target.value) })}
+                    aria-label="Maximálna cena"
+                  />
+                </label>
+                <SelectField icon="clock" label="Otvorené o" value={f.openAt} onChange={(v) => set({ openAt: v })}>
+                  <option value="">Kedykoľvek</option>
+                  <option value="now">Teraz</option>
+                  {Array.from({ length: 24 }, (_, h) => `${String(h).padStart(2, "0")}:00`).map((t) => (
+                    <option key={t} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </SelectField>
+                <SelectField label="Hodnotenie" value={String(f.minRating)} onChange={(v) => set({ minRating: Number(v) })}>
+                  <option value="0">Akékoľvek hodnotenie</option>
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <option key={n} value={n} label={n === 5 ? "5 hviezdičiek" : `${n} ${n === 1 ? "hviezdička" : "hviezdičky"} a viac`}>
+                      <span className="star-row" aria-hidden="true">
+                        {[1, 2, 3, 4, 5].map((i) => (
+                          <Icon key={i} name="star" size={14} filled={i <= n} />
+                        ))}
+                      </span>
+                      {n === 5 ? "5" : `${n} a viac`}
+                    </option>
+                  ))}
+                </SelectField>
+                <label className="check-field">
+                  <input type="checkbox" checked={f.delivery} onChange={(e) => set({ delivery: e.target.checked })} />
+                  <span className="custom-check">{f.delivery && <Icon name="check" size={14} />}</span>
+                  <Icon name="truck" size={19} /> Len s donáškou
+                </label>
+                <button className="reset-button" onClick={reset}>
+                  Zrušiť filtre
+                </button>
+              </div>
+            </div>
           </div>
-        </section>
+        </div>
       )}
 
-      <section className={`content-wrap ${slug ? "restaurant-view" : mapExpanded ? "map-open" : ""}`}>
+      <section className={`content-wrap ${slug ? "restaurant-view" : ""}`}>
         <div className="results-column" ref={feedRef}>
           {geo === "denied" && isIndex && !bannerOff && (
             <div className="geo-banner" role="status">
               <Icon name="location" size={18} />
               <div>
                 <strong>Polohu nemáme k dispozícii</strong>
-                <span>Zobrazujeme okolie centra mesta. Vyberte mesto a mestskú časť v Filtroch.</span>
+                <span>Zobrazujeme okolie centra mesta. Vyberte mesto a mestskú časť vo Filtroch.</span>
               </div>
               <button
                 onClick={() => {
-                  setFiltersOpen(true);
+                  setPanel("filters");
                   setBannerOff(true);
                 }}
               >
@@ -409,20 +320,32 @@ export default function Browse() {
               </button>
             </div>
           )}
-          <Outlet context={ctx} />
+          {/* Keyed per restaurant so Detail's local state (menu tab, selected
+              day, lightbox) resets between different restaurants, while Browse
+              itself stays mounted and keeps the filters. */}
+          <Outlet key={slug ?? "index"} context={ctx} />
         </div>
-        {!slug && <MapPanel
-          items={mapItems}
-          selected={slug ?? pinned}
-          hovered={hovered}
-          expanded={mapExpanded}
-          setExpanded={(expanded) => {
-            setMapExpanded(expanded);
-            if (!expanded) setPinned(null);
-          }}
-          onPick={pick}
-        />}
       </section>
+
+      {isIndex && panel === "map" && (
+        <div className="map-overlay" onClick={() => setPanel(null)}>
+          <div
+            className="map-overlay-card glass"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Mapa reštaurácií"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <MapPanel
+              items={mapItems}
+              selected={pinned}
+              hovered={hovered}
+              onPick={pick}
+              onClose={() => setPanel(null)}
+            />
+          </div>
+        </div>
+      )}
     </>
   );
 }

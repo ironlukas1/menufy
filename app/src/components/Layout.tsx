@@ -1,15 +1,26 @@
-import { Component, useEffect, useState, type ReactNode } from "react";
-import { Link, NavLink, Outlet, useLocation } from "react-router";
+import { Component, useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router";
 import Icon from "./Icon";
+import SearchBox from "./SearchBox";
+import { chromeHearts, chromeRects, installChromeBridge, postChrome } from "./chromeBridge";
+import { isNative, nativeGlass } from "@/native";
 import { useProto } from "@/proto/ProtoContext";
-import { isNative } from "@/native";
+import { useUi } from "@/proto/UiContext";
 
 const links = [
-  { to: "/", label: "Domov", icon: "search", auth: false, end: true },
-  { to: "/saved", label: "Uložené", icon: "heart", auth: true, end: false },
-  { to: "/notifications", label: "Upozornenia", icon: "bell", auth: true, end: false },
-  { to: "/owners", label: "Vlastníš reštauráciu?", icon: "store", auth: false, end: false },
-  { to: "/settings", label: "Nastavenia", icon: "settings", auth: false, end: false },
+  { to: "/", label: "Domov", icon: "search", end: true },
+  { to: "/saved", label: "Uložené", icon: "heart", end: false },
+  { to: "/notifications", label: "Upozornenia", icon: "bell", end: false },
+  { to: "/owners", label: "Vlastníš reštauráciu?", icon: "store", end: false },
+  { to: "/account", label: "Účet", icon: "user", end: false },
+] as const;
+
+/** Bottom task-bar tabs: settings live inside the account page. */
+const tabs = [
+  { to: "/", label: "Domov", icon: "search", end: true },
+  { to: "/saved", label: "Uložené", icon: "heart", end: false },
+  { to: "/notifications", label: "Upozornenia", icon: "bell", end: false },
+  { to: "/account", label: "Účet", icon: "user", end: false },
 ] as const;
 
 function Brand() {
@@ -26,16 +37,117 @@ function Brand() {
 }
 
 function TopBar() {
-  const { loggedIn, email } = useProto();
+  const { loggedIn, email, dark, refreshProfile } = useProto();
+  const { panel, togglePanel, setPanel, activeFilters, query, setQuery } = useUi();
   const [open, setOpen] = useState(false);
   const loc = useLocation();
+  const nav = useNavigate();
+  const isHome = loc.pathname === "/";
 
   useEffect(() => {
     setOpen(false);
+    setPanel(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loc.pathname]);
 
+  // Native shell bridge: the glass buttons in the shell toggle these panels.
+  // Wrappers go through a ref so the installed bridge never goes stale when
+  // the top bar re-renders (or hot-reloads).
+  const togglesRef = useRef({
+    search: () => {},
+    filters: () => {},
+    map: () => {},
+    heartTap: (_slug: string) => {},
+    poke: () => {},
+  });
+  togglesRef.current = {
+    search: () => togglePanel("search"),
+    filters: () => togglePanel("filters"),
+    map: () => togglePanel("map"),
+    // Replays the tap on the (hidden) web heart so all of its logic — login
+    // redirect, favorite toggle, animation — stays in exactly one place.
+    heartTap: (slug: string) => {
+      const el = Array.from(document.querySelectorAll<HTMLElement>("[data-heart]")).find(
+        (n) => n.dataset.heart === slug,
+      );
+      el?.click();
+    },
+    poke: () => {
+      report();
+      // A tab regains focus: re-read favorites/preferences from the database,
+      // because every shell tab is a separate WebView with its own state copy
+      // and the change may have been made in another tab.
+      void refreshProfile();
+    },
+  };
+
+  useEffect(
+    () =>
+      installChromeBridge({
+        search: () => togglesRef.current.search(),
+        filters: () => togglesRef.current.filters(),
+        map: () => togglesRef.current.map(),
+        heartTap: (slug) => togglesRef.current.heartTap(slug),
+        poke: () => togglesRef.current.poke(),
+      }),
+    [],
+  );
+
+  const report = useCallback(() => {
+    postChrome({
+      rects: chromeRects(),
+      open: { map: panel === "map", filters: panel === "filters", search: panel === "search" },
+      count: activeFilters,
+      dark,
+      scrollY: window.scrollY,
+      hearts: chromeHearts(),
+    });
+  }, [panel, activeFilters, dark]);
+
+  // Report after every render (rects depend on the open state and badge).
+  useLayoutEffect(() => {
+    const raf = requestAnimationFrame(report);
+    return () => cancelAnimationFrame(raf);
+  });
+
+  useEffect(() => {
+    window.addEventListener("resize", report);
+    const bar = document.querySelector(".top-bar");
+    const ro = new ResizeObserver(report);
+    if (bar) ro.observe(bar);
+    // Card lists change without the top bar re-rendering (day/price filters,
+    // favorites toggling classes) — watch the DOM so the shell always has
+    // fresh heart rects. rAF-debounced to coalesce bursts.
+    let raf = 0;
+    const mo = new MutationObserver(() => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(report);
+    });
+    mo.observe(document.body, { childList: true, subtree: true, attributes: true });
+    return () => {
+      window.removeEventListener("resize", report);
+      ro.disconnect();
+      mo.disconnect();
+      cancelAnimationFrame(raf);
+    };
+  }, [report]);
+
+  const submitSearch = () => {
+    setPanel(null);
+    document.querySelector(".results-column")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  // Escape closes the search window (filters/map handle their own).
+  useEffect(() => {
+    if (panel !== "search") return;
+    const on = (e: KeyboardEvent) => e.key === "Escape" && setPanel(null);
+    window.addEventListener("keydown", on);
+    return () => window.removeEventListener("keydown", on);
+  }, [panel, setPanel]);
+
   return (
-    <header className="top-bar">
+    <>
+      <header className="top-bar">
       <div className="top-bar-inner">
         <Brand />
         <nav className="top-nav" aria-label="Hlavná navigácia">
@@ -46,11 +158,39 @@ function TopBar() {
           ))}
         </nav>
         <div className="top-actions">
-          {loggedIn ? (
-            <Link to="/settings" className="top-avatar" aria-label="Môj účet">
-              <Icon name="user" size={18} />
-            </Link>
-          ) : (
+          {isHome && (
+            <div className={`top-chrome${nativeGlass ? " glass-native" : ""}`}>
+              <button
+                data-chrome="map"
+                className={`chrome-btn glass${panel === "map" ? " active" : ""}`}
+                onClick={() => togglePanel("map")}
+                aria-label="Mapa"
+                aria-expanded={panel === "map"}
+              >
+                <Icon name="map" size={20} />
+              </button>
+              <button
+                data-chrome="filters"
+                className={`chrome-btn glass${panel === "filters" ? " active" : ""}`}
+                onClick={() => togglePanel("filters")}
+                aria-label="Filtre"
+                aria-expanded={panel === "filters"}
+              >
+                <Icon name="filter" size={20} />
+                {activeFilters > 0 && <span className="filter-count">{activeFilters}</span>}
+              </button>
+              <button
+                data-chrome="search"
+                className={`chrome-btn glass${panel === "search" ? " active" : ""}`}
+                onClick={() => togglePanel("search")}
+                aria-label="Hľadať"
+                aria-expanded={panel === "search"}
+              >
+                <Icon name="search" size={20} />
+              </button>
+            </div>
+          )}
+          {!loggedIn && (
             <Link to="/login" className="top-signin">
               <Icon name="user" size={17} /> Prihlásiť sa
             </Link>
@@ -92,17 +232,37 @@ function TopBar() {
           </aside>
         </div>
       )}
-    </header>
+      </header>
+
+      {isHome && panel === "search" && (
+        <div className="search-overlay" onClick={() => setPanel(null)}>
+          <div
+            className="search-overlay-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Hľadať"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <SearchBox
+              applied={query}
+              onApply={setQuery}
+              onSubmit={submitSearch}
+              onOpen={(slug) => nav(`/restaurant/${slug}`)}
+            />
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
 function BottomNav() {
   return (
-    <nav className="bottom-nav" aria-label="Hlavná navigácia">
-      {links.map((l) => (
+    <nav className="bottom-nav glass" aria-label="Hlavná navigácia">
+      {tabs.map((l) => (
         <NavLink key={l.to} to={l.to} end={l.end} className="bottom-tab">
           <Icon name={l.icon} size={22} />
-          <span>{l.to === "/owners" ? "Môj podnik" : l.label}</span>
+          <span>{l.label}</span>
         </NavLink>
       ))}
     </nav>
@@ -127,13 +287,19 @@ export function Footer() {
   );
 }
 
-class RouteBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+class RouteBoundary extends Component<{ children: ReactNode; locationKey: string }, { error: Error | null }> {
   state = { error: null as Error | null };
   static getDerivedStateFromError(error: Error) {
     return { error };
   }
   componentDidCatch(e: unknown) {
     console.error(e);
+  }
+  componentDidUpdate(prev: { locationKey: string }) {
+    // A new route gets a clean slate, but the route subtree itself stays
+    // mounted so page state (filters, search, pinned restaurant, scroll
+    // position) survives navigating into a detail page and back.
+    if (prev.locationKey !== this.props.locationKey && this.state.error) this.setState({ error: null });
   }
   render() {
     const { error } = this.state;
@@ -157,7 +323,7 @@ export default function Layout() {
     <div className="app-shell">
       <TopBar />
       <main>
-        <RouteBoundary key={loc.pathname}>
+        <RouteBoundary locationKey={loc.pathname}>
           <Outlet />
         </RouteBoundary>
       </main>

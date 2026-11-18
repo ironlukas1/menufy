@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import Icon from "./Icon";
-import { dailyFor, formatPrice, type MenuItem, type Restaurant } from "@/data/restaurants";
-import { fmtKm, openStatus } from "@/lib";
+import { DAYS, dailyFor, formatPrice, type MenuItem, type Restaurant } from "@/data/restaurants";import { fmtKm, openStatus } from "@/lib";
 import { useProto } from "@/proto/ProtoContext";
 
 export function useFavorite(slug: string) {
@@ -23,6 +22,7 @@ export function HeartButton({ slug }: { slug: string }) {
   return (
     <button
       className={`favorite ${active ? "selected" : ""}`}
+      data-heart={slug}
       onClick={toggle}
       aria-pressed={active}
       aria-label={active ? "Odstrániť z obľúbených" : "Pridať do obľúbených"}
@@ -74,7 +74,7 @@ export default function RestaurantCard({
   const items = dailyFor(r, day).filter(
     (it) => it.price <= maxPrice && !it.allergens.some((a) => excluded.includes(String(a))),
   );
-  const date = day === 0 ? "Dnes" : ["", "Piatok", "Pondelok", "Utorok"][day];
+  const date = DAYS[day].short;
   const hasHit = !!q && items.some((it) => it.name.toLocaleLowerCase("sk").includes(q));
   const [open, setOpen] = useState(menuOpen || hasHit);
   useEffect(() => setOpen(menuOpen || hasHit), [menuOpen, hasHit]);

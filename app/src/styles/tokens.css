@@ -27,6 +27,11 @@
   --map-river: #c9e3e2;
   --map-road: #fbfbf7;
   --shadow: 0 14px 38px rgba(27, 52, 38, 0.08);
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-bg-strong: rgba(255, 255, 255, 0.78);
+  --glass-line: rgba(255, 255, 255, 0.6);
+  --glass-highlight: rgba(255, 255, 255, 0.75);
+  --glass-shadow: 0 12px 40px rgba(10, 30, 20, 0.16);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -57,6 +62,11 @@
     --map-river: #1d3a3a;
     --map-road: #2a352f;
     --shadow: 0 14px 38px rgba(0, 0, 0, 0.35);
+    --glass-bg: rgba(27, 37, 32, 0.55);
+    --glass-bg-strong: rgba(27, 37, 32, 0.8);
+    --glass-line: rgba(255, 255, 255, 0.14);
+    --glass-highlight: rgba(255, 255, 255, 0.24);
+    --glass-shadow: 0 14px 44px rgba(0, 0, 0, 0.5);
   }
 }
 
@@ -87,4 +97,9 @@
   --map-river: #1d3a3a;
   --map-road: #2a352f;
   --shadow: 0 14px 38px rgba(0, 0, 0, 0.35);
+  --glass-bg: rgba(27, 37, 32, 0.55);
+  --glass-bg-strong: rgba(27, 37, 32, 0.8);
+  --glass-line: rgba(255, 255, 255, 0.14);
+  --glass-highlight: rgba(255, 255, 255, 0.24);
+  --glass-shadow: 0 14px 44px rgba(0, 0, 0, 0.5);
 }

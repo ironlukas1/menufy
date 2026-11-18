@@ -2,13 +2,15 @@ import { Link } from "react-router";
 import Icon from "@/components/Icon";
 import RestaurantCard from "@/components/RestaurantCard";
 import { useRestaurants } from "@/proto/RestaurantContext";
-import { USER_POS, distanceKm } from "@/lib";
+import { CITY_CENTER, distanceKm } from "@/lib";
 import { useProto } from "@/proto/ProtoContext";
 
 export default function Saved() {
   const { restaurants } = useRestaurants();
-  const { favorites } = useProto();
+  const { favorites, geo, userPosition } = useProto();
   const list = restaurants.filter((r) => favorites.includes(r.slug));
+  // Same origin as the main page, so distances agree between the two tabs.
+  const origin = geo === "granted" && userPosition ? userPosition : CITY_CENTER;
 
   return (
     <div className="page">
@@ -19,7 +21,7 @@ export default function Saved() {
       </div>
       <div className="restaurant-list">
         {list.map((r) => (
-          <RestaurantCard key={r.slug} r={r} day={0} excluded={[]} maxPrice={99} query="" distance={distanceKm(USER_POS, r)} />
+          <RestaurantCard key={r.slug} r={r} day={0} excluded={[]} maxPrice={99} query="" distance={distanceKm(origin, r)} />
         ))}
         {list.length === 0 && (
           <div className="empty-state">

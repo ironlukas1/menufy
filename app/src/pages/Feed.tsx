@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useOutletContext } from "react-router";
 import Icon from "@/components/Icon";
+import Modal from "@/components/Modal";
 import SelectField from "@/components/SelectField";
 import RestaurantCard from "@/components/RestaurantCard";
+import { LOCATIONS } from "@/data/allergens";
 import { DAYS } from "@/data/restaurants";
 import { useRestaurants } from "@/proto/RestaurantContext";
 import type { BrowseCtx } from "./Browse";
@@ -11,8 +13,9 @@ import { useProto } from "@/proto/ProtoContext";
 export default function Feed() {
   const { f, set, results, query, pinned, setPinned, reset, setHovered } = useOutletContext<BrowseCtx>();
   const { restaurants } = useRestaurants();
-  const { geo } = useProto();
+  const { geo, loggedIn } = useProto();
   const [allOpen, setAllOpen] = useState(false);
+  const [cityOpen, setCityOpen] = useState(false);
   const n = results.length;
   const noun = n === 1 ? "reštaurácia" : n >= 2 && n <= 4 ? "reštaurácie" : "reštaurácií";
 
@@ -20,10 +23,17 @@ export default function Feed() {
     <>
       <div className="results-header">
         <div>
-          <p className="section-kicker">
+          <button
+            className="section-kicker city-kicker"
+            onClick={() => setCityOpen(true)}
+            aria-haspopup="dialog"
+            aria-expanded={cityOpen}
+          >
+            <Icon name="location" size={13} />
             {f.city}
             {f.district !== "Všetky časti" ? ` – ${f.district}` : ""}
-          </p>
+            <Icon name="chevron" size={13} />
+          </button>
           <h2>Menu vo vašom okolí</h2>
           <p>
             {n} {noun} · {DAYS[f.day].short === "Dnes" ? "dnešné menu" : DAYS[f.day].label} ·{" "}
@@ -35,7 +45,7 @@ export default function Feed() {
         <SelectField label="Zoradiť výsledky" value={f.sort} onChange={(v) => set({ sort: v as typeof f.sort })}>
           <option value="rating">Najlepšie hodnotené</option>
           <option value="price">Najnižšia cena</option>
-          <option value="favorites">Len obľúbené</option>
+          {loggedIn && <option value="favorites">Len obľúbené</option>}
           <option value="distance">{geo === "granted" ? "Najbližšie" : "Najbližšie k centru"}</option>
         </SelectField>
       </div>
@@ -77,6 +87,32 @@ export default function Feed() {
           </div>
         )}
       </div>
+
+      {cityOpen && (
+        <Modal title="Zmeniť mesto" onClose={() => setCityOpen(false)} className="glass">
+          <div className="city-list">
+            {Object.keys(LOCATIONS).map((c) => (
+              <button
+                key={c}
+                className={c === f.city ? "on" : ""}
+                onClick={() => {
+                  set({ city: c, district: "Všetky časti" });
+                  setCityOpen(false);
+                }}
+              >
+                <Icon name="location" size={17} />
+                {c}
+                {c === f.city && (
+                  <span className="city-check">
+                    <Icon name="check" size={17} />
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+          <p className="muted city-hint">Mestskú časť viete doladiť vo Filtroch.</p>
+        </Modal>
+      )}
     </>
   );
 }

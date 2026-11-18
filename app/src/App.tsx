@@ -1,12 +1,14 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router";
 import Layout from "@/components/Layout";
 import { ProtoProvider, RequireAuth } from "@/proto/ProtoContext";
+import { UiProvider } from "@/proto/UiContext";
 import Browse from "@/pages/Browse";
 import Feed from "@/pages/Feed";
 import Detail from "@/pages/Detail";
 import Saved from "@/pages/Saved";
 import Notifications from "@/pages/Notifications";
 import Owners from "@/pages/Owners";
+import Account from "@/pages/Account";
 import { RestaurantProvider } from "@/proto/RestaurantContext";
 import Settings from "@/pages/Settings";
 import { ForgotPassword, Login, ResetPassword, Verified } from "@/pages/Auth";
@@ -16,6 +18,7 @@ export default function App() {
   return (
     <ProtoProvider>
       <RestaurantProvider>
+      <UiProvider>
       <BrowserRouter>
         <Routes>
           <Route element={<Layout />}>
@@ -26,6 +29,7 @@ export default function App() {
             <Route path="saved" element={<RequireAuth><Saved /></RequireAuth>} />
             <Route path="notifications" element={<RequireAuth><Notifications /></RequireAuth>} />
             <Route path="owners" element={<Owners />} />
+            <Route path="account" element={<Account />} />
             <Route path="settings" element={<Settings />} />
             <Route path="terms" element={<Terms />} />
             <Route path="privacy" element={<Privacy />} />
@@ -37,6 +41,7 @@ export default function App() {
           </Route>
         </Routes>
       </BrowserRouter>
+      </UiProvider>
       </RestaurantProvider>
     </ProtoProvider>
   );
