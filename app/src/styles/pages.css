@@ -59,9 +59,9 @@
 /* when the native shell draws the real Liquid Glass buttons, the web copies
    stay invisible but keep their layout slot so the rects stay valid */
 html[data-glass="native"] .top-chrome { visibility: hidden; }
-/* same for the card hearts — the shell draws real glass hearts at their
-   document positions and replays taps onto the (invisible) web buttons */
-html[data-glass="native"] .favorite { visibility: hidden; }
+/* Expo preview draws native glass hearts over the web buttons. Capacitor's
+   UIKit shell does not, so keep its Save buttons visible. */
+html[data-glass-hearts="native"] .favorite { visibility: hidden; }
 
 /* search strip attached under the top bar (the field itself is the glass) */
 /* search window (opened from the top-bar search button, closed by the same
