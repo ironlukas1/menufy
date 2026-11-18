@@ -27,14 +27,11 @@
   --map-river: #c9e3e2;
   --map-road: #fbfbf7;
   --shadow: 0 14px 38px rgba(27, 52, 38, 0.08);
-  --bar-surface: rgba(255, 255, 255, .76);
-  --glass-surface: rgba(255, 255, 255, .56);
-  --glass-hover: rgba(255, 255, 255, .78);
-  --glass-active: rgba(226, 241, 231, .82);
-  --glass-border: rgba(255, 255, 255, .62);
-  --glass-sheen: rgba(255, 255, 255, .42);
-  --glass-edge: rgba(255, 255, 255, .8);
-  --glass-shadow: 0 5px 18px rgba(27, 52, 38, .12);
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-bg-strong: rgba(255, 255, 255, 0.78);
+  --glass-line: rgba(255, 255, 255, 0.6);
+  --glass-highlight: rgba(255, 255, 255, 0.75);
+  --glass-shadow: 0 12px 40px rgba(10, 30, 20, 0.16);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -65,14 +62,11 @@
     --map-river: #1d3a3a;
     --map-road: #2a352f;
     --shadow: 0 14px 38px rgba(0, 0, 0, 0.35);
-    --bar-surface: rgba(24, 33, 28, .76);
-    --glass-surface: rgba(43, 56, 48, .68);
-    --glass-hover: rgba(55, 72, 61, .8);
-    --glass-active: rgba(42, 82, 57, .85);
-    --glass-border: rgba(255, 255, 255, .14);
-    --glass-sheen: rgba(255, 255, 255, .13);
-    --glass-edge: rgba(255, 255, 255, .22);
-    --glass-shadow: 0 5px 18px rgba(0, 0, 0, .24);
+    --glass-bg: rgba(27, 37, 32, 0.55);
+    --glass-bg-strong: rgba(27, 37, 32, 0.8);
+    --glass-line: rgba(255, 255, 255, 0.14);
+    --glass-highlight: rgba(255, 255, 255, 0.24);
+    --glass-shadow: 0 14px 44px rgba(0, 0, 0, 0.5);
   }
 }
 
@@ -103,12 +97,9 @@
   --map-river: #1d3a3a;
   --map-road: #2a352f;
   --shadow: 0 14px 38px rgba(0, 0, 0, 0.35);
-  --bar-surface: rgba(24, 33, 28, .76);
-  --glass-surface: rgba(43, 56, 48, .68);
-  --glass-hover: rgba(55, 72, 61, .8);
-  --glass-active: rgba(42, 82, 57, .85);
-  --glass-border: rgba(255, 255, 255, .14);
-  --glass-sheen: rgba(255, 255, 255, .13);
-  --glass-edge: rgba(255, 255, 255, .22);
-  --glass-shadow: 0 5px 18px rgba(0, 0, 0, .24);
+  --glass-bg: rgba(27, 37, 32, 0.55);
+  --glass-bg-strong: rgba(27, 37, 32, 0.8);
+  --glass-line: rgba(255, 255, 255, 0.14);
+  --glass-highlight: rgba(255, 255, 255, 0.24);
+  --glass-shadow: 0 14px 44px rgba(0, 0, 0, 0.5);
 }

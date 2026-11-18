@@ -1,15 +1,14 @@
 import { Capacitor } from "@capacitor/core";
 
 const params = new URLSearchParams(location.search);
+
 export const isNative = Capacitor.isNativePlatform() || params.has("native");
 const isIOSApp = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "ios";
-
-/** iOS uses a native Liquid Glass tab bar drawn above the Capacitor WebView. */
-export const hasNativeTabBar = isIOSApp || params.get("tabbar") === "native";
-
-/** iOS uses UIKit Liquid Glass for the three browse toolbar buttons. */
-export const hasNativeGlass = isIOSApp || (params.get("glass") === "native");
+/** The bottom tab bar is drawn by the native shell; the web copy must hide. */
+export const nativeTabBar = isIOSApp || params.get("tabbar") === "native";
+/** The three top-bar buttons are drawn natively with real Liquid Glass. */
+export const nativeGlass = isIOSApp || params.get("glass") === "native";
 
 if (isNative) document.documentElement.classList.add("native");
-if (hasNativeTabBar) document.documentElement.classList.add("native-tabbar");
-if (hasNativeGlass) document.documentElement.classList.add("native-glass");
+if (nativeTabBar) document.documentElement.dataset.tabbar = "native";
+if (nativeGlass) document.documentElement.dataset.glass = "native";

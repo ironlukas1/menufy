@@ -1,20 +1,27 @@
-import { Component, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
+import { Component, useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router";
 import Icon from "./Icon";
+import SearchBox from "./SearchBox";
+import { chromeHearts, chromeRects, installChromeBridge, postChrome } from "./chromeBridge";
+import { isNative, nativeGlass } from "@/native";
 import { useProto } from "@/proto/ProtoContext";
-import { useRestaurants } from "@/proto/RestaurantContext";
 import { useUi } from "@/proto/UiContext";
-import { hasNativeGlass, hasNativeTabBar, isNative } from "@/native";
 
 const links = [
-  { to: "/", label: "Domov", icon: "search", auth: false, end: true },
-  { to: "/saved", label: "Uložené", icon: "heart", auth: true, end: false },
-  { to: "/notifications", label: "Upozornenia", icon: "bell", auth: true, end: false },
-  { to: "/owners", label: "Vlastníš reštauráciu?", icon: "store", auth: false, end: false },
-  { to: "/account", label: "Účet", icon: "user", auth: false, end: false },
+  { to: "/", label: "Domov", icon: "search", end: true },
+  { to: "/saved", label: "Uložené", icon: "heart", end: false },
+  { to: "/notifications", label: "Upozornenia", icon: "bell", end: false },
+  { to: "/owners", label: "Vlastníš reštauráciu?", icon: "store", end: false },
+  { to: "/account", label: "Účet", icon: "user", end: false },
 ] as const;
 
-const bottomLinks = links.filter((link) => link.to !== "/owners");
+/** Bottom task-bar tabs: settings live inside the account page. */
+const tabs = [
+  { to: "/", label: "Domov", icon: "search", end: true },
+  { to: "/saved", label: "Uložené", icon: "heart", end: false },
+  { to: "/notifications", label: "Upozornenia", icon: "bell", end: false },
+  { to: "/account", label: "Účet", icon: "user", end: false },
+] as const;
 
 function Brand() {
   const loc = useLocation();
@@ -29,280 +36,125 @@ function Brand() {
   );
 }
 
-function SearchOverlay() {
-  const { searchOpen, setSearchOpen, query, setQuery } = useUi();
-  const { restaurants } = useRestaurants();
-  const nav = useNavigate();
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [draft, setDraft] = useState(query);
-
-  useEffect(() => {
-    if (!searchOpen) return;
-    setDraft(query);
-    const t = setTimeout(() => inputRef.current?.focus(), 60);
-    return () => clearTimeout(t);
-  }, [searchOpen]);
-
-  if (!searchOpen) return null;
-
-  const q = draft.trim().toLocaleLowerCase("sk");
-  const places = q ? restaurants.filter((r) => r.name.toLocaleLowerCase("sk").includes(q)).slice(0, 4) : [];
-  const seen = new Map<string, { name: string; place: string }>();
-  if (q) {
-    restaurants.forEach((r) =>
-      [...r.daily.flat(), ...r.standard].forEach((it) => {
-        if (it.name.toLocaleLowerCase("sk").includes(q) && !seen.has(it.name)) {
-          seen.set(it.name, { name: it.name, place: r.name });
-        }
-      }),
-    );
-  }
-  const dishes = [...seen.values()].slice(0, 5);
-
-  const close = () => setSearchOpen(false);
-
-  const submit = (value: string) => {
-    setQuery(value);
-    close();
-    nav("/");
-  };
-
-  return (
-    <>
-      <div className="search-backdrop" onClick={close} />
-      <div className="top-search" role="search">
-        <form
-          className="search-box"
-          onSubmit={(e) => {
-            e.preventDefault();
-            inputRef.current?.blur();
-            submit(draft.trim());
-          }}
-        >
-          <Icon name="search" size={22} />
-          <input
-            ref={inputRef}
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") close();
-            }}
-            placeholder="Hľadať jedlo (napr. sviečková) alebo reštauráciu…"
-            aria-label="Hľadať jedlo alebo reštauráciu"
-            role="combobox"
-            aria-expanded={!!q && (places.length > 0 || dishes.length > 0)}
-          />
-          {draft && (
-            <button type="button" className="clear-search" onClick={() => { setDraft(""); setQuery(""); }} aria-label="Vymazať vyhľadávanie">
-              <Icon name="close" size={17} />
-            </button>
-          )}
-          <button type="submit" className="search-action">Hľadať</button>
-        </form>
-
-        {q && (places.length > 0 || dishes.length > 0) && (
-          <div className="search-menu" role="listbox">
-            {places.length > 0 && (
-              <>
-                <span className="search-group">Reštaurácie</span>
-                {places.map((r) => (
-                  <button key={r.slug} onClick={() => { close(); nav(`/restaurant/${r.slug}`); }} role="option">
-                    <span className="mini-logo">{r.initials}</span>
-                    <span>
-                      {r.name}
-                      <small>{r.address}</small>
-                    </span>
-                  </button>
-                ))}
-              </>
-            )}
-            {dishes.length > 0 && (
-              <>
-                <span className="search-group">Jedlá</span>
-                {dishes.map((d) => (
-                  <button key={d.name} onClick={() => submit(d.name)} role="option">
-                    <span className="mini-logo dish">
-                      <Icon name="search" size={14} />
-                    </span>
-                    <span>
-                      {d.name}
-                      <small>napr. {d.place}</small>
-                    </span>
-                  </button>
-                ))}
-              </>
-            )}
-          </div>
-        )}
-      </div>
-    </>
-  );
-}
-
 function TopBar() {
-  const { loggedIn, email, dark } = useProto();
-  const { searchOpen, setSearchOpen, filtersOpen, setFiltersOpen, activeFilters, mapOpen, setMapOpen } = useUi();
+  const { loggedIn, email, dark, refreshProfile } = useProto();
+  const { panel, togglePanel, setPanel, activeFilters, query, setQuery } = useUi();
   const [open, setOpen] = useState(false);
   const loc = useLocation();
   const nav = useNavigate();
-  const isBrowse = loc.pathname === "/";
-  const mapBtnRef = useRef<HTMLButtonElement>(null);
-  const filterBtnRef = useRef<HTMLButtonElement>(null);
-  const searchBtnRef = useRef<HTMLButtonElement>(null);
-  const lockedScroll = useRef<number | null>(null);
+  const isHome = loc.pathname === "/";
 
   useEffect(() => {
     setOpen(false);
-    if (loc.pathname !== "/") {
-      setSearchOpen(false);
-      setFiltersOpen(false);
-      setMapOpen(false);
-    }
-  }, [loc.pathname, setSearchOpen, setFiltersOpen, setMapOpen]);
+    setPanel(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loc.pathname]);
 
-  useEffect(() => {
-    const panelOpen = searchOpen || filtersOpen || mapOpen;
-    if (panelOpen && lockedScroll.current === null) {
-      lockedScroll.current = window.scrollY;
-      document.body.style.top = `-${lockedScroll.current}px`;
-      document.documentElement.classList.add("panel-open");
-    } else if (!panelOpen && lockedScroll.current !== null) {
-      const scrollY = lockedScroll.current;
-      lockedScroll.current = null;
-      document.documentElement.classList.remove("panel-open");
-      document.body.style.top = "";
-      window.scrollTo({ top: scrollY });
-    }
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      setSearchOpen(false);
-      setFiltersOpen(false);
-      setMapOpen(false);
-    };
-    window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
-  }, [searchOpen || filtersOpen || mapOpen, setSearchOpen, setFiltersOpen, setMapOpen]);
-
-  useEffect(() => () => {
-    document.documentElement.classList.remove("panel-open");
-    document.body.style.top = "";
-  }, []);
-
-  // Search, filters and map are mutually exclusive: opening one closes the
-  // other two, so the top bar never shows two panels at once.
-  const toggleSearch = () => {
-    setSearchOpen(!searchOpen);
-  };
-
-  const toggleFilters = () => {
-    const next = !filtersOpen;
-    if (!isBrowse) nav("/");
-    setFiltersOpen(next);
-  };
-
-  const toggleMap = () => {
-    const next = !mapOpen;
-    if (!isBrowse) nav("/");
-    setMapOpen(next);
-  };
-
-  const nativeTabIndex = Math.max(0, bottomLinks.findIndex((link) =>
-    link.to === "/"
-      ? loc.pathname === "/" || loc.pathname.startsWith("/restaurant/")
-      : loc.pathname === link.to || loc.pathname.startsWith(`${link.to}/`),
-  ));
-  const chromeHandlers = useRef({
-    toggleSearch,
-    toggleFilters,
-    toggleMap,
-    navigate: (path: string) => nav(path),
+  // Native shell bridge: the glass buttons in the shell toggle these panels.
+  // Wrappers go through a ref so the installed bridge never goes stale when
+  // the top bar re-renders (or hot-reloads).
+  const togglesRef = useRef({
+    search: () => {},
+    filters: () => {},
+    map: () => {},
+    heartTap: (_slug: string) => {},
+    poke: () => {},
   });
-  chromeHandlers.current = {
-    toggleSearch,
-    toggleFilters,
-    toggleMap,
-    navigate: (path) => {
-      if (path === "/" && loc.pathname === "/") window.scrollTo({ top: 0, behavior: "smooth" });
-      else nav(path);
+  togglesRef.current = {
+    search: () => togglePanel("search"),
+    filters: () => togglePanel("filters"),
+    map: () => togglePanel("map"),
+    // Replays the tap on the (hidden) web heart so all of its logic — login
+    // redirect, favorite toggle, animation — stays in exactly one place.
+    heartTap: (slug: string) => {
+      const el = Array.from(document.querySelectorAll<HTMLElement>("[data-heart]")).find(
+        (n) => n.dataset.heart === slug,
+      );
+      el?.click();
+    },
+    poke: () => {
+      report();
+      // A tab regains focus: re-read favorites/preferences from the database,
+      // because every shell tab is a separate WebView with its own state copy
+      // and the change may have been made in another tab.
+      void refreshProfile();
     },
   };
 
-  useEffect(() => {
-    const w = window as Window & {
-      __menufyChrome?: {
-        toggleSearch: () => void;
-        toggleFilters: () => void;
-        toggleMap: () => void;
-        navigate: (path: string) => void;
-        closeAll: () => void;
-      };
-    };
-    w.__menufyChrome = {
-      toggleSearch: () => chromeHandlers.current.toggleSearch(),
-      toggleFilters: () => chromeHandlers.current.toggleFilters(),
-      toggleMap: () => chromeHandlers.current.toggleMap(),
-      navigate: (path) => chromeHandlers.current.navigate(path),
-      closeAll: () => {
-        setSearchOpen(false);
-        setFiltersOpen(false);
-        setMapOpen(false);
-      },
-    };
-    return () => {
-      delete w.__menufyChrome;
-    };
-  }, [setSearchOpen, setFiltersOpen, setMapOpen]);
+  useEffect(
+    () =>
+      installChromeBridge({
+        navigate: (path) => nav(path),
+        search: () => togglesRef.current.search(),
+        filters: () => togglesRef.current.filters(),
+        map: () => togglesRef.current.map(),
+        heartTap: (slug) => togglesRef.current.heartTap(slug),
+        poke: () => togglesRef.current.poke(),
+      }),
+    [nav],
+  );
 
-  // Publish the DOM button geometry and panel state so the native glass
-  // buttons can sit exactly where the (now hidden) web buttons are.
+  const report = useCallback(() => {
+    const activeTab = loc.pathname.startsWith("/saved") ? 1
+      : loc.pathname.startsWith("/notifications") ? 2
+      : loc.pathname.startsWith("/account") ? 3
+      : 0;
+    postChrome({
+      rects: chromeRects(),
+      open: { map: panel === "map", filters: panel === "filters", search: panel === "search" },
+      count: activeFilters,
+      dark,
+      scrollY: window.scrollY,
+      hearts: chromeHearts(),
+      activeTab,
+      browse: isHome,
+    });
+  }, [panel, activeFilters, dark, loc.pathname, isHome]);
+
+  // Report after every render (rects depend on the open state and badge).
+  useLayoutEffect(() => {
+    const raf = requestAnimationFrame(report);
+    return () => cancelAnimationFrame(raf);
+  });
+
   useEffect(() => {
-    if (!hasNativeGlass) return;
-    let frame = 0;
-    const rect = (el: HTMLButtonElement | null) => {
-      if (!el) return null;
-      const r = el.getBoundingClientRect();
-      if (!r.width || !r.height) return null;
-      return { x: r.left, y: r.top, w: r.width, h: r.height };
-    };
-    const send = () => {
-      frame = 0;
-      const bridge = (window as Window & {
-        webkit?: { messageHandlers?: { menufyNativeChrome?: { postMessage: (message: unknown) => void } } };
-      }).webkit?.messageHandlers?.menufyNativeChrome;
-      if (!bridge) return;
-      bridge.postMessage(
-        {
-          type: "menufy:chrome",
-          rects: {
-            map: rect(mapBtnRef.current),
-            filter: rect(filterBtnRef.current),
-            search: rect(searchBtnRef.current),
-          },
-          open: { map: mapOpen, filters: filtersOpen, search: searchOpen },
-          count: activeFilters,
-          dark,
-          activeTab: nativeTabIndex,
-          browse: isBrowse,
-        },
-      );
-    };
-    const schedule = () => {
-      if (!frame) frame = window.requestAnimationFrame(send);
-    };
-    schedule();
-    window.addEventListener("resize", schedule);
-    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(schedule);
-    observer?.observe(document.querySelector(".top-bar") ?? document.documentElement);
-    observer?.observe(document.querySelector(".top-actions") ?? document.documentElement);
+    window.addEventListener("resize", report);
+    const bar = document.querySelector(".top-bar");
+    const ro = new ResizeObserver(report);
+    if (bar) ro.observe(bar);
+    // Card lists change without the top bar re-rendering (day/price filters,
+    // favorites toggling classes) — watch the DOM so the shell always has
+    // fresh heart rects. rAF-debounced to coalesce bursts.
+    let raf = 0;
+    const mo = new MutationObserver(() => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(report);
+    });
+    mo.observe(document.body, { childList: true, subtree: true, attributes: true });
     return () => {
-      if (frame) window.cancelAnimationFrame(frame);
-      window.removeEventListener("resize", schedule);
-      observer?.disconnect();
+      window.removeEventListener("resize", report);
+      ro.disconnect();
+      mo.disconnect();
+      cancelAnimationFrame(raf);
     };
-  }, [mapOpen, filtersOpen, searchOpen, activeFilters, dark, isBrowse, loggedIn, nativeTabIndex, loc.pathname]);
+  }, [report]);
+
+  const submitSearch = () => {
+    setPanel(null);
+    document.querySelector(".results-column")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  // Escape closes the search window (filters/map handle their own).
+  useEffect(() => {
+    if (panel !== "search") return;
+    const on = (e: KeyboardEvent) => e.key === "Escape" && setPanel(null);
+    window.addEventListener("keydown", on);
+    return () => window.removeEventListener("keydown", on);
+  }, [panel, setPanel]);
 
   return (
-    <header className="top-bar">
+    <>
+      <header className="top-bar">
       <div className="top-bar-inner">
         <Brand />
         <nav className="top-nav" aria-label="Hlavná navigácia">
@@ -313,43 +165,39 @@ function TopBar() {
           ))}
         </nav>
         <div className="top-actions">
-          {isBrowse && (
-            <>
+          {isHome && (
+            <div className={`top-chrome${nativeGlass ? " glass-native" : ""}`}>
               <button
-                ref={mapBtnRef}
-                className={`top-icon-btn ${mapOpen ? "active" : ""}`}
-                onClick={toggleMap}
-                aria-label={mapOpen ? "Zavrieť mapu" : "Otvoriť mapu"}
-                aria-expanded={mapOpen}
+                data-chrome="map"
+                className={`chrome-btn glass${panel === "map" ? " active" : ""}`}
+                onClick={() => togglePanel("map")}
+                aria-label="Mapa"
+                aria-expanded={panel === "map"}
               >
-                <Icon name={mapOpen ? "close" : "map"} size={22} />
+                <Icon name="map" size={20} />
               </button>
               <button
-                ref={filterBtnRef}
-                className={`top-icon-btn ${filtersOpen ? "active" : ""}`}
-                onClick={toggleFilters}
-                aria-label={filtersOpen ? "Zavrieť filtre" : "Filtre"}
-                aria-expanded={filtersOpen}
+                data-chrome="filters"
+                className={`chrome-btn glass${panel === "filters" ? " active" : ""}`}
+                onClick={() => togglePanel("filters")}
+                aria-label="Filtre"
+                aria-expanded={panel === "filters"}
               >
-                <Icon name="filter" size={22} />
-                {activeFilters > 0 && <span className="top-action-count">{activeFilters}</span>}
+                <Icon name="filter" size={20} />
+                {activeFilters > 0 && <span className="filter-count">{activeFilters}</span>}
               </button>
-            </>
+              <button
+                data-chrome="search"
+                className={`chrome-btn glass${panel === "search" ? " active" : ""}`}
+                onClick={() => togglePanel("search")}
+                aria-label="Hľadať"
+                aria-expanded={panel === "search"}
+              >
+                <Icon name="search" size={20} />
+              </button>
+            </div>
           )}
-          <button
-            ref={searchBtnRef}
-            className={`top-icon-btn ${searchOpen ? "active" : ""}`}
-            onClick={toggleSearch}
-            aria-label={searchOpen ? "Zavrieť hľadanie" : "Hľadať"}
-            aria-expanded={searchOpen}
-          >
-            <Icon name="search" size={22} />
-          </button>
-          {loggedIn ? (
-            <Link to="/account" className="top-avatar" aria-label="Môj účet">
-              <Icon name="user" size={18} />
-            </Link>
-          ) : (
+          {!loggedIn && (
             <Link to="/login" className="top-signin">
               <Icon name="user" size={17} /> Prihlásiť sa
             </Link>
@@ -364,8 +212,6 @@ function TopBar() {
           </button>
         </div>
       </div>
-
-      <SearchOverlay />
 
       {open && (
         <div className="drawer-backdrop" onClick={() => setOpen(false)}>
@@ -393,102 +239,34 @@ function TopBar() {
           </aside>
         </div>
       )}
-    </header>
+      </header>
+
+      {isHome && panel === "search" && (
+        <div className="search-overlay" onClick={() => setPanel(null)}>
+          <div
+            className="search-overlay-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Hľadať"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <SearchBox
+              applied={query}
+              onApply={setQuery}
+              onSubmit={submitSearch}
+              onOpen={(slug) => nav(`/restaurant/${slug}`)}
+            />
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
 function BottomNav() {
-  const loc = useLocation();
-  const nav = useNavigate();
-  const barRef = useRef<HTMLElement>(null);
-  const dragRef = useRef<{ pointerId: number; startX: number; startY: number; moved: boolean } | null>(null);
-  const suppressClick = useRef(false);
-  const [dragging, setDragging] = useState(false);
-  const [dragOffset, setDragOffset] = useState(0);
-  const routeIndex = bottomLinks.findIndex((link) =>
-    link.to === "/"
-      ? loc.pathname === "/" || loc.pathname.startsWith("/restaurant/")
-      : loc.pathname === link.to || loc.pathname.startsWith(`${link.to}/`),
-  );
-  const activeIndex = routeIndex < 0 ? 0 : routeIndex;
-
-  const measure = () => {
-    const rect = barRef.current?.getBoundingClientRect();
-    if (!rect) return null;
-    const gap = 2;
-    const tabWidth = (rect.width - 10 - gap * (bottomLinks.length - 1)) / bottomLinks.length;
-    return { rect, tabWidth, step: tabWidth + gap };
-  };
-
-  const onPointerDown = (event: ReactPointerEvent<HTMLElement>) => {
-    if (event.pointerType === "mouse" && event.button !== 0) return;
-    dragRef.current = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, moved: false };
-    event.currentTarget.setPointerCapture(event.pointerId);
-  };
-
-  const onPointerMove = (event: ReactPointerEvent<HTMLElement>) => {
-    const drag = dragRef.current;
-    if (!drag || drag.pointerId !== event.pointerId) return;
-    const dx = event.clientX - drag.startX;
-    const dy = event.clientY - drag.startY;
-    if (!drag.moved && Math.abs(dx) < 8) return;
-    if (Math.abs(dx) <= Math.abs(dy)) return;
-    drag.moved = true;
-    setDragging(true);
-    const layout = measure();
-    if (!layout) return;
-    const left = event.clientX - layout.rect.left - 5 - layout.tabWidth / 2;
-    const maxLeft = layout.step * (bottomLinks.length - 1);
-    setDragOffset(Math.max(0, Math.min(maxLeft, left)) - activeIndex * layout.step);
-  };
-
-  const finishPointer = (event: ReactPointerEvent<HTMLElement>) => {
-    const drag = dragRef.current;
-    if (!drag || drag.pointerId !== event.pointerId) return;
-    if (drag.moved) {
-      const layout = measure();
-      if (layout) {
-        const position = event.clientX - layout.rect.left - 5 - layout.tabWidth / 2;
-        const targetIndex = Math.max(0, Math.min(bottomLinks.length - 1, Math.round(position / layout.step)));
-        suppressClick.current = true;
-        nav(bottomLinks[targetIndex].to);
-        window.setTimeout(() => { suppressClick.current = false; }, 0);
-      }
-    }
-    dragRef.current = null;
-    setDragging(false);
-    setDragOffset(0);
-  };
-
-  const cancelPointer = () => {
-    dragRef.current = null;
-    suppressClick.current = false;
-    setDragging(false);
-    setDragOffset(0);
-  };
-
   return (
-    <nav
-      ref={barRef}
-      className={`bottom-nav ${dragging ? "dragging" : ""}`}
-      aria-label="Hlavná navigácia"
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={finishPointer}
-      onPointerCancel={cancelPointer}
-      onClickCapture={(event) => {
-        if (!suppressClick.current) return;
-        event.preventDefault();
-        event.stopPropagation();
-        suppressClick.current = false;
-      }}
-    >
-      <span
-        className="bottom-indicator"
-        aria-hidden="true"
-        style={{ transform: `translateX(${activeIndex * (measure()?.step ?? 0) + dragOffset}px)` }}
-      />
-      {bottomLinks.map((l) => (
+    <nav className="bottom-nav glass" aria-label="Hlavná navigácia">
+      {tabs.map((l) => (
         <NavLink key={l.to} to={l.to} end={l.end} className="bottom-tab">
           <Icon name={l.icon} size={22} />
           <span>{l.label}</span>
@@ -516,13 +294,19 @@ export function Footer() {
   );
 }
 
-class RouteBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
+class RouteBoundary extends Component<{ children: ReactNode; locationKey: string }, { error: Error | null }> {
   state = { error: null as Error | null };
   static getDerivedStateFromError(error: Error) {
     return { error };
   }
   componentDidCatch(e: unknown) {
     console.error(e);
+  }
+  componentDidUpdate(prev: { locationKey: string }) {
+    // A new route gets a clean slate, but the route subtree itself stays
+    // mounted so page state (filters, search, pinned restaurant, scroll
+    // position) survives navigating into a detail page and back.
+    if (prev.locationKey !== this.props.locationKey && this.state.error) this.setState({ error: null });
   }
   render() {
     const { error } = this.state;
@@ -546,11 +330,11 @@ export default function Layout() {
     <div className="app-shell">
       <TopBar />
       <main>
-        <RouteBoundary key={loc.pathname}>
+        <RouteBoundary locationKey={loc.pathname}>
           <Outlet />
         </RouteBoundary>
       </main>
-      {isNative ? hasNativeTabBar ? null : <BottomNav /> : <Footer />}
+      {isNative ? <BottomNav /> : <Footer />}
     </div>
   );
 }

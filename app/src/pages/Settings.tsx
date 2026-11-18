@@ -42,6 +42,16 @@ export default function Settings() {
   const [nameError, setNameError] = useState<string | null>(null);
   const [nameSaved, setNameSaved] = useState(false);
 
+  const [pw, setPw] = useState({ next: "", confirm: "" });
+  const [pwBusy, setPwBusy] = useState(false);
+  const [pwError, setPwError] = useState<string | null>(null);
+  const [pwSaved, setPwSaved] = useState(false);
+
+  const [newEmail, setNewEmail] = useState("");
+  const [emailBusy, setEmailBusy] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [emailSaved, setEmailSaved] = useState(false);
+
   useEffect(() => {
     setUsername(displayName === "Člen menufy" ? "" : displayName);
     setNameError(null);
@@ -65,6 +75,53 @@ export default function Settings() {
       setNameError("Meno sa nepodarilo uložiť. Skúste znova.");
     } finally {
       setNameBusy(false);
+    }
+  };
+
+  const savePassword = async (event: FormEvent) => {
+    event.preventDefault();
+    if (pwBusy || !userId) return;
+    setPwError(null);
+    setPwSaved(false);
+    if (pw.next !== pw.confirm) return setPwError("Zadané heslá sa nezhodujú.");
+    if (pw.next.length < 8 || !/[A-Z]/.test(pw.next) || !/\d/.test(pw.next))
+      return setPwError("Heslo musí mať min. 8 znakov, aspoň 1 veľké písmeno a 1 číslo.");
+    setPwBusy(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: pw.next });
+      if (error) setPwError("Heslo sa nepodarilo zmeniť. Skúste znova.");
+      else {
+        setPw({ next: "", confirm: "" });
+        setPwSaved(true);
+      }
+    } catch {
+      setPwError("Heslo sa nepodarilo zmeniť. Skúste znova.");
+    } finally {
+      setPwBusy(false);
+    }
+  };
+
+  const saveEmail = async (event: FormEvent) => {
+    event.preventDefault();
+    if (emailBusy || !userId) return;
+    setEmailError(null);
+    setEmailSaved(false);
+    const mail = newEmail.trim();
+    if (!/^\S+@\S+\.\S+$/.test(mail)) return setEmailError("Zadajte platnú e-mailovú adresu.");
+    if (mail.toLowerCase() === email.toLowerCase()) return setEmailError("Nový e-mail je rovnaký ako aktuálny.");
+    setEmailBusy(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ email: mail });
+      if (error) setEmailError("E-mail sa nepodarilo zmeniť. Skúste znova.");
+      else {
+        setModal(null);
+        setNewEmail("");
+        setEmailSaved(true);
+      }
+    } catch {
+      setEmailError("E-mail sa nepodarilo zmeniť. Skúste znova.");
+    } finally {
+      setEmailBusy(false);
     }
   };
 
@@ -112,26 +169,53 @@ export default function Settings() {
               <span>Aktuálny e-mail</span>
               <strong>{email}</strong>
             </div>
-            <button className="btn-ghost" onClick={() => setModal("email")}>
+            <button
+              className="btn-ghost"
+              onClick={() => {
+                setModal("email");
+                setEmailError(null);
+                setEmailSaved(false);
+              }}
+            >
               <Icon name="mail" size={16} /> Zmeniť e-mail
             </button>
+            {emailSaved && (
+              <p className="success-note" role="status">
+                Nový e-mail sme uložili. Ak je zmena e-mailu chránená potvrdením, pošleme vám odkaz na novú adresu.
+              </p>
+            )}
           </Section>
 
           <Section title="Zabezpečenie">
-            <form className="form" onSubmit={(e) => e.preventDefault()}>
-              <label>
-                Aktuálne heslo
-                <input type="password" autoComplete="current-password" placeholder="••••••••" />
-              </label>
+            <form className="form" onSubmit={savePassword}>
               <label>
                 Nové heslo
-                <input type="password" autoComplete="new-password" placeholder="Min. 8 znakov, 1 veľké písmeno, 1 číslo" />
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  placeholder="Min. 8 znakov, 1 veľké písmeno, 1 číslo"
+                  value={pw.next}
+                  disabled={pwBusy}
+                  onChange={(e) => {
+                    setPw((current) => ({ ...current, next: e.target.value }));
+                    setPwSaved(false);
+                  }}
+                />
               </label>
               <label>
                 Potvrdiť nové heslo
-                <input type="password" autoComplete="new-password" placeholder="Zopakujte nové heslo" />
+                <input
+                  type="password"
+                  autoComplete="new-password"
+                  placeholder="Zopakujte nové heslo"
+                  value={pw.confirm}
+                  disabled={pwBusy}
+                  onChange={(e) => setPw((current) => ({ ...current, confirm: e.target.value }))}
+                />
               </label>
-              <button className="btn-primary">Zmeniť heslo</button>
+              {pwError && <p className="form-error" role="alert">{pwError}</p>}
+              {pwSaved && <p className="success-note" role="status">Heslo bolo zmenené.</p>}
+              <button className="btn-primary" disabled={pwBusy}>{pwBusy ? "Ukladáme…" : "Zmeniť heslo"}</button>
             </form>
           </Section>
         </>
@@ -223,26 +307,24 @@ export default function Settings() {
 
       {modal === "email" && (
         <Modal title="Zmeniť e-mail" onClose={() => setModal(null)}>
-          <form
-            className="form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              setModal(null);
-            }}
-          >
+          <form className="form" onSubmit={saveEmail}>
             <label>
               Nový e-mail
-              <input type="email" placeholder="novy@email.sk" />
+              <input
+                type="email"
+                placeholder="novy@email.sk"
+                value={newEmail}
+                disabled={emailBusy}
+                onChange={(e) => setNewEmail(e.target.value)}
+              />
             </label>
-            <label>
-              Heslo pre potvrdenie
-              <input type="password" placeholder="••••••••" />
-            </label>
+            <p className="muted">Zmenu overíme e-mailom, aby nikto nepoužil váš účet bez vášho vedomia.</p>
+            {emailError && <p className="form-error" role="alert">{emailError}</p>}
             <div className="modal-actions">
               <button type="button" className="btn-ghost" onClick={() => setModal(null)}>
                 Zrušiť
               </button>
-              <button className="btn-primary">Uložiť</button>
+              <button className="btn-primary" disabled={emailBusy}>{emailBusy ? "Ukladáme…" : "Uložiť"}</button>
             </div>
           </form>
         </Modal>

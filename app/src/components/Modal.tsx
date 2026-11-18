@@ -5,10 +5,12 @@ export default function Modal({
   title,
   onClose,
   children,
+  className,
 }: {
   title: string;
   onClose: () => void;
   children: ReactNode;
+  className?: string;
 }) {
   useEffect(() => {
     const on = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -18,7 +20,13 @@ export default function Modal({
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal" role="dialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}>
+      <div
+        className={`modal${className ? ` ${className}` : ""}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="modal-head">
           <h3>{title}</h3>
           <button onClick={onClose} aria-label="Zavrieť">

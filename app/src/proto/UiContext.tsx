@@ -1,51 +1,44 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 
-type Panel = "search" | "filters" | "map" | null;
+/**
+ * Which top-bar panel is open. Only one at a time: opening the search bar
+ * closes the filters and the map, and vice versa (panel = null closes all).
+ */
+export type ChromePanel = "search" | "filters" | "map" | null;
 
 type UiContextValue = {
-  searchOpen: boolean;
-  setSearchOpen: (open: boolean) => void;
+  panel: ChromePanel;
+  /** Set the open panel directly (null closes everything). */
+  setPanel: (panel: ChromePanel) => void;
+  /** Toggle one panel; toggling the open panel closes it. */
+  togglePanel: (panel: Exclude<ChromePanel, null>) => void;
   query: string;
   setQuery: (query: string) => void;
-  filtersOpen: boolean;
-  setFiltersOpen: (open: boolean) => void;
   activeFilters: number;
   setActiveFilters: (count: number) => void;
-  mapOpen: boolean;
-  setMapOpen: (open: boolean) => void;
 };
 
 const UiContext = createContext<UiContextValue | null>(null);
 
 export function UiProvider({ children }: { children: ReactNode }) {
-  const [panel, setPanel] = useState<Panel>(null);
+  const [panel, setPanel] = useState<ChromePanel>(null);
   const [query, setQuery] = useState("");
   const [activeFilters, setActiveFilters] = useState(0);
 
-  // Setting any panel true replaces the current one; closing is conditional so
-  // a stale close action cannot dismiss a different panel opened just after it.
-  const setSearchOpen = useCallback((open: boolean) => setPanel((current) => open ? "search" : current === "search" ? null : current), []);
-  const setFiltersOpen = useCallback((open: boolean) => setPanel((current) => open ? "filters" : current === "filters" ? null : current), []);
-  const setMapOpen = useCallback((open: boolean) => setPanel((current) => open ? "map" : current === "map" ? null : current), []);
+  const togglePanel = useCallback((next: Exclude<ChromePanel, null>) => {
+    setPanel((current) => (current === next ? null : next));
+  }, []);
 
-  const value = useMemo<UiContextValue>(() => ({
-    searchOpen: panel === "search",
-    setSearchOpen,
-    query,
-    setQuery,
-    filtersOpen: panel === "filters",
-    setFiltersOpen,
-    activeFilters,
-    setActiveFilters,
-    mapOpen: panel === "map",
-    setMapOpen,
-  }), [panel, query, activeFilters, setSearchOpen, setFiltersOpen, setMapOpen]);
+  const value = useMemo<UiContextValue>(
+    () => ({ panel, setPanel, togglePanel, query, setQuery, activeFilters, setActiveFilters }),
+    [panel, togglePanel, query, activeFilters],
+  );
 
   return <UiContext.Provider value={value}>{children}</UiContext.Provider>;
 }
 
 export function useUi() {
-  const value = useContext(UiContext);
-  if (!value) throw new Error("useUi must be used inside UiProvider");
-  return value;
+  const ctx = useContext(UiContext);
+  if (!ctx) throw new Error("useUi must be used inside UiProvider");
+  return ctx;
 }
