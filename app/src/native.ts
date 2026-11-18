@@ -14,3 +14,4 @@ if (isNative) document.documentElement.classList.add("native");
 if (nativeTabBar) document.documentElement.dataset.tabbar = "native";
 if (nativeGlass) document.documentElement.dataset.glass = "native";
 if (nativeGlassHearts) document.documentElement.dataset.glassHearts = "native";
+if (isIOSApp) document.documentElement.dataset.iosShell = "capacitor";

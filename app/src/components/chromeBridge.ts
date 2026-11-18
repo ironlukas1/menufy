@@ -19,7 +19,7 @@ export type ChromeHeart = { slug: string; active: boolean; x: number; y: number;
 
 export type ChromeSnapshot = {
   type: "menufy:chrome";
-  rects: { map: ChromeRect | null; filter: ChromeRect | null; search: ChromeRect | null };
+  rects: { map: ChromeRect | null; filter: ChromeRect | null; search: ChromeRect | null; mapClose: ChromeRect | null };
   open: { map: boolean; filters: boolean; search: boolean };
   count: number;
   dark: boolean;
@@ -39,6 +39,7 @@ type ChromeWindow = Window & {
     toggleSearch: () => void;
     toggleFilters: () => void;
     toggleMap: () => void;
+    closeMap: () => void;
     /** Native glass heart was pressed; forwards the tap to the web button. */
     heartTap: (slug: string) => void;
     /** Re-post the current snapshot (called when a tab regains focus). */
@@ -64,6 +65,7 @@ export const chromeRects = (): ChromeSnapshot["rects"] => ({
   map: rectOf(document.querySelector('[data-chrome="map"]')),
   filter: rectOf(document.querySelector('[data-chrome="filters"]')),
   search: rectOf(document.querySelector('[data-chrome="search"]')),
+  mapClose: rectOf(document.querySelector('[data-chrome="map-close"]')),
 });
 
 /** Favorite buttons, as document-relative rects for the native shell. */
@@ -88,7 +90,7 @@ export const chromeHearts = (): ChromeHeart[] =>
  * top bar unmounts.
  */
 export function installChromeBridge(
-  toggles: { navigate: (path: string) => void; search: () => void; filters: () => void; map: () => void; heartTap: (slug: string) => void; poke: () => void },
+  toggles: { navigate: (path: string) => void; search: () => void; filters: () => void; map: () => void; closeMap: () => void; heartTap: (slug: string) => void; poke: () => void },
 ) {
   const w = window as ChromeWindow;
   w.__menufyChrome = {
@@ -96,6 +98,7 @@ export function installChromeBridge(
     toggleSearch: toggles.search,
     toggleFilters: toggles.filters,
     toggleMap: toggles.map,
+    closeMap: toggles.closeMap,
     heartTap: toggles.heartTap,
     poke: toggles.poke,
   };

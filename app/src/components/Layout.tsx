@@ -57,6 +57,7 @@ function TopBar() {
     search: () => {},
     filters: () => {},
     map: () => {},
+    closeMap: () => {},
     heartTap: (_slug: string) => {},
     poke: () => {},
   });
@@ -64,6 +65,7 @@ function TopBar() {
     search: () => togglePanel("search"),
     filters: () => togglePanel("filters"),
     map: () => togglePanel("map"),
+    closeMap: () => setPanel(null),
     // Replays the tap on the (hidden) web heart so all of its logic — login
     // redirect, favorite toggle, animation — stays in exactly one place.
     heartTap: (slug: string) => {
@@ -88,6 +90,7 @@ function TopBar() {
         search: () => togglesRef.current.search(),
         filters: () => togglesRef.current.filters(),
         map: () => togglesRef.current.map(),
+        closeMap: () => togglesRef.current.closeMap(),
         heartTap: (slug) => togglesRef.current.heartTap(slug),
         poke: () => togglesRef.current.poke(),
       }),

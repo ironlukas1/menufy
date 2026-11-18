@@ -60,7 +60,7 @@ final class MenufyBridgeViewController: CAPBridgeViewController, WKScriptMessage
         var convertedPayload = payload
         if let rects = payload["rects"] as? [String: Any], let webView {
             var convertedRects = rects
-            for key in ["map", "filter", "search"] {
+            for key in ["map", "filter", "search", "mapClose"] {
                 guard let value = rects[key] as? [String: Any],
                       let x = (value["x"] as? NSNumber)?.doubleValue,
                       let y = (value["y"] as? NSNumber)?.doubleValue,
@@ -118,6 +118,7 @@ final class MenufyBridgeViewController: CAPBridgeViewController, WKScriptMessage
         case "saved": script = "window.__menufyChrome?.navigate('/saved')"
         case "notifications": script = "window.__menufyChrome?.navigate('/notifications')"
         case "account": script = "window.__menufyChrome?.navigate('/account')"
+        case "closeMap": script = "window.__menufyChrome?.closeMap()"
         default: return
         }
         webView?.evaluateJavaScript(script)
@@ -145,6 +146,9 @@ private final class NativeGlassChrome: UIView, UITabBarDelegate {
     private var legacyHeartGlass: [String: UIVisualEffectView] = [:]
     private var heartButtons: [String: UIButton] = [:]
     private var heartFrames: [String: CGRect] = [:]
+    private var legacyMapCloseGlass: UIVisualEffectView?
+    private var mapCloseButton: UIButton?
+    private var mapCloseFrame: CGRect?
     private var filterBadge: UILabel?
     private var topFrames: [String: CGRect] = [:]
     private var selectedTab = 0
@@ -186,6 +190,29 @@ private final class NativeGlassChrome: UIView, UITabBarDelegate {
             addSubview(button)
             topButtons[key] = button
         }
+
+        if #unavailable(iOS 26.0) {
+            let glass = UIVisualEffectView(effect: UIBlurEffect(style: .systemMaterial))
+            glass.isUserInteractionEnabled = false
+            glass.clipsToBounds = true
+            addSubview(glass)
+            legacyMapCloseGlass = glass
+        }
+        let closeButton = UIButton(type: .system)
+        closeButton.accessibilityLabel = "Zavrieť mapu"
+        if #available(iOS 26.0, *) {
+            var configuration = UIButton.Configuration.glass()
+            configuration.image = UIImage(systemName: "xmark")
+            configuration.baseForegroundColor = .label
+            closeButton.configuration = configuration
+        } else {
+            closeButton.setImage(UIImage(systemName: "xmark"), for: .normal)
+            closeButton.tintColor = .label
+        }
+        closeButton.addTarget(self, action: #selector(mapCloseTapped), for: .touchUpInside)
+        closeButton.isHidden = true
+        addSubview(closeButton)
+        mapCloseButton = closeButton
 
         let badge = UILabel()
         badge.font = .systemFont(ofSize: 10, weight: .bold)
@@ -247,6 +274,16 @@ private final class NativeGlassChrome: UIView, UITabBarDelegate {
                     continue
                 }
                 topFrames[key] = CGRect(x: x, y: y, width: width, height: height)
+            }
+            if let value = rects["mapClose"] as? [String: Any],
+               let x = (value["x"] as? NSNumber)?.doubleValue,
+               let y = (value["y"] as? NSNumber)?.doubleValue,
+               let width = (value["w"] as? NSNumber)?.doubleValue,
+               let height = (value["h"] as? NSNumber)?.doubleValue,
+               width > 0, height > 0 {
+                mapCloseFrame = CGRect(x: x, y: y, width: width, height: height)
+            } else {
+                mapCloseFrame = nil
             }
         }
         if let open = payload["open"] as? [String: Bool] {
@@ -312,6 +349,11 @@ private final class NativeGlassChrome: UIView, UITabBarDelegate {
         if let filterFrame = topFrames["filter"] {
             filterBadge?.frame = CGRect(x: filterFrame.maxX - 6, y: filterFrame.minY - 4, width: 18, height: 18)
         }
+        let closeFrame = mapCloseFrame ?? .zero
+        legacyMapCloseGlass?.frame = closeFrame
+        legacyMapCloseGlass?.layer.cornerRadius = closeFrame.height / 2
+        mapCloseButton?.frame = closeFrame
+        mapCloseButton?.isHidden = closeFrame.isEmpty
 
         for (slug, button) in heartButtons {
             let rect = heartFrames[slug] ?? .zero
@@ -339,6 +381,8 @@ private final class NativeGlassChrome: UIView, UITabBarDelegate {
             if let glass = legacyTopGlass[key] { bringSubviewToFront(glass) }
             if let button = topButtons[key] { bringSubviewToFront(button) }
         }
+        if let glass = legacyMapCloseGlass { bringSubviewToFront(glass) }
+        if let button = mapCloseButton { bringSubviewToFront(button) }
         if let badge = filterBadge { bringSubviewToFront(badge) }
     }
 
@@ -346,6 +390,10 @@ private final class NativeGlassChrome: UIView, UITabBarDelegate {
         guard !isHidden, alpha > 0.01 else { return nil }
         for key in topKeys.reversed() {
             guard let button = topButtons[key], !button.isHidden, button.frame.contains(point) else { continue }
+            let localPoint = button.convert(point, from: self)
+            if let target = button.hitTest(localPoint, with: event) { return target }
+        }
+        if let button = mapCloseButton, !button.isHidden, button.frame.contains(point) {
             let localPoint = button.convert(point, from: self)
             if let target = button.hitTest(localPoint, with: event) { return target }
         }
@@ -461,6 +509,10 @@ private final class NativeGlassChrome: UIView, UITabBarDelegate {
         guard let key = sender.accessibilityIdentifier else { return }
         let action = key == "filter" ? "toggleFilters" : key == "map" ? "toggleMap" : "toggleSearch"
         onAction?(action)
+    }
+
+    @objc private func mapCloseTapped() {
+        onAction?("closeMap")
     }
 
     @objc private func didPanBottomBar(_ gesture: UIPanGestureRecognizer) {

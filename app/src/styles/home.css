@@ -519,6 +519,7 @@ button.menu-heading.open svg { transform: rotate(180deg); }
 .map-header small { color: var(--muted); font-size: 10px; }
 .map-close-btn { width: 36px; height: 36px; flex: none; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 50%; color: var(--ink); background: var(--paper); cursor: pointer; }
 .map-close-btn:hover { color: var(--green); border-color: var(--green-line); }
+html[data-ios-shell="capacitor"] .map-close-btn { visibility: hidden; }
 .map-tip { margin: 0; padding: 10px 12px; color: var(--muted); font-size: 11px; text-align: center; border-top: 1px solid var(--soft-line); }
 .map-canvas { position: relative; isolation: isolate; flex: 1; min-height: 0; overflow: hidden; background: var(--map-bg); }
 .empty-state { padding: 60px 20px; text-align: center; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); }

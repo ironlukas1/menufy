@@ -84,7 +84,7 @@ export default function MapPanel({
           <span>Mapa reštaurácií</span>
           <small>{items.length} miest</small>
         </div>
-        <button className="map-close-btn" type="button" onClick={onClose} aria-label="Zavrieť mapu">
+        <button className="map-close-btn" data-chrome="map-close" type="button" onClick={onClose} aria-label="Zavrieť mapu">
           <Icon name="close" size={18} />
         </button>
       </div>
