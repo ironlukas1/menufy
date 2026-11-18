@@ -180,16 +180,18 @@ export default function Detail() {
       {panel === "map" && (
         <div className="map-overlay" role="dialog" aria-modal="true" aria-label={`Poloha reštaurácie ${r.name}`}>
           <button className="panel-backdrop map-backdrop" onClick={() => setPanel(null)} aria-label="Zavrieť mapu" />
-          <MapPanel
-            items={restaurants}
-            selected={r.slug}
-            hovered={null}
-            onClose={() => setPanel(null)}
-            onPick={(placeSlug) => {
-              setPanel(null);
-              navigate(`/restaurant/${placeSlug}`);
-            }}
-          />
+          <div className="map-overlay-card glass">
+            <MapPanel
+              items={restaurants}
+              selected={r.slug}
+              hovered={null}
+              onClose={() => setPanel(null)}
+              onPick={(placeSlug) => {
+                setPanel(null);
+                navigate(`/restaurant/${placeSlug}`);
+              }}
+            />
+          </div>
         </div>
       )}
     </article>
