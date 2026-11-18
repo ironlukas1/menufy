@@ -66,7 +66,7 @@ export const chromeRects = (): ChromeSnapshot["rects"] => ({
   search: rectOf(document.querySelector('[data-chrome="search"]')),
 });
 
-/** All favorite buttons, as document-relative rects the shell draws glass over. */
+/** Favorite buttons, as document-relative rects for the native shell. */
 export const chromeHearts = (): ChromeHeart[] =>
   Array.from(document.querySelectorAll<HTMLElement>("[data-heart]"))
     .map((el) => {

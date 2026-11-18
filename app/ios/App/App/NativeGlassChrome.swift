@@ -17,6 +17,8 @@ private final class WeakScriptMessageHandler: NSObject, WKScriptMessageHandler {
 @MainActor
 final class MenufyBridgeViewController: CAPBridgeViewController, WKScriptMessageHandler {
     private let chrome = NativeGlassChrome()
+    private var heartSnapshot: [[String: Any]] = []
+    private var heartScrollObservation: NSKeyValueObservation?
 
     override func webView(with frame: CGRect, configuration: WKWebViewConfiguration) -> WKWebView {
         configuration.userContentController.add(
@@ -32,6 +34,14 @@ final class MenufyBridgeViewController: CAPBridgeViewController, WKScriptMessage
         chrome.onAction = { [weak self] action in
             self?.runChromeAction(action)
         }
+        chrome.onHeartTap = { [weak self] slug in
+            guard let data = try? JSONEncoder().encode(slug),
+                  let value = String(data: data, encoding: .utf8) else { return }
+            self?.webView?.evaluateJavaScript("window.__menufyChrome?.heartTap(\(value))")
+        }
+        heartScrollObservation = webView?.scrollView.observe(\.contentOffset, options: [.new]) { [weak self] _, _ in
+            DispatchQueue.main.async { [weak self] in self?.refreshNativeHearts() }
+        }
         view.addSubview(chrome)
         chrome.frame = view.bounds
         chrome.autoresizingMask = [.flexibleWidth, .flexibleHeight]
@@ -42,6 +52,7 @@ final class MenufyBridgeViewController: CAPBridgeViewController, WKScriptMessage
         chrome.frame = view.bounds
         chrome.updateSafeArea(view.safeAreaInsets)
         view.bringSubviewToFront(chrome)
+        refreshNativeHearts()
     }
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
@@ -67,7 +78,35 @@ final class MenufyBridgeViewController: CAPBridgeViewController, WKScriptMessage
             }
             convertedPayload["rects"] = convertedRects
         }
+        if let hearts = payload["hearts"] as? [[String: Any]] { heartSnapshot = hearts }
+        convertedPayload["hearts"] = positionedHeartSnapshot()
         chrome.update(convertedPayload)
+    }
+
+    private func refreshNativeHearts() {
+        chrome.update(["hearts": positionedHeartSnapshot()])
+    }
+
+    private func positionedHeartSnapshot() -> [[String: Any]] {
+        guard let webView else { return [] }
+        let scrollY = webView.scrollView.contentOffset.y
+        return heartSnapshot.compactMap { heart in
+            guard let x = (heart["x"] as? NSNumber)?.doubleValue,
+                  let y = (heart["y"] as? NSNumber)?.doubleValue,
+                  let width = (heart["w"] as? NSNumber)?.doubleValue,
+                  let height = (heart["h"] as? NSNumber)?.doubleValue,
+                  width > 0, height > 0 else { return nil }
+            let webRect = CGRect(x: x, y: y - scrollY, width: width, height: height)
+            let nativeRect = webView.convert(webRect, to: chrome)
+            return [
+                "slug": heart["slug"] as? String ?? "",
+                "active": heart["active"] as? Bool ?? false,
+                "x": nativeRect.minX,
+                "y": nativeRect.minY,
+                "w": nativeRect.width,
+                "h": nativeRect.height,
+            ]
+        }
     }
 
     private func runChromeAction(_ action: String) {
@@ -103,6 +142,9 @@ private final class NativeGlassChrome: UIView, UITabBarDelegate {
     private let bottomBar = UITabBar()
     private var legacyTopGlass: [String: UIVisualEffectView] = [:]
     private var topButtons: [String: UIButton] = [:]
+    private var legacyHeartGlass: [String: UIVisualEffectView] = [:]
+    private var heartButtons: [String: UIButton] = [:]
+    private var heartFrames: [String: CGRect] = [:]
     private var filterBadge: UILabel?
     private var topFrames: [String: CGRect] = [:]
     private var selectedTab = 0
@@ -112,6 +154,7 @@ private final class NativeGlassChrome: UIView, UITabBarDelegate {
     private var isBrowsing = true
 
     var onAction: ((String) -> Void)?
+    var onHeartTap: ((String) -> Void)?
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -223,6 +266,9 @@ private final class NativeGlassChrome: UIView, UITabBarDelegate {
                 }
             }
         }
+        if let hearts = payload["hearts"] as? [[String: Any]] {
+            updateHeartButtons(hearts)
+        }
         if let count = payload["count"] as? Int, let badge = filterBadge {
             badge.text = count > 9 ? "9+" : String(count)
             badge.isHidden = count <= 0 || topFrames["filter"] == nil
@@ -267,8 +313,21 @@ private final class NativeGlassChrome: UIView, UITabBarDelegate {
             filterBadge?.frame = CGRect(x: filterFrame.maxX - 6, y: filterFrame.minY - 4, width: 18, height: 18)
         }
 
+        for (slug, button) in heartButtons {
+            let rect = heartFrames[slug] ?? .zero
+            let frame = bounds.intersects(rect) ? rect : .zero
+            button.frame = frame
+            button.isHidden = frame.isEmpty
+            legacyHeartGlass[slug]?.frame = frame
+            legacyHeartGlass[slug]?.layer.cornerRadius = frame.height / 2
+        }
+
         let barHeight: CGFloat = 80
         let barWidth = max(0, min(bounds.width, 540))
+        for slug in heartButtons.keys {
+            if let glass = legacyHeartGlass[slug] { bringSubviewToFront(glass) }
+            if let button = heartButtons[slug] { bringSubviewToFront(button) }
+        }
         bottomBar.frame = CGRect(
             x: (bounds.width - barWidth) / 2,
             y: bounds.height - safeInsets.bottom - 4 - barHeight,
@@ -290,9 +349,72 @@ private final class NativeGlassChrome: UIView, UITabBarDelegate {
             let localPoint = button.convert(point, from: self)
             if let target = button.hitTest(localPoint, with: event) { return target }
         }
-        guard !bottomBar.isHidden, bottomBar.frame.contains(point) else { return nil }
-        let localPoint = bottomBar.convert(point, from: self)
-        return bottomBar.hitTest(localPoint, with: event)
+        if !bottomBar.isHidden, bottomBar.frame.contains(point) {
+            let localPoint = bottomBar.convert(point, from: self)
+            if let target = bottomBar.hitTest(localPoint, with: event) { return target }
+        }
+        for slug in heartButtons.keys {
+            guard let button = heartButtons[slug], !button.isHidden, button.frame.contains(point) else { continue }
+            let localPoint = button.convert(point, from: self)
+            if let target = button.hitTest(localPoint, with: event) { return target }
+        }
+        return nil
+    }
+
+    private func updateHeartButtons(_ values: [[String: Any]]) {
+        var visible = Set<String>()
+        for value in values {
+            guard let slug = value["slug"] as? String, !slug.isEmpty,
+                  let x = (value["x"] as? NSNumber)?.doubleValue,
+                  let y = (value["y"] as? NSNumber)?.doubleValue,
+                  let width = (value["w"] as? NSNumber)?.doubleValue,
+                  let height = (value["h"] as? NSNumber)?.doubleValue,
+                  width > 0, height > 0 else { continue }
+            visible.insert(slug)
+            let active = value["active"] as? Bool ?? false
+            let button: UIButton
+            if let existing = heartButtons[slug] {
+                button = existing
+            } else {
+                if #unavailable(iOS 26.0) {
+                    let glass = UIVisualEffectView(effect: UIBlurEffect(style: .systemMaterial))
+                    glass.isUserInteractionEnabled = false
+                    glass.clipsToBounds = true
+                    addSubview(glass)
+                    legacyHeartGlass[slug] = glass
+                }
+                let created = UIButton(type: .system)
+                created.accessibilityIdentifier = slug
+                created.addTarget(self, action: #selector(heartButtonTapped(_:)), for: .touchUpInside)
+                addSubview(created)
+                heartButtons[slug] = created
+                button = created
+            }
+            heartFrames[slug] = CGRect(x: x, y: y, width: width, height: height)
+            updateHeartState(button, active: active)
+        }
+        for slug in Array(heartFrames.keys) where !visible.contains(slug) {
+            heartFrames[slug] = nil
+        }
+    }
+
+    private func updateHeartState(_ button: UIButton, active: Bool) {
+        let symbol = active ? "heart.fill" : "heart"
+        button.accessibilityLabel = active ? "Odobrať z obľúbených" : "Pridať do obľúbených"
+        if #available(iOS 26.0, *) {
+            var configuration = button.configuration ?? UIButton.Configuration.glass()
+            configuration.image = UIImage(systemName: symbol)
+            configuration.baseForegroundColor = active ? brandGreen : .label
+            button.configuration = configuration
+        } else {
+            button.setImage(UIImage(systemName: symbol), for: .normal)
+            button.tintColor = active ? brandGreen : .label
+        }
+    }
+
+    @objc private func heartButtonTapped(_ sender: UIButton) {
+        guard let slug = sender.accessibilityIdentifier else { return }
+        onHeartTap?(slug)
     }
 
     private func updateTopState(key: String, active: Bool) {
