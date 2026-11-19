@@ -6,6 +6,10 @@ import type { Restaurant } from "@/data/restaurants";
 import { useProto } from "@/proto/ProtoContext";
 import { CITY_CENTER } from "@/lib";
 
+type NativeMapWindow = Window & {
+  webkit?: { messageHandlers?: { menufyNativeChrome?: { postMessage: (message: unknown) => void } } };
+};
+
 const pin = (label: string, selected: boolean) =>
   L.divIcon({
     className: "pin-wrap",
@@ -70,6 +74,38 @@ export default function MapPanel({
 }) {
   const { dark, geo, userPosition, locationError, requestLocation } = useProto();
   const user = geo === "granted" ? userPosition : null;
+
+  useEffect(() => {
+    const canvas = document.querySelector<HTMLElement>(".map-canvas");
+    if (!canvas) return;
+    const report = () => {
+      const rect = canvas.getBoundingClientRect();
+      (window as NativeMapWindow).webkit?.messageHandlers?.menufyNativeChrome?.postMessage({
+        type: "menufy:native-map",
+        rect: { x: rect.left, y: rect.top, w: rect.width, h: rect.height },
+        selected,
+        user,
+        restaurants: items.map(({ slug, name, lat, lng, rating }) => ({ slug, name, lat, lng, rating })),
+      });
+    };
+    report();
+    const observer = new ResizeObserver(report);
+    observer.observe(canvas);
+    window.addEventListener("resize", report);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", report);
+    };
+  }, [items, selected, user]);
+
+  useEffect(() => {
+    const pick = (event: Event) => {
+      const slug = (event as CustomEvent<{ slug?: string }>).detail?.slug;
+      if (slug) onPick(slug);
+    };
+    window.addEventListener("menufy:native-map-pick", pick);
+    return () => window.removeEventListener("menufy:native-map-pick", pick);
+  }, [onPick]);
 
   useEffect(() => {
     const on = (e: KeyboardEvent) => e.key === "Escape" && onClose();

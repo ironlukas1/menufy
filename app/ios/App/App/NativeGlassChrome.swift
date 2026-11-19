@@ -1,4 +1,5 @@
 import Capacitor
+import MapKit
 import UIKit
 import WebKit
 
@@ -11,6 +12,29 @@ private final class WeakScriptMessageHandler: NSObject, WKScriptMessageHandler {
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         target?.userContentController(userContentController, didReceive: message)
+    }
+}
+
+private final class NativeRestaurantAnnotation: NSObject, MKAnnotation {
+    let slug: String
+    let rating: String
+    dynamic var coordinate: CLLocationCoordinate2D
+    let title: String?
+    let subtitle: String?
+
+    init?(dictionary: [String: Any]) {
+        guard let slug = dictionary["slug"] as? String,
+              let name = dictionary["name"] as? String,
+              let latitude = (dictionary["lat"] as? NSNumber)?.doubleValue,
+              let longitude = (dictionary["lng"] as? NSNumber)?.doubleValue,
+              CLLocationCoordinate2DIsValid(CLLocationCoordinate2D(latitude: latitude, longitude: longitude)) else { return nil }
+        self.slug = slug
+        self.title = name
+        let ratingText = String(format: "%.1f", (dictionary["rating"] as? NSNumber)?.doubleValue ?? 0)
+        self.rating = ratingText
+        self.subtitle = "Hodnotenie \(ratingText)"
+        self.coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+        super.init()
     }
 }
 
@@ -39,6 +63,11 @@ final class MenufyBridgeViewController: CAPBridgeViewController, WKScriptMessage
                   let value = String(data: data, encoding: .utf8) else { return }
             self?.webView?.evaluateJavaScript("window.__menufyChrome?.heartTap(\(value))")
         }
+        chrome.onMapPick = { [weak self] slug in
+            guard let data = try? JSONEncoder().encode(slug),
+                  let value = String(data: data, encoding: .utf8) else { return }
+            self?.webView?.evaluateJavaScript("window.dispatchEvent(new CustomEvent('menufy:native-map-pick',{detail:{slug:\(value)}}))")
+        }
         heartScrollObservation = webView?.scrollView.observe(\.contentOffset, options: [.new]) { [weak self] _, _ in
             DispatchQueue.main.async { [weak self] in self?.refreshNativeHearts() }
         }
@@ -58,6 +87,19 @@ final class MenufyBridgeViewController: CAPBridgeViewController, WKScriptMessage
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         guard message.name == "menufyNativeChrome", let payload = message.body as? [String: Any] else { return }
+        if payload["type"] as? String == "menufy:native-map" {
+            var mapPayload = payload
+            if let rect = payload["rect"] as? [String: Any], let webView,
+               let x = (rect["x"] as? NSNumber)?.doubleValue,
+               let y = (rect["y"] as? NSNumber)?.doubleValue,
+               let width = (rect["w"] as? NSNumber)?.doubleValue,
+               let height = (rect["h"] as? NSNumber)?.doubleValue {
+                let nativeRect = webView.convert(CGRect(x: x, y: y, width: width, height: height), to: chrome)
+                mapPayload["nativeRect"] = ["x": nativeRect.minX, "y": nativeRect.minY, "w": nativeRect.width, "h": nativeRect.height]
+            }
+            chrome.updateMap(mapPayload)
+            return
+        }
         var convertedPayload = payload
         if let rects = payload["rects"] as? [String: Any], let webView {
             var convertedRects = rects
@@ -128,7 +170,7 @@ final class MenufyBridgeViewController: CAPBridgeViewController, WKScriptMessage
 }
 
 @MainActor
-private final class NativeGlassChrome: UIView, UITabBarDelegate {
+private final class NativeGlassChrome: UIView, UITabBarDelegate, MKMapViewDelegate {
     private struct Tab {
         let title: String
         let symbol: String
@@ -143,6 +185,12 @@ private final class NativeGlassChrome: UIView, UITabBarDelegate {
     ]
     private let topKeys = ["map", "filter", "search"]
     private let bottomBar = UITabBar()
+    private let appleMap = MKMapView()
+    private var mapRestaurants: [NativeRestaurantAnnotation] = []
+    private var mapUserAnnotation: MKPointAnnotation?
+    private var mapFrame: CGRect = .zero
+    private var mapSelectedSlug: String?
+    private var mapIsOpen = false
     private var legacyTopGlass: [String: UIVisualEffectView] = [:]
     private var topButtons: [String: UIButton] = [:]
     private var legacyHeartGlass: [String: UIVisualEffectView] = [:]
@@ -161,11 +209,16 @@ private final class NativeGlassChrome: UIView, UITabBarDelegate {
 
     var onAction: ((String) -> Void)?
     var onHeartTap: ((String) -> Void)?
+    var onMapPick: ((String) -> Void)?
 
     override init(frame: CGRect) {
         super.init(frame: frame)
         backgroundColor = .clear
         isUserInteractionEnabled = true
+        appleMap.isHidden = true
+        appleMap.delegate = self
+        appleMap.pointOfInterestFilter = .includingAll
+        addSubview(appleMap)
 
         for key in topKeys {
             if #unavailable(iOS 26.0) {
@@ -289,6 +342,8 @@ private final class NativeGlassChrome: UIView, UITabBarDelegate {
             }
         }
         if let open = payload["open"] as? [String: Bool] {
+            mapIsOpen = open["map"] ?? false
+            appleMap.isHidden = !mapIsOpen || mapFrame.isEmpty
             updateTopState(key: "map", active: open["map"] ?? false)
             updateTopState(key: "filter", active: open["filters"] ?? false)
             updateTopState(key: "search", active: open["search"] ?? false)
@@ -325,8 +380,78 @@ private final class NativeGlassChrome: UIView, UITabBarDelegate {
         setNeedsLayout()
     }
 
+    func updateMap(_ payload: [String: Any]) {
+        guard let rect = payload["nativeRect"] as? [String: Any],
+              let x = (rect["x"] as? NSNumber)?.doubleValue,
+              let y = (rect["y"] as? NSNumber)?.doubleValue,
+              let width = (rect["w"] as? NSNumber)?.doubleValue,
+              let height = (rect["h"] as? NSNumber)?.doubleValue,
+              width > 0, height > 0 else { return }
+        mapFrame = CGRect(x: x, y: y, width: width, height: height)
+
+        let oldSlugs = Set(mapRestaurants.map(\.slug))
+        let restaurants = (payload["restaurants"] as? [[String: Any]] ?? []).compactMap(NativeRestaurantAnnotation.init)
+        let newSlugs = Set(restaurants.map(\.slug))
+        let selected = payload["selected"] as? String
+        let shouldFit = oldSlugs != newSlugs || mapSelectedSlug != selected
+        mapSelectedSlug = selected
+        appleMap.removeAnnotations(mapRestaurants)
+        mapRestaurants = restaurants
+        appleMap.addAnnotations(restaurants)
+        if let mapUserAnnotation { appleMap.removeAnnotation(mapUserAnnotation) }
+        mapUserAnnotation = nil
+        if let user = payload["user"] as? [String: Any],
+           let latitude = (user["lat"] as? NSNumber)?.doubleValue,
+           let longitude = (user["lng"] as? NSNumber)?.doubleValue {
+            let annotation = MKPointAnnotation()
+            annotation.coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+            annotation.title = "Vaša poloha"
+            mapUserAnnotation = annotation
+            appleMap.addAnnotation(annotation)
+        }
+        if shouldFit {
+            if let selectedAnnotation = restaurants.first(where: { $0.slug == selected }) {
+                appleMap.setRegion(MKCoordinateRegion(center: selectedAnnotation.coordinate, latitudinalMeters: 1700, longitudinalMeters: 1700), animated: false)
+            } else if let mapUserAnnotation {
+                appleMap.setRegion(MKCoordinateRegion(center: mapUserAnnotation.coordinate, latitudinalMeters: 2400, longitudinalMeters: 2400), animated: false)
+            } else if !restaurants.isEmpty {
+                appleMap.showAnnotations(restaurants, animated: false)
+            }
+        }
+        appleMap.isHidden = !mapIsOpen
+        setNeedsLayout()
+    }
+
+    func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+        guard let restaurant = annotation as? NativeRestaurantAnnotation else {
+            guard annotation is MKPointAnnotation else { return nil }
+            let identifier = "menufy-user-location"
+            let marker = (mapView.dequeueReusableAnnotationView(withIdentifier: identifier) as? MKMarkerAnnotationView)
+                ?? MKMarkerAnnotationView(annotation: annotation, reuseIdentifier: identifier)
+            marker.annotation = annotation
+            marker.markerTintColor = UIColor(red: 0.18, green: 0.44, blue: 0.89, alpha: 1)
+            marker.glyphImage = UIImage(systemName: "location.fill")
+            marker.canShowCallout = true
+            return marker
+        }
+        let identifier = "menufy-restaurant"
+        let marker = (mapView.dequeueReusableAnnotationView(withIdentifier: identifier) as? MKMarkerAnnotationView)
+            ?? MKMarkerAnnotationView(annotation: annotation, reuseIdentifier: identifier)
+        marker.annotation = restaurant
+        marker.markerTintColor = UIColor(red: 0.08, green: 0.42, blue: 0.26, alpha: 1)
+        marker.glyphText = restaurant.rating
+        marker.canShowCallout = true
+        return marker
+    }
+
+    func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
+        guard let annotation = view.annotation as? NativeRestaurantAnnotation else { return }
+        onMapPick?(annotation.slug)
+    }
+
     override func layoutSubviews() {
         super.layoutSubviews()
+        appleMap.frame = mapFrame
         if isBrowsing {
             let size: CGFloat = 44
             let gap: CGFloat = 8
@@ -413,6 +538,10 @@ private final class NativeGlassChrome: UIView, UITabBarDelegate {
         if let button = mapCloseButton, !button.isHidden, button.frame.contains(point) {
             let localPoint = button.convert(point, from: self)
             if let target = button.hitTest(localPoint, with: event) { return target }
+        }
+        if !appleMap.isHidden, appleMap.frame.contains(point) {
+            let localPoint = appleMap.convert(point, from: self)
+            if let target = appleMap.hitTest(localPoint, with: event) { return target }
         }
         if !bottomBar.isHidden, bottomBar.frame.contains(point) {
             let localPoint = bottomBar.convert(point, from: self)
