@@ -23,7 +23,6 @@ export type ChromeSnapshot = {
   open: { map: boolean; filters: boolean; search: boolean };
   count: number;
   dark: boolean;
-  path: string;
   /** Current document scroll offset, so the shell can place hearts before the first scroll event. */
   scrollY: number;
   hearts: ChromeHeart[];
