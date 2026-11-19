@@ -106,7 +106,7 @@ export default function RestaurantCard({
           </div>
           <div className="restaurant-meta">
             {r.ratingCount > 0 && (
-              <Link className="rating" to={`/restaurant/${r.slug}#reviews`} title="Zobraziť hodnotenia">
+              <Link className="rating" to={`/restaurant/${r.slug}#reviews`} title="Hodnotenie členov menufy">
                 <Icon name="star" size={16} filled /> <strong>{r.rating.toFixed(1).replace(".", ",")}</strong>
                 <em>({r.ratingCount})</em>
               </Link>

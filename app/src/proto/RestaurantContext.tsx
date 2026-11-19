@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { DAYS, restaurants as prototypeRestaurants, type Restaurant, type MenuItem } from "@/data/restaurants";
 import type { StoredMenu } from "@/data/owner";
-import { supabase } from "@/supabase";
+import { restaurantImageUrl, supabase } from "@/supabase";
 
 type PublicRestaurantRow = {
   slug: string; name: string; initials: string; tagline: string; city: string; district: string; address: string;
@@ -14,10 +14,11 @@ function toRestaurant(row: PublicRestaurantRow): Restaurant {
     name: item.name, desc: item.description, weight: item.weight, allergens: item.allergens,
     price: item.price_cents / 100, tag: item.tag,
   }));
+  const coverImage = row.image ? restaurantImageUrl(row.image) : "";
   return {
     slug: row.slug, name: row.name, initials: row.initials, tagline: row.tagline, city: row.city, district: row.district,
     address: row.address, email: row.email, phone: row.phone, web: row.web, rating: Number(row.rating), ratingCount: row.rating_count,
-    lat: row.lat, lng: row.lng, image: row.image || prototypeRestaurants[0].image, gallery: row.gallery ?? [],
+    lat: row.lat, lng: row.lng, image: coverImage || prototypeRestaurants[0].image, gallery: row.gallery?.length ? row.gallery : coverImage ? [coverImage] : [],
     cuisines: row.restaurant_type_links.map((link) => link.restaurant_types.name), hours: row.hours ?? [], todayHours: "",
     delivery: { available: row.delivery_available, eta: row.delivery_eta }, reviews: [], live: true,
     daily: DAYS.map((day) => items(row.menus.find((menu) => menu.kind === "daily" && menu.date === day.date && menu.status === "published"))),
@@ -27,11 +28,18 @@ function toRestaurant(row: PublicRestaurantRow): Restaurant {
 const Context = createContext<{ restaurants: Restaurant[]; loading: boolean; refresh: () => void } | null>(null);
 export function RestaurantProvider({ children }: { children: ReactNode }) {
   const [liveRestaurants, setLiveRestaurants] = useState<Restaurant[]>([]);
+  const [ratings, setRatings] = useState<{ slug: string; rating: number; rating_count: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [revision, setRevision] = useState(0);
   const refresh = useCallback(() => setRevision((value) => value + 1), []);
   useEffect(() => {
     let live = true;
+    void (async () => {
+      try {
+        const { data, error } = await supabase.rpc("restaurant_community_ratings");
+        if (live && !error) setRatings(data ?? []);
+      } catch { /* No fabricated rating fallback. */ }
+    })();
     void (async () => {
       try {
         const { data, error } = await supabase.from("restaurants")
@@ -49,7 +57,10 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
     window.addEventListener("focus", refresh);
     return () => window.removeEventListener("focus", refresh);
   }, [refresh]);
-  const value = useMemo(() => ({ restaurants: [...prototypeRestaurants, ...liveRestaurants], loading, refresh }), [liveRestaurants, loading, refresh]);
+  const value = useMemo(() => ({ restaurants: [...prototypeRestaurants, ...liveRestaurants].map((restaurant) => {
+    const rating = ratings.find((entry) => entry.slug === restaurant.slug);
+    return { ...restaurant, rating: Number(rating?.rating ?? 0), ratingCount: Number(rating?.rating_count ?? 0) };
+  }), loading, refresh }), [liveRestaurants, ratings, loading, refresh]);
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }
 export function useRestaurants() {

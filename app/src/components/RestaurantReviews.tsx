@@ -1,3 +1,4 @@
+import GoogleRating from "@/components/GoogleRating";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Link } from "react-router";
 import type { Restaurant } from "@/data/restaurants";
@@ -40,7 +41,7 @@ export default function RestaurantReviews({ restaurant }: { restaurant: Restaura
         if (place.error) throw place.error;
         const result = await supabase.from("restaurant_reviews")
           .select("id, user_id, author, stars, reviewed_on, body")
-          .eq("restaurant_id", place.data.id).order("created_at", { ascending: false });
+          .eq("restaurant_id", place.data.id).not("user_id", "is", null).order("created_at", { ascending: false });
         if (result.error) throw result.error;
         if (live) {
           setRestaurantId(place.data.id);
@@ -107,12 +108,7 @@ export default function RestaurantReviews({ restaurant }: { restaurant: Restaura
     <section className="panel" id="reviews" aria-labelledby="reviews-heading">
       <h3 id="reviews-heading">Hodnotenia</h3>
       <div className="rating-split">
-        <div className="rating-box">
-          <span className="rating-src">Google</span>
-          <strong>{restaurant.rating.toFixed(1).replace(".", ",")}</strong>
-          <span className="rating-stars">{stars(restaurant.rating)}</span>
-          <small>{restaurant.ratingCount} hodnotení</small>
-        </div>
+        <GoogleRating key={restaurant.slug} slug={restaurant.slug} />
         <div className="rating-box">
           <span className="rating-src">Komunita menufy</span>
           <strong>{loading || loadError || !reviews.length ? "—" : average.toFixed(1).replace(".", ",")}</strong>

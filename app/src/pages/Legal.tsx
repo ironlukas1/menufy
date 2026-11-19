@@ -4,7 +4,7 @@ import Icon from "@/components/Icon";
 
 type Section = { id: string; title: string; body: ReactNode };
 
-const UPDATED = "15. 10. 2026";
+const UPDATED = "19. 11. 2026";
 
 function LegalPage({ title, intro, sections, other }: { title: string; intro: string; sections: Section[]; other: { to: string; label: string } }) {
   const nav = useNavigate();
@@ -143,6 +143,7 @@ export function Terms() {
             </p>
           ),
         },
+        { id: "google-maps", title: "Google Maps", body: <p>Hodnotenia označené Google Maps pochádzajú od spoločnosti Google a zobrazujú sa oddelene od recenzií členov menufy. Pri používaní tohto obsahu platia aj <a href="https://maps.google.com/help/terms_maps/" target="_blank" rel="noopener noreferrer">ďalšie podmienky Google Maps</a> a <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">pravidlá ochrany súkromia spoločnosti Google</a>. Google hodnotenia sa načítavajú pri otvorení profilu reštaurácie a neukladáme ich do databázy menufy.</p> },
         { id: "kontakt", title: "Kontakt", body: contact },
       ]}
     />
@@ -233,6 +234,7 @@ export function Privacy() {
             </>
           ),
         },
+        { id: "google-maps", title: "Google Maps", body: <p>Hodnotenia označené Google Maps pochádzajú od spoločnosti Google a zobrazujú sa oddelene od recenzií členov menufy. Pri používaní tohto obsahu platia aj <a href="https://maps.google.com/help/terms_maps/" target="_blank" rel="noopener noreferrer">ďalšie podmienky Google Maps</a> a <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">pravidlá ochrany súkromia spoločnosti Google</a>. Google hodnotenia sa načítavajú pri otvorení profilu reštaurácie a neukladáme ich do databázy menufy.</p> },
         { id: "kontakt", title: "Kontakt", body: contact },
       ]}
     />

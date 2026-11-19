@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import { Link } from "react-router";
 import Icon from "@/components/Icon";
 import OwnerLocationPicker from "@/components/OwnerLocationPicker";
+import OwnerRestaurantSettings from "@/components/OwnerRestaurantSettings";
 import OwnerMenuEditor from "@/components/OwnerMenuEditor";
 import { CUISINES, LOCATIONS } from "@/data/allergens";
 import type { OwnedRestaurant } from "@/data/owner";
@@ -19,14 +20,15 @@ export default function Owners() {
   const [applications, setApplications] = useState<OwnedRestaurant[]>([]);
   const [admin, setAdmin] = useState(false);
   const [selectedId, setSelectedId] = useState("");
+  const [workspace, setWorkspace] = useState<"menus" | "settings">("menus");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [adding, setAdding] = useState(false);
   const [form, setForm] = useState(fields);
   const [busy, setBusy] = useState(false);
   const [decisionBusy, setDecisionBusy] = useState(false);
-  const [menuDirty, setMenuDirty] = useState(false);
-  const [menuBusy, setMenuBusy] = useState(false);
+  const [workspaceDirty, setWorkspaceDirty] = useState(false);
+  const [workspaceBusy, setWorkspaceBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [retry, setRetry] = useState(0);
@@ -55,10 +57,10 @@ export default function Owners() {
   }, [userId]);
 
   useEffect(() => { void load(); }, [load, retry]);
-  const mayDiscard = () => !menuDirty || window.confirm("Máte neuložené menu. Chcete zahodiť zmeny?");
+  const mayDiscard = () => !workspaceDirty || window.confirm("Máte neuložené zmeny. Chcete ich zahodiť?");
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (submitting.current || !userId || menuBusy || !mayDiscard()) return;
+    if (submitting.current || !userId || workspaceBusy || !mayDiscard()) return;
     setError(null); setMessage(null);
     if (!/^\d{8}$/.test(form.ico) || form.name.trim().length < 2 || form.address.trim().length < 5 || form.phone.trim().length < 5)
       return setError("Skontrolujte názov, adresu, telefón a osemmiestne IČO.");
@@ -71,14 +73,14 @@ export default function Owners() {
       const { data, error } = await supabase.rpc("submit_owned_restaurant", { p_restaurant: { ...form, name: form.name.trim(), lat, lng } });
       if (error) throw error;
       if (currentUser.current !== member) return;
-      setSelectedId(data as string); setAdding(false); setForm(fields);
+      setSelectedId(data as string); setWorkspace("menus"); setAdding(false); setForm(fields);
       setMessage("Žiadosť bola odoslaná. Po overení reštauráciu zverejníme. Zatiaľ si môžete pripraviť menu.");
       await load();
     } catch { if (currentUser.current === member) setError("Žiadosť sa nepodarilo odoslať. Skontrolujte údaje a pripojenie a skúste znova."); }
     finally { submitting.current = false; setBusy(false); }
   };
   const decide = async (restaurant: OwnedRestaurant, approve: boolean) => {
-    if (decisionBusy || menuBusy || !mayDiscard()) return;
+    if (decisionBusy || workspaceBusy || !mayDiscard()) return;
     setDecisionBusy(true); setError(null); setMessage(null);
     try {
       const { error } = await supabase.rpc("review_restaurant_application", { p_restaurant_id: restaurant.id, p_approve: approve });
@@ -107,7 +109,7 @@ export default function Owners() {
       {userId && <>
         {message && <p className="success-note" role="status">{message}</p>}
         {error && <p className="form-error" role="alert">{error}</p>}
-        <div className="page-head-row owner-dashboard-head"><h3>Moje reštaurácie</h3><div className="owner-actions"><button className="btn-ghost" disabled={loading || busy || decisionBusy || menuBusy} onClick={() => { if (mayDiscard()) setRetry((n) => n + 1); }}>Obnoviť stav</button>{(restaurants.length > 0 || admin) && <button className="btn-primary" onClick={() => setAdding(!adding)}>{adding ? "Zavrieť formulár" : "+ Pridať reštauráciu"}</button>}</div></div>
+        <div className="page-head-row owner-dashboard-head"><h3>Moje reštaurácie</h3><div className="owner-actions"><button className="btn-ghost" disabled={loading || busy || decisionBusy || workspaceBusy} onClick={() => { if (mayDiscard()) setRetry((n) => n + 1); }}>Obnoviť stav</button>{(restaurants.length > 0 || admin) && <button className="btn-primary" onClick={() => setAdding(!adding)}>{adding ? "Zavrieť formulár" : "+ Pridať reštauráciu"}</button>}</div></div>
         {loading ? <p role="status">Načítavame vaše reštaurácie…</p> : loadError ? <p className="form-error" role="alert">Portál sa nepodarilo načítať. Skúste obnoviť stav.</p> : <>
           {(adding || (restaurants.length === 0 && !admin)) && <section className="panel">
             <h3>Pridať reštauráciu</h3><p className="muted">Žiadosť skontroluje administrátor. Kontaktné údaje sa po schválení zobrazia pri reštaurácii.</p>
@@ -132,9 +134,14 @@ export default function Owners() {
               <button className="btn-primary" type="submit">{busy ? "Odosielame…" : "Odoslať na schválenie"}</button>
             </fieldset></form>
           </section>}
-          {restaurants.length > 0 && <div className="owner-restaurants">{restaurants.map((place) => <button key={place.id} className={`owner-place ${place.id === selectedId ? "selected" : ""}`} disabled={menuBusy} onClick={() => { if (place.id !== selectedId && mayDiscard()) setSelectedId(place.id); }}><Icon name="store" size={23} /><span><strong>{place.name}</strong><small>{place.city} · {place.address}</small></span><span className={`owner-status ${place.status}`}>{statusLabel[place.status]}</span></button>)}</div>}
-          {selected && <><div className="owner-selection-note">{selected.status === "active" ? <Link className="inline-link" to={`/restaurant/${selected.slug}`}>Zobraziť verejný profil →</Link> : <p className="muted">{selected.status === "pending" ? "Vaša reštaurácia zatiaľ nie je verejná. Čakáme na overenie administrátorom." : "Reštaurácia nebola zverejnená. Ak potrebujete preveriť žiadosť, obráťte sa na administrátora Menufy."}</p>}</div><OwnerMenuEditor key={selected.id} restaurant={selected} onPublished={refreshPublic} onDirtyChange={setMenuDirty} onBusyChange={setMenuBusy} /></>}
-          {admin && <section className="panel owner-approvals"><p className="section-kicker">Administrácia</p><h3>Žiadosti na schválenie</h3>{applications.length === 0 ? <p className="muted">Žiadne čakajúce žiadosti.</p> : applications.map((place) => <div className="owner-application" key={place.id}><h4>{place.name}</h4><p>IČO: {place.ico} · {place.city}, {place.address}</p><p><a href={`mailto:${place.email}`}>{place.email}</a> · {place.phone}</p><div className="owner-actions"><button className="btn-primary" disabled={decisionBusy || menuBusy} onClick={() => void decide(place, true)}>Schváliť reštauráciu</button><button className="btn-ghost" disabled={decisionBusy || menuBusy} onClick={() => void decide(place, false)}>Zamietnuť žiadosť</button></div></div>)}</section>}
+          {restaurants.length > 0 && <div className="owner-restaurants">{restaurants.map((place) => <button key={place.id} className={`owner-place ${place.id === selectedId ? "selected" : ""}`} disabled={workspaceBusy} onClick={() => { if (place.id !== selectedId && mayDiscard()) setSelectedId(place.id); }}><Icon name="store" size={23} /><span><strong>{place.name}</strong><small>{place.city} · {place.address}</small></span><span className={`owner-status ${place.status}`}>{statusLabel[place.status]}</span></button>)}</div>}
+          {selected && <><div className="owner-selection-note">{selected.status === "active" ? <Link className="inline-link" to={`/restaurant/${selected.slug}`}>Zobraziť verejný profil →</Link> : <p className="muted">{selected.status === "pending" ? "Vaša reštaurácia zatiaľ nie je verejná. Čakáme na overenie administrátorom." : "Reštaurácia nebola zverejnená. Ak potrebujete preveriť žiadosť, obráťte sa na administrátora Menufy."}</p>}</div><div className="owner-workspace-tabs" role="tablist" aria-label="Správa vybranej reštaurácie">
+            <button role="tab" id="owner-menus-tab" aria-selected={workspace === "menus"} aria-controls="owner-workspace-panel" className={workspace === "menus" ? "on" : ""} disabled={workspaceBusy} onClick={() => { if (workspace !== "menus" && mayDiscard()) setWorkspace("menus"); }}><Icon name="menu" size={18} /> Menu</button>
+            <button role="tab" id="owner-settings-tab" aria-selected={workspace === "settings"} aria-controls="owner-workspace-panel" className={workspace === "settings" ? "on" : ""} disabled={workspaceBusy} onClick={() => { if (workspace !== "settings" && mayDiscard()) setWorkspace("settings"); }}><Icon name="settings" size={18} /> Nastavenia reštaurácie</button>
+          </div><div id="owner-workspace-panel" role="tabpanel" aria-labelledby={workspace === "menus" ? "owner-menus-tab" : "owner-settings-tab"}>
+            {workspace === "menus" ? <OwnerMenuEditor key={selected.id} restaurant={selected} onPublished={refreshPublic} onDirtyChange={setWorkspaceDirty} onBusyChange={setWorkspaceBusy} /> : <OwnerRestaurantSettings key={selected.id} restaurant={selected} onDirtyChange={setWorkspaceDirty} onBusyChange={setWorkspaceBusy} onSaved={(updated) => { setRestaurants((current) => current.map((place) => place.id === updated.id ? { ...place, ...updated } : place)); refreshPublic(); }} />}
+          </div></>}
+          {admin && <section className="panel owner-approvals"><p className="section-kicker">Administrácia</p><h3>Žiadosti na schválenie</h3>{applications.length === 0 ? <p className="muted">Žiadne čakajúce žiadosti.</p> : applications.map((place) => <div className="owner-application" key={place.id}><h4>{place.name}</h4><p>IČO: {place.ico} · {place.city}, {place.address}</p><p><a href={`mailto:${place.email}`}>{place.email}</a> · {place.phone}</p><div className="owner-actions"><button className="btn-primary" disabled={decisionBusy || workspaceBusy} onClick={() => void decide(place, true)}>Schváliť reštauráciu</button><button className="btn-ghost" disabled={decisionBusy || workspaceBusy} onClick={() => void decide(place, false)}>Zamietnuť žiadosť</button></div></div>)}</section>}
         </>}
       </>}
     </div>

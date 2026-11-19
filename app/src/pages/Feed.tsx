@@ -33,7 +33,7 @@ export default function Feed() {
           </p>
         </div>
         <SelectField label="Zoradiť výsledky" value={f.sort} onChange={(v) => set({ sort: v as typeof f.sort })}>
-          <option value="rating">Najlepšie hodnotené</option>
+          <option value="rating">Podľa komunity menufy</option>
           <option value="price">Najnižšia cena</option>
           <option value="favorites">Len obľúbené</option>
           <option value="distance">{geo === "granted" ? "Najbližšie" : "Najbližšie k centru"}</option>

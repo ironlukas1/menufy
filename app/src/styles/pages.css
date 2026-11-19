@@ -474,3 +474,82 @@ html.native button:active, html.native a:active { opacity: .85; }
 .owner-menu-card-title::first-letter { text-transform: uppercase; }
 .owner-menu .owner-status.active { color: var(--ink); }
 .owner-menu-feedback { color: var(--ink); border: 1px solid var(--green-line); }
+
+/* Restaurant profile settings */
+.owner-workspace-tabs { display: flex; gap: 24px; margin: 24px 0 20px; border-bottom: 1px solid var(--line); }
+.owner-workspace-tabs button { display: flex; align-items: center; gap: 8px; position: relative; padding: 12px 2px 16px; border: 0; background: none; color: var(--muted); font: 600 13px "DM Sans", sans-serif; cursor: pointer; }
+.owner-workspace-tabs button.on { color: var(--green); }
+.owner-workspace-tabs button.on::after { content: ""; position: absolute; bottom: -1px; left: 0; right: 0; height: 3px; background: var(--green); border-radius: 3px 3px 0 0; }
+.owner-settings { padding: 26px; }
+.owner-settings-section { display: grid; gap: 16px; padding: 22px 0; border-bottom: 1px solid var(--soft-line); min-width: 0; }
+.owner-settings-section:first-child { padding-top: 0; }
+.owner-settings-section-heading { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 4px; }
+.owner-settings-section-heading > svg { color: var(--green); flex-shrink: 0; margin-top: 2px; }
+.owner-settings-section-heading h4 { margin: 0 0 5px; font: 700 15px "Manrope", sans-serif; }
+.owner-settings-section-heading p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.owner-photo-preview { height: 250px; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); background: var(--subtle); }
+.owner-photo-preview img { width: 100%; height: 100%; object-fit: cover; }
+.owner-photo-preview > div { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 14px; height: 100%; color: var(--muted); font-size: 13px; text-align: center; padding: 20px; }
+.owner-photo-controls { display: flex; flex-wrap: wrap; gap: 18px; align-items: center; }
+.form label.owner-photo-picker { display: inline-flex; align-items: center; position: relative; gap: 8px; cursor: pointer; overflow: hidden; }
+.owner-photo-picker input[type="file"] { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.owner-photo-picker:focus-within { outline: 2px solid var(--green); outline-offset: 3px; }
+.owner-photo-filename { margin: 0; font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+.form .owner-settings-check { display: flex; align-items: center; gap: 9px; font-size: 13px; font-weight: 500; }
+.owner-settings-check input[type="checkbox"] { width: 18px; height: 18px; min-height: 18px; padding: 0; margin: 0; flex-shrink: 0; accent-color: var(--green); }
+.owner-opening-hours { display: grid; }
+.owner-opening-day { display: grid; grid-template-columns: 100px 130px 1fr; gap: 12px; align-items: center; padding: 12px 0; border-top: 1px solid var(--soft-line); }
+.owner-opening-day > strong { font-size: 13px; }
+.owner-opening-day > div { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+.owner-opening-day > div > label { max-width: 125px; }
+.owner-settings-save { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; padding-top: 20px; }
+.owner-settings-save > span { color: var(--muted); font-size: 12px; }
+@media (max-width: 640px) {
+  .owner-settings { padding: 18px; }
+  .owner-opening-day { grid-template-columns: 1fr 1fr; }
+  .owner-opening-day > div { grid-column: 1 / -1; justify-content: flex-start; }
+  .owner-settings-save .owner-actions { width: 100%; }
+  .owner-settings-save button { flex: 1; }
+  .owner-photo-preview { height: 200px; }
+  .owner-workspace-tabs { gap: 16px; }
+  .owner-workspace-tabs button { font-size: 12px; }
+}
+
+/* Daylight surfaces and controls, with matching dark-theme token values. */
+.top-bar { background: var(--header-bg); box-shadow: var(--header-shadow); backdrop-filter: blur(14px); }
+.panel, .restaurant-card, .detail-head, .map-card { border-radius: var(--surface-radius); }
+.panel, .restaurant-card { box-shadow: var(--surface-shadow); }
+.restaurant-card:hover { box-shadow: var(--shadow); }
+.settings-section { padding: var(--settings-padding); margin-bottom: 20px; }
+.settings-section > h3 { font-weight: 800; font-size: 17px; padding-bottom: 16px; margin-bottom: 18px; border-bottom: 1px solid var(--soft-line); }
+.settings-section .form > .btn-primary { width: var(--settings-action-width); min-width: 150px; justify-self: start; }
+.settings-section .form + .kv { margin-top: 22px; }
+.settings-section .form small { font-size: 12px; line-height: 1.6; }
+.form input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), .form textarea, .owner-page select, .field {
+  background: var(--field-bg); border-color: var(--field-line); transition: border-color .15s, box-shadow .15s;
+}
+.form input::placeholder, .form textarea::placeholder { color: var(--faint); opacity: 1; }
+.form input:focus:not([type="checkbox"]):not([type="radio"]):not([type="file"]), .form textarea:focus, .field:focus-within { border-color: var(--green); box-shadow: var(--field-focus); }
+.btn-primary, .top-signin { box-shadow: var(--button-shadow); }
+.btn-primary, .btn-ghost, .top-signin { transition: background .15s, border-color .15s, box-shadow .15s; }
+button:disabled, input:disabled, select:disabled { cursor: not-allowed; }
+.btn-primary:disabled, .btn-ghost:disabled { opacity: .55; box-shadow: none; }
+.owner-menu-card { box-shadow: var(--surface-shadow); }
+.owner-menu-card:hover { box-shadow: var(--shadow); }
+.tabs button.on { box-shadow: 0 1px 3px rgba(30, 48, 33, .09); }
+@media (max-width: 480px) {
+  .settings-section { padding: 20px; }
+  .settings-section .form > .btn-primary { min-width: 0; }
+}
+.hero h1 { font-weight: 800; }
+.page-head h2 { font-weight: 800; font-size: clamp(28px, 4vw, 34px); line-height: 1.2; letter-spacing: -.8px; }
+
+.google-rating-box { gap: 7px; scroll-margin-top: 85px; }
+.google-rating-box p { margin: 6px 0; font-size: 12px; }
+.google-rating-box > .inline-link { margin-top: 5px; overflow-wrap: anywhere; }
+.google-maps-attribution { font-family: Roboto, "DM Sans", sans-serif; font-weight: 400; font-style: normal; font-size: 14px; letter-spacing: normal; white-space: nowrap; color: light-dark(#1f1f1f, #ffffff); }
+.google-review-policy { font-size: 10px; color: var(--muted); margin-top: 6px; }
+.owner-google-settings { padding-top: 28px; margin-top: 28px; border-top: 1px solid var(--line); }
+.owner-google-settings h4 { margin: 0 0 8px; font: 700 16px "Manrope", sans-serif; }
+.owner-google-settings > p { font-size: 13px; line-height: 1.7; }
+.owner-google-settings .form { max-width: 640px; }

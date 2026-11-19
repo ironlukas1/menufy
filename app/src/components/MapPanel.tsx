@@ -119,7 +119,7 @@ export default function MapPanel({
             <Marker
               key={r.slug + (r.slug === selected)}
               position={[r.lat, r.lng]}
-              icon={pin(r.rating.toFixed(1).replace(".", ","), r.slug === selected || r.slug === hovered)}
+              icon={pin(r.initials.replace(/[&<>"']/g, ""), r.slug === selected || r.slug === hovered)}
               zIndexOffset={r.slug === hovered ? 1000 : 0}
               eventHandlers={{ click: () => onPick(r.slug) }}
               title={r.name}

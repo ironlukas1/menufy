@@ -53,6 +53,7 @@ export default function Detail() {
             <span className={`open-label ${status.open ? "" : "closed"}`}>{status.label}</span>
             <h2>{r.name}</h2>
             <p className="restaurant-type">{r.tagline}</p>
+            <a className="inline-link" href="#google-rating">Hodnotenie z Google Maps ↓</a>
           </div>
           <div className="detail-fav">
             <HeartButton slug={r.slug} />
@@ -80,7 +81,7 @@ export default function Detail() {
             )}
             {r.web && (
               <li>
-                <Icon name="globe" size={16} /> <a href={`https://${r.web}`}>{r.web}</a>
+                <Icon name="globe" size={16} /> <a href={/^https?:\/\//.test(r.web) ? r.web : `https://${r.web}`}>{r.web}</a>
               </li>
             )}
           </ul>

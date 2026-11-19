@@ -134,8 +134,8 @@ nav { display: flex; align-self: stretch; gap: 28px; }
 
 .hero {
   position: relative;
-  color: var(--on-green);
-  background: var(--green);
+  color: var(--hero-ink);
+  background: var(--hero-background);
 }
 
 .hero::after {
@@ -266,7 +266,7 @@ h1 {
   box-shadow: 0 18px 40px rgba(4, 42, 25, .22);
 }
 
-.search-box input { flex: 1; min-width: 0; border: 0; outline: 0; color: var(--ink); }
+.search-box input { background: transparent; flex: 1; min-width: 0; border: 0; outline: 0; color: var(--ink); }
 .search-box input::placeholder { color: var(--faint); }
 .clear-search { border: 0; background: none; color: var(--muted); padding: 6px; }
 .search-action {
