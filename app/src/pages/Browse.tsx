@@ -84,12 +84,12 @@ export default function Browse() {
   // focus, and re-applying would clobber the user's chosen city and sorting.
   const appliedPosition = useRef<{ lat: number; lng: number } | null>(null);
   useEffect(() => {
-    if (!userPosition || appliedPosition.current === userPosition) return;
+    if (!userPosition || !restaurants.length || appliedPosition.current === userPosition) return;
     appliedPosition.current = userPosition;
     const near = restaurants.reduce((a, b) => (distanceKm(userPosition, a) <= distanceKm(userPosition, b) ? a : b));
     set({ city: near.city, district: "Všetky časti", sort: "distance" });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userPosition]);
+  }, [userPosition, restaurants]);
 
   const results = useMemo(() => {
     const q = query.trim().toLocaleLowerCase("sk");
