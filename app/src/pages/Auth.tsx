@@ -48,6 +48,9 @@ const emailErrorMessage = (error: { code?: string; message: string }) =>
     : error.message;
 
 const safeNext = (value: string | null) => value?.startsWith("/") && !value.startsWith("//") && !value.includes("\\") ? value : "/";
+const authRedirectBase = () => window.location.origin.startsWith("capacitor://")
+  ? "https://menufy.misaligned.dev"
+  : window.location.origin;
 
 export function Login() {
   const [sp, setSp] = useSearchParams();
@@ -55,7 +58,7 @@ export function Login() {
   const mode = sp.get("mode") === "signup" ? "signup" : "login";
   const owner = sp.get("owner") === "1";
   const next = safeNext(sp.get("next") ?? (owner ? "/owners" : "/"));
-  const verificationUrl = `${window.location.origin}/verified?next=${encodeURIComponent(next)}`;
+  const verificationUrl = `${authRedirectBase()}/verified?next=${encodeURIComponent(next)}`;
   const [email, setEmail] = useState(sp.get("email") ?? "");
   const [username, setUsername] = useState("");
   const [pw, setPw] = useState("");
@@ -199,6 +202,8 @@ export function Verified() {
     return () => clearTimeout(t);
   }, []);
 
+  if (sp.get("mode") === "recovery") return <ResetPassword />;
+
   if (loggedIn)
     return (
       <AuthShell title="E-mail overený" sub="Váš účet je aktívny a ste prihlásený.">
@@ -224,17 +229,23 @@ export function Verified() {
 }
 
 export function ForgotPassword() {
-  const [sp] = useSearchParams();
-  const nav = useNavigate();
-  const forced = sp.get("state");
-  const [email, setEmail] = useState(forced ? "zuzana@example.sk" : "");
-  const [result, setResult] = useState<null | "found" | "missing">(forced === "found" ? "found" : forced === "missing" ? "missing" : null);
-  const [declined, setDeclined] = useState(false);
+  const [email, setEmail] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const submit = (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
-    setDeclined(false);
-    setResult(email.trim().startsWith("nikto") ? "missing" : "found");
+    if (busy) return;
+    setBusy(true);
+    setSent(false);
+    setError(null);
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${authRedirectBase()}/verified?mode=recovery`,
+    });
+    setBusy(false);
+    if (resetError) setError("Odkaz na obnovenie hesla sa nepodarilo odoslať. Skontrolujte e-mail a skúste znova.");
+    else setSent(true);
   };
 
   return (
@@ -242,36 +253,12 @@ export function ForgotPassword() {
       <form className="form" onSubmit={submit} noValidate>
         <label>
           E-mail
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="meno@domena.sk" />
+          <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="meno@domena.sk" />
         </label>
-        <button className="btn-primary block">Obnoviť heslo</button>
+        <button className="btn-primary block" disabled={busy}>{busy ? "Odosielame…" : "Obnoviť heslo"}</button>
       </form>
-      {result === "found" && (
-        <p className="success-note" role="status">
-          Odkaz na obnovenie hesla sme poslali na váš e-mail.{" "}
-          <Link to="/reset-password" className="inline-link">
-            Otvoriť odkaz (demo)
-          </Link>
-        </p>
-      )}
-      {result === "missing" && (
-        <div className="form-error" role="alert">
-          <p>Zadaná e-mailová adresa sa nepoužíva.</p>
-          {!declined ? (
-            <>
-              <strong>Chcete si vytvoriť účet?</strong>
-              <div className="modal-actions left">
-                <button className="btn-primary" onClick={() => nav(`/login?mode=signup&email=${encodeURIComponent(email)}`)}>
-                  Áno
-                </button>
-                <button className="btn-ghost" onClick={() => setDeclined(true)}>
-                  Nie
-                </button>
-              </div>
-            </>
-          ) : null}
-        </div>
-      )}
+      {sent && <p className="success-note" role="status">Ak je tento e-mail zaregistrovaný, poslali sme odkaz na obnovenie hesla.</p>}
+      {error && <ErrorMsg>{error}</ErrorMsg>}
       <Link to="/login" className="inline-link center">
         Späť na prihlásenie
       </Link>
@@ -280,26 +267,42 @@ export function ForgotPassword() {
 }
 
 export function ResetPassword() {
-  const nav = useNavigate();
   const [pw, setPw] = useState("");
   const [pw2, setPw2] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  if (saved) return <AuthShell title="Heslo bolo zmenené" sub="Teraz sa môžete prihlásiť novým heslom."><Link className="btn-primary block" to="/login">Prihlásiť sa</Link></AuthShell>;
 
   return (
     <AuthShell title="Nové heslo" sub="Zadajte a potvrďte nové heslo.">
       <form
         className="form"
-        onSubmit={(e) => {
+        onSubmit={async (e) => {
           e.preventDefault();
+          if (busy) return;
           if (pw !== pw2) return setError("Zadané heslá sa nezhodujú.");
-          nav("/login");
+          if (pw.length < 8 || !/[A-Z]/.test(pw) || !/\d/.test(pw))
+            return setError("Heslo musí mať min. 8 znakov, aspoň 1 veľké písmeno a 1 číslo.");
+          setBusy(true);
+          setError(null);
+          try {
+            const { error: updateError } = await supabase.auth.updateUser({ password: pw });
+            if (updateError) setError("Heslo sa nepodarilo zmeniť. Otvorte nový odkaz na obnovenie a skúste znova.");
+            else setSaved(true);
+          } catch {
+            setError("Heslo sa nepodarilo zmeniť. Otvorte nový odkaz na obnovenie a skúste znova.");
+          } finally {
+            setBusy(false);
+          }
         }}
         noValidate
       >
         <PasswordField label="Nové heslo" value={pw} onChange={setPw} hint="Min. 8 znakov, aspoň 1 veľké písmeno a 1 číslo." />
         <PasswordField label="Potvrdiť nové heslo" value={pw2} onChange={setPw2} />
         {error && <ErrorMsg>{error}</ErrorMsg>}
-        <button className="btn-primary block">Uložiť heslo</button>
+        <button className="btn-primary block" disabled={busy}>{busy ? "Ukladáme…" : "Uložiť heslo"}</button>
       </form>
     </AuthShell>
   );

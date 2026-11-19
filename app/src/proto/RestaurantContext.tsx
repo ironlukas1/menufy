@@ -53,7 +53,7 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
     window.addEventListener("focus", refresh);
     return () => window.removeEventListener("focus", refresh);
   }, [refresh]);
-  const value = useMemo(() => ({ restaurants: [...prototypeRestaurants, ...liveRestaurants], loading, refresh }), [liveRestaurants, loading, refresh]);
+  const value = useMemo(() => ({ restaurants: isSupabaseConfigured ? liveRestaurants : prototypeRestaurants, loading, refresh }), [liveRestaurants, loading, refresh]);
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }
 export function useRestaurants() {
