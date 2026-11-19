@@ -107,6 +107,7 @@ function TopBar() {
       open: { map: panel === "map", filters: panel === "filters", search: panel === "search" },
       count: activeFilters,
       dark,
+      path: loc.pathname,
       scrollY: window.scrollY,
       hearts: panel === null && !open ? chromeHearts() : [],
       activeTab,

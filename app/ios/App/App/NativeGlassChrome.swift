@@ -19,6 +19,7 @@ final class MenufyBridgeViewController: CAPBridgeViewController, WKScriptMessage
     private let chrome = NativeGlassChrome()
     private var heartSnapshot: [[String: Any]] = []
     private var heartScrollObservation: NSKeyValueObservation?
+    private var backSwipe: UIScreenEdgePanGestureRecognizer?
 
     override func webView(with frame: CGRect, configuration: WKWebViewConfiguration) -> WKWebView {
         configuration.userContentController.add(
@@ -42,6 +43,11 @@ final class MenufyBridgeViewController: CAPBridgeViewController, WKScriptMessage
         heartScrollObservation = webView?.scrollView.observe(\.contentOffset, options: [.new]) { [weak self] _, _ in
             DispatchQueue.main.async { [weak self] in self?.refreshNativeHearts() }
         }
+        let backSwipe = UIScreenEdgePanGestureRecognizer(target: self, action: #selector(handleBackSwipe(_:)))
+        backSwipe.edges = .left
+        backSwipe.cancelsTouchesInView = false
+        view.addGestureRecognizer(backSwipe)
+        self.backSwipe = backSwipe
         view.addSubview(chrome)
         chrome.frame = view.bounds
         chrome.autoresizingMask = [.flexibleWidth, .flexibleHeight]
@@ -57,6 +63,9 @@ final class MenufyBridgeViewController: CAPBridgeViewController, WKScriptMessage
 
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         guard message.name == "menufyNativeChrome", let payload = message.body as? [String: Any] else { return }
+        let path = payload["path"] as? String ?? "/"
+        let open = payload["open"] as? [String: Bool] ?? [:]
+        backSwipe?.isEnabled = path.hasPrefix("/restaurant/") && !open.values.contains(true)
         var convertedPayload = payload
         if let rects = payload["rects"] as? [String: Any], let webView {
             var convertedRects = rects
@@ -122,6 +131,37 @@ final class MenufyBridgeViewController: CAPBridgeViewController, WKScriptMessage
         default: return
         }
         webView?.evaluateJavaScript(script)
+    }
+
+    @objc private func handleBackSwipe(_ gesture: UIScreenEdgePanGestureRecognizer) {
+        guard let webView else { return }
+        let distance = gesture.translation(in: view).x
+        switch gesture.state {
+        case .changed:
+            let transform = CGAffineTransform(translationX: max(0, distance), y: 0)
+            webView.transform = transform
+            chrome.transform = transform
+        case .ended:
+            let shouldGoBack = distance > view.bounds.width * 0.25 || gesture.velocity(in: view).x > 650
+            UIView.animate(withDuration: 0.18, delay: 0, options: .curveEaseOut) {
+                webView.transform = shouldGoBack
+                    ? CGAffineTransform(translationX: self.view.bounds.width, y: 0)
+                    : .identity
+            } completion: { _ in
+                webView.transform = .identity
+                self.chrome.transform = .identity
+                if shouldGoBack {
+                    webView.evaluateJavaScript("if (window.history.state?.idx > 0) history.back(); else window.__menufyChrome?.navigate('/')")
+                }
+            }
+        case .cancelled, .failed:
+            UIView.animate(withDuration: 0.18) {
+                webView.transform = .identity
+                self.chrome.transform = .identity
+            }
+        default:
+            break
+        }
     }
 }
 
@@ -376,7 +416,7 @@ private final class NativeGlassChrome: UIView, UITabBarDelegate {
             legacyHeartGlass[slug]?.frame = rect
             legacyHeartGlass[slug]?.isHidden = button.isHidden
             legacyHeartGlass[slug]?.layer.mask = mask
-            legacyHeartGlass[slug]?.layer.cornerRadius = frame.height / 2
+            legacyHeartGlass[slug]?.layer.cornerRadius = rect.height / 2
         }
 
         let barHeight: CGFloat = 80
