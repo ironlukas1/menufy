@@ -460,6 +460,7 @@ export default function Browse() {
           items={mapItems}
           selected={slug ?? pinned}
           hovered={hovered}
+          minRating={f.minRating}
           expanded={mapExpanded}
           setExpanded={(expanded) => {
             setMapExpanded(expanded);

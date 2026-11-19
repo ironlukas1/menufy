@@ -113,6 +113,9 @@ a { color: inherit; }
 .pin-wrap:hover .pin-shell { max-width: 400px; background: var(--green-dark); transform: rotate(-8deg) scale(1.15); }
 .pin-wrap:hover .pin { width: 0; }
 .pin-wrap:hover .pin-name { display: inline; }
+.pin-shell.highlighted { background: #d99a12; border-color: #fff4cf; box-shadow: 0 0 0 3px rgba(245, 180, 30, .28), 0 4px 12px rgba(120, 76, 0, .35); }
+.pin-shell.dimmed { opacity: .42; }
+.pin-shell.dimmed.selected { opacity: 1; }
 
 /* ---------- generic pages ---------- */
 .page { width: min(1240px, calc(100% - 40px)); margin: 0 auto; padding: 40px 0 80px; }

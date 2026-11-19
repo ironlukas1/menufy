@@ -11,10 +11,10 @@ const escapeHtml = (value: string | null | undefined) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char] ?? char,
   );
 
-const pin = (name: string | null | undefined, selected: boolean) =>
+const pin = (name: string | null | undefined, selected: boolean, highlighted: boolean, dimmed: boolean) =>
   L.divIcon({
     className: "pin-wrap",
-    html: `<span class="pin-shell ${selected ? "selected" : ""}"><span class="pin"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3v5a3 3 0 0 0 6 0V3M7 3v18M20 21V3c-4 2-5 6-5 10h5"/></svg></span><span class="pin-name">${escapeHtml(name)}</span></span>`,
+    html: `<span class="pin-shell ${selected ? "selected" : ""} ${highlighted ? "highlighted" : ""} ${dimmed ? "dimmed" : ""}"><span class="pin"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3v5a3 3 0 0 0 6 0V3M7 3v18M20 21V3c-4 2-5 6-5 10h5"/></svg></span><span class="pin-name">${escapeHtml(name)}</span></span>`,
     iconSize: [44, 36],
     iconAnchor: [22, 18],
   });
@@ -64,6 +64,7 @@ export default function MapPanel({
   items,
   selected,
   hovered,
+  minRating,
   expanded,
   setExpanded,
   onPick,
@@ -71,12 +72,15 @@ export default function MapPanel({
   items: Restaurant[];
   selected: string | null;
   hovered: string | null;
+  minRating: number;
   expanded: boolean;
   setExpanded: (v: boolean) => void;
   onPick: (slug: string) => void;
 }) {
   const { dark, geo, userPosition, locationError, requestLocation } = useProto();
   const user = geo === "granted" ? userPosition : null;
+  const ratingFilterOn = minRating > 0;
+  const matchesRating = (r: Restaurant) => Math.round(r.rating) >= minRating;
   const openMap = () => {
     setExpanded(true);
     requestLocation();
@@ -124,8 +128,13 @@ export default function MapPanel({
             <Marker
               key={r.slug + (r.slug === selected)}
               position={[r.lat, r.lng]}
-              icon={pin(r.name, r.slug === selected || r.slug === hovered)}
-              zIndexOffset={r.slug === hovered ? 1000 : 0}
+              icon={pin(
+                r.name,
+                r.slug === selected || r.slug === hovered,
+                ratingFilterOn && matchesRating(r),
+                ratingFilterOn && !matchesRating(r),
+              )}
+              zIndexOffset={r.slug === hovered ? 1000 : ratingFilterOn && matchesRating(r) ? 500 : 0}
               eventHandlers={{ click: () => onPick(r.slug) }}
               title={r.name}
             />
@@ -137,7 +146,10 @@ export default function MapPanel({
         {!expanded && <div className="map-cover" onClick={openMap} aria-hidden="true" />}
       </div>
       {expanded && <p className="map-tip" role="status">
-        {geo === "requesting" ? "Zisťujeme vašu polohu. Povoľte prístup v prehliadači." : locationError ?? "Nájazdom na marker zobrazíte celý názov, kliknutím reštauráciu vyfiltrujete."}
+        {geo === "requesting"
+          ? "Zisťujeme vašu polohu. Povoľte prístup v prehliadači."
+          : locationError ??
+            `${ratingFilterOn ? `Žlté markery zodpovedajú zvolenému hodnoteniu (${minRating}+). ` : ""}Nájazdom na marker zobrazíte celý názov, kliknutím reštauráciu vyfiltrujete.`}
         {locationError && <> <button className="inline-link plain" onClick={requestLocation}>Skúsiť znova</button></>}
       </p>}
     </aside>
