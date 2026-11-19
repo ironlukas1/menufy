@@ -12,7 +12,7 @@ type PublicRestaurantRow = {
 function toRestaurant(row: PublicRestaurantRow): Restaurant {
   const items = (menu: StoredMenu | undefined): MenuItem[] => [...(menu?.menu_items ?? [])].sort((a, b) => a.position - b.position).map((item) => ({
     name: item.name, desc: item.description, weight: item.weight, allergens: item.allergens,
-    price: item.price_cents / 100, tag: item.tag,
+    price: item.price_cents / 100, tag: item.tag, image: item.image || "",
   }));
   const coverImage = row.image ? restaurantImageUrl(row.image) : "";
   return {
@@ -43,7 +43,7 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
     void (async () => {
       try {
         const { data, error } = await supabase.from("restaurants")
-          .select("slug, name, initials, tagline, city, district, address, email, phone, web, rating, rating_count, lat, lng, image, gallery, hours, delivery_available, delivery_eta, restaurant_type_links(restaurant_types(name)), menus(id, kind, date, status, menu_items(name, description, weight, price_cents, allergens, tag, position))")
+          .select("slug, name, initials, tagline, city, district, address, email, phone, web, rating, rating_count, lat, lng, image, gallery, hours, delivery_available, delivery_eta, restaurant_type_links(restaurant_types(name)), menus(id, kind, date, status, menu_items(name, description, weight, price_cents, allergens, tag, image, position))")
           .eq("status", "active").eq("owner_submitted", true);
         if (error) throw error;
         if (live) setLiveRestaurants((data as unknown as PublicRestaurantRow[]).map(toRestaurant));

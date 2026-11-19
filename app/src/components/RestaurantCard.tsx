@@ -5,6 +5,7 @@ import { ALLERGENS } from "@/data/allergens";
 import { dailyFor, formatPrice, type MenuItem, type Restaurant } from "@/data/restaurants";
 import { fmtKm, openStatus } from "@/lib";
 import { useProto } from "@/proto/ProtoContext";
+import DishPhoto from "./DishPhoto";
 
 export function useFavorite(slug: string) {
   const { loggedIn, favorites, toggleFavorite } = useProto();
@@ -37,6 +38,7 @@ export function MenuRow({ item, hit }: { item: MenuItem; hit?: boolean }) {
   const allergenNames = item.allergens.map((code) => ALLERGENS.find((a) => a.code === String(code))?.name ?? String(code));
   return (
     <div className={`menu-item ${hit ? "hit" : ""}`}>
+      <DishPhoto image={item.image} name={item.name} />
       <span className={`menu-tag ${/Vege|Fit|Vegán/.test(item.tag) ? "green" : ""}`}>{item.tag}</span>
       <div className="meal-copy">
         <h4>{item.name}</h4>

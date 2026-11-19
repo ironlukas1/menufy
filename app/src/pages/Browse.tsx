@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Outlet, useLocation, useNavigate, useParams } from "react-router";
+import CityPicker from "@/components/CityPicker";
 import Icon from "@/components/Icon";
 import SelectField from "@/components/SelectField";
 import MapPanel from "@/components/MapPanel";
@@ -152,6 +153,7 @@ export default function Browse() {
   const [draft, setDraft] = useState("");
   const [query, setQuery] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [cityOpen, setCityOpen] = useState(false);
   const [mapExpanded, setMapExpanded] = useState(false);
   const [pinned, setPinned] = useState<string | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
@@ -182,6 +184,9 @@ export default function Browse() {
     setPinned(null);
   };
   const toggleFilters = () => (filtersOpen ? closeFilters() : openFilters());
+  useEffect(() => {
+    if (!filtersOpen) setCityOpen(false);
+  }, [filtersOpen]);
   const origin = geo === "granted" && userPosition ? userPosition : CITY_CENTER;
 
   useEffect(() => {
@@ -310,16 +315,20 @@ export default function Browse() {
                 </option>
               ))}
             </SelectField>
-            <SelectField
-              icon="location"
-              label="Mesto"
-              value={panel.city}
-              onChange={(v) => setPanel({ city: v, district: "Všetky časti" })}
-            >
-              {Object.keys(LOCATIONS).map((c) => (
-                <option key={c}>{c}</option>
-              ))}
-            </SelectField>
+            <div className="field">
+              <button
+                type="button"
+                className="field-button"
+                aria-label="Mesto"
+                aria-haspopup="dialog"
+                title="Vyhľadať mesto podľa názvu alebo písmena"
+                onClick={() => setCityOpen(true)}
+              >
+                <Icon name="location" size={18} />
+                <span className="field-value">{panel.city}</span>
+                <Icon name="chevron" size={16} />
+              </button>
+            </div>
             <SelectField label="Mestská časť" value={panel.district} onChange={(v) => setPanel({ district: v })}>
               {LOCATIONS[panel.city].map((d) => (
                 <option key={d}>{d}</option>
@@ -460,6 +469,14 @@ export default function Browse() {
           onPick={pick}
         />}
       </section>
+
+      {cityOpen && (
+        <CityPicker
+          value={panel.city}
+          onPick={(city) => setPanel({ city, district: "Všetky časti" })}
+          onClose={() => setCityOpen(false)}
+        />
+      )}
     </>
   );
 }

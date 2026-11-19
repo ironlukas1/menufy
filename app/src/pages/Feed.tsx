@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useOutletContext } from "react-router";
 import Icon from "@/components/Icon";
-import CityPicker from "@/components/CityPicker";
 import SelectField from "@/components/SelectField";
 import RestaurantCard from "@/components/RestaurantCard";
 import { DAYS } from "@/data/restaurants";
@@ -14,7 +13,6 @@ export default function Feed() {
   const { restaurants } = useRestaurants();
   const { geo } = useProto();
   const [allOpen, setAllOpen] = useState(false);
-  const [cityOpen, setCityOpen] = useState(false);
   const n = results.length;
   const noun = n === 1 ? "reštaurácia" : n >= 2 && n <= 4 ? "reštaurácie" : "reštaurácií";
 
@@ -22,12 +20,6 @@ export default function Feed() {
     <>
       <div className="results-header">
         <div>
-          <p className="section-kicker location-kicker">
-            <button type="button" onClick={() => setCityOpen(true)} aria-label="Zmeniť mesto">
-              {f.city} <Icon name="chevron" size={12} />
-            </button>
-            {f.district !== "Všetky časti" ? ` – ${f.district}` : ""}
-          </p>
           <h2>Menu vo vašom okolí</h2>
           <p>
             {n} {noun} · {DAYS[f.day].short === "Dnes" ? "dnešné menu" : DAYS[f.day].label} ·{" "}
@@ -81,14 +73,6 @@ export default function Feed() {
           </div>
         )}
       </div>
-
-      {cityOpen && (
-        <CityPicker
-          value={f.city}
-          onPick={(city) => set({ city, district: "Všetky časti" })}
-          onClose={() => setCityOpen(false)}
-        />
-      )}
     </>
   );
 }

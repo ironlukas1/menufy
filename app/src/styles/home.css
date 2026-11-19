@@ -543,8 +543,12 @@ button.menu-heading .menu-date { display: inline-flex; align-items: center; gap:
 button.menu-heading svg { transition: transform .15s; }
 button.menu-heading.open svg { transform: rotate(180deg); }
 .menu-list { padding: 3px 20px; }
-.menu-item { min-height: 65px; display: grid; grid-template-columns: 65px 1fr auto; align-items: center; gap: 12px; border-bottom: 1px solid var(--soft-line); }
+.menu-item { min-height: 65px; display: grid; grid-template-columns: 64px 65px 1fr auto; align-items: center; gap: 12px; border-bottom: 1px solid var(--soft-line); }
 .menu-item:last-child { border-bottom: 0; }
+.dish-photo { width: 64px; height: 64px; padding: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: var(--subtle); cursor: zoom-in; }
+.dish-photo:hover { border-color: var(--green); }
+.dish-photo img { width: 100%; height: 100%; display: block; object-fit: cover; }
+.dish-photo-empty { width: 64px; height: 64px; display: grid; place-content: center; justify-items: center; gap: 3px; border: 1px dashed var(--line); border-radius: 10px; background: var(--subtle); color: var(--faint); font-size: 9px; text-align: center; }
 .menu-tag { width: fit-content; padding: 4px 7px; border-radius: 4px; color: var(--tag-fg); background: var(--tag-bg); font-size: 9px; font-weight: 700; text-transform: uppercase; }
 .menu-tag.green { color: var(--green); background: var(--green-soft); }
 .meal-copy h4 { margin-bottom: 3px; font-size: 13px; font-weight: 600; }
@@ -639,10 +643,11 @@ footer > span { margin-left: auto; }
   .favorite { width: 32px; height: 32px; }
   .restaurant-meta { gap: 8px; }
   .menu-heading, .menu-list { padding-inline: 14px; }
-  .menu-item { grid-template-columns: 1fr auto; padding: 10px 0; }
-  .menu-tag { grid-column: 1; }
-  .meal-copy { grid-column: 1; }
-  .price { grid-column: 2; grid-row: 1 / 3; }
+  .menu-item { grid-template-columns: 64px 1fr auto; padding: 10px 0; }
+  .dish-photo, .dish-photo-empty { grid-column: 1; grid-row: 1 / 3; }
+  .menu-tag { grid-column: 2; grid-row: 1; }
+  .meal-copy { grid-column: 2; grid-row: 2; }
+  .price { grid-column: 3; grid-row: 1 / 3; }
   footer { flex-wrap: wrap; }
   footer p { width: 100%; order: 3; }
   .footer-links { width: 100%; order: 4; }

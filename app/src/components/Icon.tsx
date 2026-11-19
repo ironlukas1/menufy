@@ -14,6 +14,7 @@ export type IconName =
   | "filter"
   | "globe"
   | "heart"
+  | "image"
   | "info"
   | "location"
   | "logout"
@@ -55,6 +56,7 @@ const paths: Record<IconName, ReactNode> = {
     </>
   ),
   close: <path d="M18 6 6 18M6 6l12 12" />,
+  image: <><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="m21 15-5-5L5 21" /></>,
   info: (
     <>
       <circle cx="12" cy="12" r="9" />

@@ -258,10 +258,15 @@ a { color: inherit; }
 .modal-actions { margin-top: 16px; display: flex; justify-content: flex-end; gap: 10px; }
 .modal-actions.left { justify-content: flex-start; margin-top: 10px; }
 
+/* dish photo viewer */
+.dish-lightbox { position: fixed; inset: 0; z-index: 3000; display: grid; place-items: center; padding: 56px 20px 20px; background: rgba(8, 20, 13, .82); backdrop-filter: blur(6px); cursor: zoom-out; }
+.dish-lightbox figure { max-width: min(900px, 100%); max-height: 100%; margin: 0; display: grid; gap: 10px; justify-items: center; cursor: default; }
+.dish-lightbox img { max-width: 100%; max-height: calc(100vh - 120px); object-fit: contain; border-radius: 12px; box-shadow: 0 24px 80px rgba(0, 0, 0, .45); }
+.dish-lightbox figcaption { color: var(--on-green); font-size: 14px; font-weight: 600; text-align: center; }
+.dish-lightbox-close { position: absolute; top: 18px; right: 20px; width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid rgba(255, 255, 255, .35); border-radius: 50%; background: rgba(255, 255, 255, .12); color: #fff; }
+.dish-lightbox-close:hover { background: rgba(255, 255, 255, .22); }
+
 /* city picker */
-.location-kicker { display: flex; align-items: center; gap: 4px; }
-.location-kicker button { padding: 0; display: inline-flex; align-items: center; gap: 4px; border: 0; background: none; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; }
-.location-kicker button:hover { text-decoration: underline; }
 .city-picker { display: grid; gap: 12px; }
 .city-search { height: 40px; padding: 0 11px; display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); border-radius: 8px; color: var(--muted); background: var(--canvas); }
 .city-search:focus-within { border-color: var(--green); box-shadow: 0 0 0 3px var(--green-soft); }
@@ -410,6 +415,11 @@ html.native button:active, html.native a:active { opacity: .85; }
 .owner-allergens > div { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .owner-allergens label { display: flex; align-items: center; gap: 7px; font-weight: 400; }
 .owner-allergens input { min-height: 18px; width: 18px; height: 18px; margin: 0; accent-color: var(--green); flex-shrink: 0; }
+.owner-dish-photo { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.owner-dish-photo > img { width: 84px; height: 84px; object-fit: cover; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); }
+.owner-dish-photo-empty { width: 84px; height: 84px; padding: 6px; display: grid; place-content: center; justify-items: center; gap: 6px; border: 1px dashed var(--line); border-radius: 10px; color: var(--faint); font-size: 9px; text-align: center; }
+.owner-dish-photo-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.owner-dish-photo-hint { color: var(--muted); font-size: 11px; }
 .owner-application { padding: 20px 0; border-top: 1px solid var(--soft-line); }
 .owner-application h4 { margin: 0 0 8px; }
 .owner-application p { overflow-wrap: anywhere; font-size: 13px; }
