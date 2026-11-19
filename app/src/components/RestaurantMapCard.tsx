@@ -15,8 +15,8 @@ const pin = (label: string | null | undefined, name: string | null | undefined) 
   const safeLabel = label || safeName.slice(0, 2) || "?";
   return L.divIcon({
     className: "pin-wrap",
-    html: `<span class="pin-shell selected"><span class="pin"><b>${escapeHtml(safeLabel)}</b></span><span class="pin-name">${escapeHtml(safeName)}</span></span>`,
-    iconSize: [44, 36],
+    html: `<span class="pin-shell selected"><span class="pin"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3v5a3 3 0 0 0 6 0V3M7 3v18M20 21V3c-4 2-5 6-5 10h5"/></svg><span class="pin-rating">★ ${escapeHtml(safeLabel)}</span></span><span class="pin-name">${escapeHtml(safeName)}</span></span>`,
+    iconSize: [64, 36],
     iconAnchor: [22, 18],
   });
 };

@@ -11,13 +11,16 @@ const escapeHtml = (value: string | null | undefined) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char] ?? char,
   );
 
-const pin = (name: string | null | undefined, selected: boolean, highlighted: boolean, dimmed: boolean) =>
-  L.divIcon({
+const pin = (name: string | null | undefined, rating: number | null | undefined, selected: boolean, highlighted: boolean, dimmed: boolean) => {
+  const safeRating = Number.isFinite(rating) ? (rating as number) : 0;
+  const ratingLabel = safeRating.toFixed(1).replace(".", ",");
+  return L.divIcon({
     className: "pin-wrap",
-    html: `<span class="pin-shell ${selected ? "selected" : ""} ${highlighted ? "highlighted" : ""} ${dimmed ? "dimmed" : ""}"><span class="pin"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3v5a3 3 0 0 0 6 0V3M7 3v18M20 21V3c-4 2-5 6-5 10h5"/></svg></span><span class="pin-name">${escapeHtml(name)}</span></span>`,
-    iconSize: [44, 36],
+    html: `<span class="pin-shell ${selected ? "selected" : ""} ${highlighted ? "highlighted" : ""} ${dimmed ? "dimmed" : ""}"><span class="pin"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3v5a3 3 0 0 0 6 0V3M7 3v18M20 21V3c-4 2-5 6-5 10h5"/></svg><span class="pin-rating">★ ${escapeHtml(ratingLabel)}</span></span><span class="pin-name">${escapeHtml(name)}</span></span>`,
+    iconSize: [64, 36],
     iconAnchor: [22, 18],
   });
+};
 
 const boundsOf = (items: Restaurant[]) =>
   L.latLngBounds(items.map((r) => [r.lat, r.lng] as [number, number])).pad(0.3);
@@ -130,6 +133,7 @@ export default function MapPanel({
               position={[r.lat, r.lng]}
               icon={pin(
                 r.name,
+                r.rating,
                 r.slug === selected || r.slug === hovered,
                 ratingFilterOn && matchesRating(r),
                 ratingFilterOn && !matchesRating(r),

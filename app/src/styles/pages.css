@@ -103,9 +103,11 @@ a { color: inherit; }
 .map-canvas:not(.is-open) .leaflet-interactive { pointer-events: none !important; }
 .leaflet-container { font-family: "DM Sans", sans-serif; background: var(--map-bg); }
 .dark-tiles .osm-tiles { filter: invert(1) hue-rotate(180deg) brightness(.9) contrast(.9); }
-.pin-wrap { width: 44px !important; height: 36px !important; background: none; border: 0; overflow: visible !important; }
-.pin-shell { box-sizing: border-box; display: inline-flex; align-items: center; width: max-content; max-width: 44px; height: 36px; overflow: hidden; white-space: nowrap; border: 3px solid #fff; border-radius: 18px 18px 18px 3px; color: #fff; background: var(--green); box-shadow: 0 4px 10px rgba(20, 73, 44, .35); transform: rotate(-8deg); transform-origin: 12px 30px; transition: max-width .18s ease, transform .15s ease, background .15s ease; }
-.pin { width: 38px; flex: none; display: grid; place-items: center; overflow: hidden; transition: width .18s ease; }
+.pin-wrap { width: 64px !important; height: 36px !important; background: none; border: 0; overflow: visible !important; }
+.pin-shell { box-sizing: border-box; display: inline-flex; align-items: center; width: max-content; max-width: 64px; height: 36px; overflow: hidden; white-space: nowrap; border: 3px solid #fff; border-radius: 18px 18px 18px 3px; color: #fff; background: var(--green); box-shadow: 0 4px 10px rgba(20, 73, 44, .35); transform: rotate(-8deg); transform-origin: 12px 30px; transition: max-width .18s ease, transform .15s ease, background .15s ease; }
+.pin { width: 58px; flex: none; display: flex; align-items: center; justify-content: center; gap: 4px; overflow: hidden; transition: width .18s ease; }
+.pin svg { flex: none; }
+.pin-rating { font-size: 11px; font-weight: 800; line-height: 1; }
 .pin b { font-size: 10px; font-weight: 800; }
 .pin-name { display: none; padding: 0 12px; font-size: 11px; font-weight: 700; }
 .pin-shell.selected { background: var(--green-dark); }
