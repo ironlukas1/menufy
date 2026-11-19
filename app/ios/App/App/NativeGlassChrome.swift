@@ -355,9 +355,10 @@ private final class NativeGlassChrome: UIView, UITabBarDelegate {
         mapCloseButton?.frame = closeFrame
         mapCloseButton?.isHidden = closeFrame.isEmpty
 
+        let topBarBottom = (topFrames.values.map(\.maxY).max() ?? safeInsets.top + 60) + 8
         for (slug, button) in heartButtons {
             let rect = heartFrames[slug] ?? .zero
-            let frame = bounds.intersects(rect) ? rect : .zero
+            let frame = bounds.intersects(rect) && rect.minY >= topBarBottom ? rect : .zero
             button.frame = frame
             button.isHidden = frame.isEmpty
             legacyHeartGlass[slug]?.frame = frame

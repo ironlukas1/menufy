@@ -108,11 +108,11 @@ function TopBar() {
       count: activeFilters,
       dark,
       scrollY: window.scrollY,
-      hearts: chromeHearts(),
+      hearts: panel === null && !open ? chromeHearts() : [],
       activeTab,
       browse: isHome,
     });
-  }, [panel, activeFilters, dark, loc.pathname, isHome]);
+  }, [panel, activeFilters, dark, loc.pathname, isHome, open]);
 
   // Report after every render (rects depend on the open state and badge).
   useLayoutEffect(() => {
