@@ -1,0 +1,79 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "app/**"
+      - ".github/workflows/android.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: android-apk
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: app/package.json
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: app/pnpm-lock.yaml
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Build web app and sync Capacitor
+        working-directory: app
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm test
+          pnpm build
+          pnpm exec cap sync android
+
+      - name: Fail if the web bundle was not synced
+        run: |
+          ls app/android/app/src/main/assets/public/index.html
+          ls app/android/app/src/main/assets/public/assets/index-*.js
+
+      - name: Build debug APK
+        working-directory: app/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Rename APK
+        run: cp app/android/app/build/outputs/apk/debug/app-debug.apk Menufy-v1.0.1-debug.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Menufy-v1.0.1-debug-apk
+          path: Menufy-v1.0.1-debug.apk
+          if-no-files-found: error
+
+      # Keeps a stable, directly downloadable .apk link for the phone:
+      # https://github.com/<owner>/<repo>/releases/download/android-latest/Menufy-v1.0.1-debug.apk
+      - name: Publish APK to rolling release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-latest
+          name: Menufy Android (latest debug build)
+          body: Automated debug build of sk.menufy.app, installable by sideloading.
+          files: Menufy-v1.0.1-debug.apk
