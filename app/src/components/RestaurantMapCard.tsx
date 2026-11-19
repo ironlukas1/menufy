@@ -5,18 +5,21 @@ import Icon from "./Icon";
 import type { Restaurant } from "@/data/restaurants";
 import { useProto } from "@/proto/ProtoContext";
 
-const escapeHtml = (value: string) =>
-  value.replace(/[&<>"']/g, (char) =>
+const escapeHtml = (value: string | null | undefined) =>
+  String(value ?? "").replace(/[&<>"']/g, (char) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char] ?? char,
   );
 
-const pin = (label: string, name: string) =>
-  L.divIcon({
+const pin = (label: string | null | undefined, name: string | null | undefined) => {
+  const safeName = name ?? "";
+  const safeLabel = label || safeName.slice(0, 2) || "?";
+  return L.divIcon({
     className: "pin-wrap",
-    html: `<span class="pin-shell selected"><span class="pin"><b>${escapeHtml(label)}</b></span><span class="pin-name">${escapeHtml(name)}</span></span>`,
+    html: `<span class="pin-shell selected"><span class="pin"><b>${escapeHtml(safeLabel)}</b></span><span class="pin-name">${escapeHtml(safeName)}</span></span>`,
     iconSize: [44, 36],
     iconAnchor: [22, 18],
   });
+};
 
 function Center({ lat, lng }: { lat: number; lng: number }) {
   const map = useMap();

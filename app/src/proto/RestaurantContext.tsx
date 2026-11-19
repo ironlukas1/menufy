@@ -19,7 +19,7 @@ function toRestaurant(row: PublicRestaurantRow): Restaurant {
   const coverImage = row.image ? restaurantImageUrl(row.image) : "";
   const deliveryLinks = (row.delivery_links ?? []).filter((link) => Boolean(deliveryLinkUrl(link.name, link.url)));
   return {
-    slug: row.slug, name: row.name, initials: row.initials ?? "", tagline: row.tagline, city: row.city, district: row.district,
+    slug: row.slug, name: row.name || "Neznáma reštaurácia", initials: row.initials || (row.name || "?").slice(0, 2).toUpperCase(), tagline: row.tagline, city: row.city, district: row.district,
     address: row.address, email: row.email, phone: row.phone, web: row.web, rating: Number(row.rating), ratingCount: row.rating_count,
     lat: row.lat, lng: row.lng, image: coverImage || prototypeRestaurants[0].image, gallery: row.gallery?.length ? row.gallery : coverImage ? [coverImage] : [],
     cuisines: row.restaurant_type_links.map((link) => link.restaurant_types.name), hours: row.hours ?? [], todayHours: "",

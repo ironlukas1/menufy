@@ -6,12 +6,12 @@ import type { Restaurant } from "@/data/restaurants";
 import { useProto } from "@/proto/ProtoContext";
 import { CITY_CENTER } from "@/lib";
 
-const escapeHtml = (value: string) =>
-  value.replace(/[&<>"']/g, (char) =>
+const escapeHtml = (value: string | null | undefined) =>
+  String(value ?? "").replace(/[&<>"']/g, (char) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char] ?? char,
   );
 
-const pin = (name: string, selected: boolean) =>
+const pin = (name: string | null | undefined, selected: boolean) =>
   L.divIcon({
     className: "pin-wrap",
     html: `<span class="pin-shell ${selected ? "selected" : ""}"><span class="pin"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3v5a3 3 0 0 0 6 0V3M7 3v18M20 21V3c-4 2-5 6-5 10h5"/></svg></span><span class="pin-name">${escapeHtml(name)}</span></span>`,
