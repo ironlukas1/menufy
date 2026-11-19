@@ -5,10 +5,15 @@ import Icon from "./Icon";
 import type { Restaurant } from "@/data/restaurants";
 import { useProto } from "@/proto/ProtoContext";
 
-const pin = (label: string) =>
+const escapeHtml = (value: string) =>
+  value.replace(/[&<>"']/g, (char) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char] ?? char,
+  );
+
+const pin = (label: string, name: string) =>
   L.divIcon({
     className: "pin-wrap",
-    html: `<span class="pin selected"><b>${label}</b></span>`,
+    html: `<span class="pin-shell selected"><span class="pin"><b>${escapeHtml(label)}</b></span><span class="pin-name">${escapeHtml(name)}</span></span>`,
     iconSize: [44, 36],
     iconAnchor: [22, 18],
   });
@@ -48,7 +53,7 @@ export default function RestaurantMapCard({ restaurant }: { restaurant: Restaura
             url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
             className="osm-tiles"
           />
-          <Marker position={position} icon={pin(restaurant.rating.toFixed(1).replace(".", ","))} title={restaurant.name} />
+          <Marker position={position} icon={pin(restaurant.rating.toFixed(1).replace(".", ","), restaurant.name)} title={restaurant.name} />
           <ZoomControl position="topright" />
           <Center lat={restaurant.lat} lng={restaurant.lng} />
         </MapContainer>

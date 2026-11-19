@@ -6,10 +6,15 @@ import type { Restaurant } from "@/data/restaurants";
 import { useProto } from "@/proto/ProtoContext";
 import { CITY_CENTER } from "@/lib";
 
-const pin = (label: string, selected: boolean) =>
+const escapeHtml = (value: string) =>
+  value.replace(/[&<>"']/g, (char) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char] ?? char,
+  );
+
+const pin = (label: string, name: string, selected: boolean) =>
   L.divIcon({
     className: "pin-wrap",
-    html: `<span class="pin ${selected ? "selected" : ""}"><b>${label}</b></span>`,
+    html: `<span class="pin-shell ${selected ? "selected" : ""}"><span class="pin"><b>${escapeHtml(label)}</b></span><span class="pin-name">${escapeHtml(name)}</span></span>`,
     iconSize: [44, 36],
     iconAnchor: [22, 18],
   });
@@ -119,7 +124,7 @@ export default function MapPanel({
             <Marker
               key={r.slug + (r.slug === selected)}
               position={[r.lat, r.lng]}
-              icon={pin(r.initials.replace(/[&<>"']/g, ""), r.slug === selected || r.slug === hovered)}
+              icon={pin(r.initials, r.name, r.slug === selected || r.slug === hovered)}
               zIndexOffset={r.slug === hovered ? 1000 : 0}
               eventHandlers={{ click: () => onPick(r.slug) }}
               title={r.name}
@@ -132,7 +137,7 @@ export default function MapPanel({
         {!expanded && <div className="map-cover" onClick={openMap} aria-hidden="true" />}
       </div>
       {expanded && <p className="map-tip" role="status">
-        {geo === "requesting" ? "Zisťujeme vašu polohu. Povoľte prístup v prehliadači." : locationError ?? "Kliknutím na marker vyfiltrujete vybranú reštauráciu."}
+        {geo === "requesting" ? "Zisťujeme vašu polohu. Povoľte prístup v prehliadači." : locationError ?? "Nájazdom na marker zobrazíte celý názov, kliknutím reštauráciu vyfiltrujete."}
         {locationError && <> <button className="inline-link plain" onClick={requestLocation}>Skúsiť znova</button></>}
       </p>}
     </aside>
