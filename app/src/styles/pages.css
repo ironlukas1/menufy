@@ -383,6 +383,7 @@ html.native {
 }
 html.native body { -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; touch-action: manipulation; }
 html.native input, html.native textarea { -webkit-user-select: text; user-select: text; }
+html.native .form input, html.native .form textarea { font-size: 16px; }
 html.native .top-bar { padding-top: var(--safe-top); }
 html.native .top-bar-inner { height: 56px; width: calc(100% - 28px); }
 html.native .top-nav, html.native .top-burger { display: none; }
