@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import Icon from "@/components/Icon";
 import { ALLERGENS } from "@/data/allergens";
-import { emptyMenuItem, localDate, priceToCents, type MenuItemDraft, type OwnedRestaurant, type StoredMenu } from "@/data/owner";
+import { emptyMenuItem, localDate, priceToCents, SAMPLE_MENU_NOTE_PREFIX, type MenuItemDraft, type OwnedRestaurant, type StoredMenu } from "@/data/owner";
 import { supabase } from "@/supabase";
 
 type EditingMenu = { id?: string; kind: "daily" | "standard"; date: string };
@@ -35,10 +35,10 @@ export default function OwnerMenuEditor({ restaurant, onPublished, onDirtyChange
     void (async () => {
       try {
         const { data, error } = await supabase.from("menus")
-          .select("id, kind, date, status, menu_items(name, description, weight, price_cents, allergens, tag, position)")
+          .select("id, kind, date, status, note, menu_items(name, description, weight, price_cents, allergens, tag, position)")
           .eq("restaurant_id", restaurant.id).order("date", { ascending: false });
         if (error) throw error;
-        if (live) setMenus(data as StoredMenu[]);
+        if (live) setMenus((data as StoredMenu[]).filter((menu) => !menu.note?.startsWith(SAMPLE_MENU_NOTE_PREFIX)));
       } catch { if (live) setLoadError(true); }
       finally { if (live) setLoading(false); }
     })();

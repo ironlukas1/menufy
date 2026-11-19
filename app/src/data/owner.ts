@@ -4,9 +4,10 @@ export type OwnedRestaurant = {
 };
 export type MenuItemDraft = { name: string; description: string; weight: string; price: string; allergens: number[]; tag: string };
 export type StoredMenu = {
-  id: string; kind: "daily" | "standard"; date: string | null; status: "draft" | "published";
+  id: string; kind: "daily" | "standard"; date: string | null; status: "draft" | "published"; note?: string | null;
   menu_items: { name: string; description: string; weight: string; price_cents: number; allergens: number[]; tag: string; position: number }[];
 };
+export const SAMPLE_MENU_NOTE_PREFIX = "[MENUFY_SAMPLE]";
 export const emptyMenuItem = (): MenuItemDraft => ({ name: "", description: "", weight: "", price: "", allergens: [], tag: "" });
 export function priceToCents(value: string): number | null {
   if (!/^\d{1,4}([.,]\d{1,2})?$/.test(value.trim())) return null;

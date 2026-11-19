@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { DAYS, restaurants as prototypeRestaurants, type Restaurant, type MenuItem } from "@/data/restaurants";
-import type { StoredMenu } from "@/data/owner";
+import { SAMPLE_MENU_NOTE_PREFIX, type StoredMenu } from "@/data/owner";
 import { isSupabaseConfigured, supabase } from "@/supabase";
 
 type PublicRestaurantRow = {
@@ -20,17 +20,19 @@ function toRestaurant(row: PublicRestaurantRow): Restaurant {
   const todayHours = hours.find(([day]) => day.toLocaleLowerCase("sk") === weekday)?.[1] ?? "";
   const dailySample: boolean[] = [];
   const daily = DAYS.map((day, index) => {
-    const published = items(row.menus.find((menu) => menu.kind === "daily" && menu.date === day.date && menu.status === "published"));
+    const publishedMenu = row.menus.find((menu) => menu.kind === "daily" && menu.date === day.date && menu.status === "published");
+    const published = items(publishedMenu);
     if (published.length) {
-      dailySample.push(false);
+      dailySample.push(publishedMenu?.note?.startsWith(SAMPLE_MENU_NOTE_PREFIX) ?? false);
       return published;
     }
     const sample = fallback?.daily[index === 0 ? 0 : 1] ?? [];
     dailySample.push(sample.length > 0);
     return sample;
   });
-  const publishedStandard = items(row.menus.find((menu) => menu.kind === "standard" && menu.status === "published"));
-  const sampleStandard = publishedStandard.length === 0 && (fallback?.standard.length ?? 0) > 0;
+  const standardMenu = row.menus.find((menu) => menu.kind === "standard" && menu.status === "published");
+  const publishedStandard = items(standardMenu);
+  const sampleStandard = standardMenu?.note?.startsWith(SAMPLE_MENU_NOTE_PREFIX) ?? (publishedStandard.length === 0 && (fallback?.standard.length ?? 0) > 0);
   return {
     slug: row.slug, name: row.name, initials: row.initials, tagline: row.tagline, city: row.city, district: row.district,
     address: row.address, email: row.email, phone: row.phone, web: row.web, rating: Number(row.rating), ratingCount: row.rating_count,
@@ -55,7 +57,7 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
     void (async () => {
       try {
         const { data, error } = await supabase.from("restaurants")
-          .select("slug, name, initials, tagline, city, district, address, email, phone, web, rating, rating_count, lat, lng, image, gallery, hours, delivery_available, delivery_eta, restaurant_type_links(restaurant_types(name)), menus(id, kind, date, status, menu_items(name, description, weight, price_cents, allergens, tag, position))")
+          .select("slug, name, initials, tagline, city, district, address, email, phone, web, rating, rating_count, lat, lng, image, gallery, hours, delivery_available, delivery_eta, restaurant_type_links(restaurant_types(name)), menus(id, kind, date, status, note, menu_items(name, description, weight, price_cents, allergens, tag, position))")
           .eq("status", "active").eq("owner_submitted", true);
         if (error) throw error;
         if (live) setLiveRestaurants((data as unknown as PublicRestaurantRow[]).map(toRestaurant));
