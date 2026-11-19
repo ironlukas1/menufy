@@ -122,17 +122,26 @@ export function ProtoProvider({ children }: { children: ReactNode }) {
     );
   };
   const [favorites, setFavorites] = useState<string[]>([]);
+  const favoritesRef = useRef(favorites);
+  useEffect(() => {
+    favoritesRef.current = favorites;
+  }, [favorites]);
 
   useEffect(() => {
     if (!userId) return setFavorites([]);
     let live = true;
     Promise.all([
-      supabase.from("favorites").select("restaurants(slug)").order("created_at"),
+      supabase.from("favorites").select("restaurants(slug)").eq("user_id", userId).order("created_at"),
       supabase.from("preferences").select("*").maybeSingle(),
     ]).then(([f, p]) => {
       if (!live) return;
       // many-to-one embed returns an object; the untyped client types it as an array
-      if (f.data) setFavorites(f.data.map((r) => (r.restaurants as unknown as { slug: string }).slug));
+      if (f.data) {
+        const slugs = f.data
+          .map((row) => (row.restaurants as unknown as { slug?: string } | null)?.slug)
+          .filter((slug): slug is string => typeof slug === "string" && slug.length > 0);
+        setFavorites([...new Set(slugs)]);
+      }
       if (p.data) {
         setThemeState(p.data.theme);
         setNotifyState({ daily: p.data.notify_daily, fav: p.data.notify_fav, promo: p.data.notify_promo });
@@ -144,17 +153,24 @@ export function ProtoProvider({ children }: { children: ReactNode }) {
   }, [userId]);
 
   const toggleFavorite = (slug: string) => {
-    const adding = !favorites.includes(slug);
-    setFavorites((f) => (adding ? [...f, slug] : f.filter((x) => x !== slug)));
+    const adding = !favoritesRef.current.includes(slug);
+    const next = adding ? [...favoritesRef.current, slug] : favoritesRef.current.filter((x) => x !== slug);
+    favoritesRef.current = next;
+    setFavorites(next);
     if (!userId) return;
     void (async () => {
-      const r = await supabase.from("restaurants").select("id").eq("slug", slug).single();
-      const { error } = r.error
-        ? r
-        : adding
-          ? await supabase.from("favorites").insert({ user_id: userId, restaurant_id: r.data.id })
-          : await supabase.from("favorites").delete().eq("restaurant_id", r.data.id);
-      if (error) setFavorites((f) => (adding ? f.filter((x) => x !== slug) : [...f, slug]));
+      // `single()` throws when a slug is duplicated in the database; one row is enough.
+      const { data: place, error: lookupError } = await supabase
+        .from("restaurants").select("id").eq("slug", slug).limit(1).maybeSingle();
+      if (lookupError || !place) return; // keep the local change for prototype-only restaurants
+      if (adding) {
+        const { error } = await supabase.from("favorites").insert({ user_id: userId, restaurant_id: place.id });
+        if (error?.code === "23505") return; // already stored – the local state is correct
+      } else {
+        await supabase.from("favorites").delete().eq("user_id", userId).eq("restaurant_id", place.id);
+      }
+      // Never roll back the optimistic state here – that made the heart snap back and
+      // removals look like they did nothing until a refresh.
     })();
   };
   const [systemDark, setSystemDark] = useState(

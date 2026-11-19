@@ -1,4 +1,4 @@
-import { Component, useEffect, useState, type ReactNode } from "react";
+import { Component, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router";
 import Icon from "./Icon";
 import { useProto } from "@/proto/ProtoContext";
@@ -29,21 +29,50 @@ function TopBar() {
   const { loggedIn, email } = useProto();
   const [open, setOpen] = useState(false);
   const loc = useLocation();
+  const navRef = useRef<HTMLElement>(null);
+  const measured = useRef(false);
+  const [indicator, setIndicator] = useState({ left: 0, width: 0, visible: false, ready: false });
 
   useEffect(() => {
     setOpen(false);
   }, [loc.pathname]);
 
+  useLayoutEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    let cancelled = false;
+    const update = () => {
+      const active = nav.querySelector<HTMLElement>(".top-link.active");
+      const ready = measured.current;
+      measured.current = true;
+      if (cancelled) return;
+      if (active) setIndicator({ left: active.offsetLeft, width: active.offsetWidth, visible: true, ready });
+      else setIndicator((current) => ({ ...current, visible: false, ready }));
+    };
+    update();
+    document.fonts?.ready.then(update);
+    window.addEventListener("resize", update);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("resize", update);
+    };
+  }, [loc.pathname, loc.search]);
+
   return (
     <header className="top-bar">
       <div className="top-bar-inner">
         <Brand />
-        <nav className="top-nav" aria-label="Hlavná navigácia">
+        <nav className="top-nav" aria-label="Hlavná navigácia" ref={navRef}>
           {links.map((l) => (
             <NavLink key={l.to} to={l.to} end={l.end} className="top-link">
               {l.label}
             </NavLink>
           ))}
+          <span
+            className={`top-nav-indicator ${indicator.visible ? "visible" : ""} ${indicator.ready ? "ready" : ""}`}
+            style={{ left: indicator.left, width: indicator.width }}
+            aria-hidden="true"
+          />
         </nav>
         <div className="top-actions">
           {loggedIn ? (

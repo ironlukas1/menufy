@@ -57,10 +57,19 @@ export function RestaurantProvider({ children }: { children: ReactNode }) {
     window.addEventListener("focus", refresh);
     return () => window.removeEventListener("focus", refresh);
   }, [refresh]);
-  const value = useMemo(() => ({ restaurants: [...prototypeRestaurants, ...liveRestaurants].map((restaurant) => {
-    const rating = ratings.find((entry) => entry.slug === restaurant.slug);
-    return { ...restaurant, rating: Number(rating?.rating ?? 0), ratingCount: Number(rating?.rating_count ?? 0) };
-  }), loading, refresh }), [liveRestaurants, ratings, loading, refresh]);
+  const value = useMemo(() => {
+    // Prototype entries are a fallback for the pre-portal demo. Live rows with the
+    // same slug replace them so a restaurant is never rendered twice.
+    const bySlug = new Map<string, Restaurant>();
+    prototypeRestaurants.forEach((r) => bySlug.set(r.slug, r));
+    liveRestaurants.forEach((r) => bySlug.set(r.slug, r));
+    // Community ratings from Supabase replace the prototype values.
+    const restaurants = [...bySlug.values()].map((restaurant) => {
+      const rating = ratings.find((entry) => entry.slug === restaurant.slug);
+      return { ...restaurant, rating: Number(rating?.rating ?? 0), ratingCount: Number(rating?.rating_count ?? 0) };
+    });
+    return { restaurants, loading, refresh };
+  }, [liveRestaurants, ratings, loading, refresh]);
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }
 export function useRestaurants() {

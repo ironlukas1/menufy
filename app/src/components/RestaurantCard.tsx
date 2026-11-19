@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import Icon from "./Icon";
+import { ALLERGENS } from "@/data/allergens";
 import { dailyFor, formatPrice, type MenuItem, type Restaurant } from "@/data/restaurants";
 import { fmtKm, openStatus } from "@/lib";
 import { useProto } from "@/proto/ProtoContext";
@@ -33,6 +34,7 @@ export function HeartButton({ slug }: { slug: string }) {
 }
 
 export function MenuRow({ item, hit }: { item: MenuItem; hit?: boolean }) {
+  const allergenNames = item.allergens.map((code) => ALLERGENS.find((a) => a.code === String(code))?.name ?? String(code));
   return (
     <div className={`menu-item ${hit ? "hit" : ""}`}>
       <span className={`menu-tag ${/Vege|Fit|Vegán/.test(item.tag) ? "green" : ""}`}>{item.tag}</span>
@@ -40,7 +42,7 @@ export function MenuRow({ item, hit }: { item: MenuItem; hit?: boolean }) {
         <h4>{item.name}</h4>
         <p className="meal-desc">{item.desc}</p>
         <p>
-          {item.weight} <i /> Alergény: {item.allergens.length ? item.allergens.join(", ") : "–"}
+          {item.weight} <i /> Alergény: {allergenNames.length ? allergenNames.join(", ") : "–"}
         </p>
       </div>
       <strong className="price">{formatPrice(item.price)}</strong>

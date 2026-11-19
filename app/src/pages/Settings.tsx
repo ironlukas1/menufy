@@ -82,7 +82,7 @@ export default function Settings() {
 
   const faqs = [
     ["Ako často sa menu aktualizuje?", "Reštaurácie zverejňujú denné menu každé ráno. Aktualizácie sa zobrazia okamžite."],
-    ["Ako zistím alergény?", "Pri každom jedle sú uvedené čísla alergénov podľa EÚ (1–14). V Filtroch ich môžete vylúčiť."],
+    ["Ako zistím alergény?", "Pri každom jedle nájdete zoznam alergénov podľa názvu. V Filtroch môžete vybrať tie, ktoré chcete vylúčiť."],
     ["Je menufy spoplatnené?", "Nie, pre používateľov aj reštaurácie je služba v úvodnej fáze zadarmo."],
   ];
 
