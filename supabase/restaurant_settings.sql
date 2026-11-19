@@ -94,7 +94,7 @@ begin
     if not found then raise exception 'Photo upload not found' using errcode = '22023'; end if;
   end if;
   update public.restaurants set
-    name = restaurant_name, initials = upper(left(restaurant_name,2)), city = city_name,
+    name = restaurant_name, city = city_name,
     district = coalesce(p_restaurant->>'district',''), address = btrim(p_restaurant->>'address'),
     email = btrim(p_restaurant->>'email'), phone = btrim(p_restaurant->>'phone'), web = website,
     tagline = coalesce(p_restaurant->>'tagline',''), lat = latitude, lng = longitude,

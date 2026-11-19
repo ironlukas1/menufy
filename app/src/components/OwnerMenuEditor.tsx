@@ -2,8 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import Icon from "@/components/Icon";
 import { ALLERGENS } from "@/data/allergens";
 import { emptyMenuItem, localDate, priceToCents, type MenuItemDraft, type OwnedRestaurant, type StoredMenu } from "@/data/owner";
-import { IMAGE_EXTENSIONS, RESTAURANT_IMAGE_BUCKET, imageValidation } from "@/data/restaurantSettings";
-import { restaurantImageUrl, supabase } from "@/supabase";
+import { supabase } from "@/supabase";
 
 type EditingMenu = { id?: string; kind: "daily" | "standard"; date: string };
 const money = (cents: number) => new Intl.NumberFormat("sk-SK", { style: "currency", currency: "EUR" }).format(cents / 100);
@@ -36,7 +35,7 @@ export default function OwnerMenuEditor({ restaurant, onPublished, onDirtyChange
     void (async () => {
       try {
         const { data, error } = await supabase.from("menus")
-          .select("id, kind, date, status, menu_items(name, description, weight, price_cents, allergens, tag, image, position)")
+          .select("id, kind, date, status, menu_items(name, description, weight, price_cents, allergens, tag, position)")
           .eq("restaurant_id", restaurant.id).order("date", { ascending: false });
         if (error) throw error;
         if (live) setMenus(data as StoredMenu[]);
@@ -66,7 +65,7 @@ export default function OwnerMenuEditor({ restaurant, onPublished, onDirtyChange
     setEditing({ id: menu.id, kind: menu.kind, date: menu.date ?? localDate() });
     setItems([...menu.menu_items].sort((a, b) => a.position - b.position).map((item) => ({
       name: item.name, description: item.description, weight: item.weight,
-      price: (item.price_cents / 100).toFixed(2), allergens: item.allergens, tag: item.tag, image: item.image || "",
+      price: (item.price_cents / 100).toFixed(2), allergens: item.allergens, tag: item.tag,
     })));
     setDirty(false); setError(null); setMessage(null); setView("edit");
   };
@@ -89,25 +88,6 @@ export default function OwnerMenuEditor({ restaurant, onPublished, onDirtyChange
     setItems((current) => current.map((item, position) => position === index ? { ...item, ...patch } : item));
     setDirty(true); setMessage(null); setError(null);
   };
-  const uploadDishPhoto = async (index: number, file: File) => {
-    const validation = imageValidation(file);
-    if (validation) return setError(validation);
-    if (saving.current) return;
-    saving.current = true; setBusy(true); setError(null);
-    try {
-      const path = `${restaurant.id}/${crypto.randomUUID()}.${IMAGE_EXTENSIONS[file.type]}`;
-      const { error: uploadError } = await supabase.storage.from(RESTAURANT_IMAGE_BUCKET)
-        .upload(path, file, { contentType: file.type, cacheControl: "3600", upsert: false });
-      if (uploadError) throw new Error("photo-upload");
-      changeItem(index, { image: `${RESTAURANT_IMAGE_BUCKET}/${path}` });
-      setMessage(null);
-    } catch (failure) {
-      setError(failure instanceof Error && failure.message === "photo-upload"
-        ? "Fotografiu jedla sa nepodarilo nahrať. Skontrolujte pripojenie a skúste znova."
-        : "Fotografiu jedla sa nepodarilo nahrať. Skúste znova.");
-    } finally { saving.current = false; setBusy(false); }
-  };
-  const removeDishPhoto = (index: number) => changeItem(index, { image: "" });
   const save = async (status: "draft" | "published") => {
     if (saving.current || !editing || !formRef.current?.reportValidity()) return;
     setError(null); setMessage(null);
@@ -186,19 +166,6 @@ export default function OwnerMenuEditor({ restaurant, onPublished, onDirtyChange
               {items.map((item, index) => <div className="owner-dish" key={index}>
                 <div className="panel-head"><h4>Jedlo {index + 1}</h4><button type="button" className="inline-link plain" disabled={items.length === 1} onClick={() => { setItems((current) => current.filter((_, i) => i !== index)); setDirty(true); setError(null); }}>Odstrániť jedlo</button></div>
                 <label>Názov jedla<input required minLength={2} maxLength={120} value={item.name} onChange={(event) => changeItem(index, { name: event.target.value })} placeholder="Napr. Kurací rezeň so zemiakovou kašou" /></label>
-                <div className="owner-dish-photo">
-                  {item.image ? <img src={restaurantImageUrl(item.image)} alt={`Fotografia jedla ${item.name || index + 1}`} />
-                    : <div className="owner-dish-photo-empty"><Icon name="store" size={22} /><span>Fotografia jedla je voliteľná</span></div>}
-                  <div className="owner-dish-photo-actions">
-                    <label className="btn-ghost owner-photo-picker"><Icon name="arrow" size={16} />{item.image ? "Zmeniť fotografiu" : "Pridať fotografiu"}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={busy} onChange={(event) => {
-                      const file = event.target.files?.[0];
-                      if (file) void uploadDishPhoto(index, file);
-                      event.target.value = "";
-                    }} /></label>
-                    {item.image && <button type="button" className="inline-link plain" disabled={busy} onClick={() => removeDishPhoto(index)}>Odstrániť fotografiu</button>}
-                  </div>
-                </div>
-                <small className="owner-dish-photo-hint">JPG, PNG alebo WebP, najviac 5 MB. Fotografia sa zobrazí v menu po zverejnení.</small>
                 <div className="owner-form-grid"><label>Cena (€)<input required inputMode="decimal" value={item.price} onChange={(event) => changeItem(index, { price: event.target.value })} placeholder="8,90" /></label><label>Hmotnosť / objem<input maxLength={40} value={item.weight} onChange={(event) => changeItem(index, { weight: event.target.value })} placeholder="150 / 200 g" /></label></div>
                 <label>Popis<textarea rows={2} maxLength={500} value={item.description} onChange={(event) => changeItem(index, { description: event.target.value })} /></label>
                 <label>Kategória<input maxLength={40} value={item.tag} onChange={(event) => changeItem(index, { tag: event.target.value })} placeholder="Polievka, Menu 1, Vege…" /></label>

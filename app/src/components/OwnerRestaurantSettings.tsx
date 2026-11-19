@@ -4,19 +4,19 @@ import OwnerGooglePlace from "@/components/OwnerGooglePlace";
 import OwnerLocationPicker from "@/components/OwnerLocationPicker";
 import { CUISINES, LOCATIONS } from "@/data/allergens";
 import type { OwnedRestaurant } from "@/data/owner";
-import { IMAGE_EXTENSIONS, RESTAURANT_IMAGE_BUCKET, imageValidation, openingDays, websiteUrl, type OpeningDay } from "@/data/restaurantSettings";
+import { DELIVERY_PROVIDERS, deliveryLinkUrl, type DeliveryLink, IMAGE_EXTENSIONS, RESTAURANT_IMAGE_BUCKET, imageValidation, photoUploadError, openingDays, websiteUrl, type OpeningDay } from "@/data/restaurantSettings";
 import { prepareRestaurantPhoto } from "@/data/restaurantPhoto";
 import { restaurantImageUrl, supabase } from "@/supabase";
 
 type RestaurantProfile = OwnedRestaurant & {
   google_place_id?: string | null; tagline: string; web: string; lat: number; lng: number; image: string; hours: [string, string][];
-  delivery_available: boolean; delivery_eta: string;
+  delivery_available: boolean; delivery_eta: string; delivery_links?: DeliveryLink[];
   restaurant_type_links: { restaurant_types: { name: string } }[];
 };
 type ProfileForm = {
   name: string; tagline: string; city: string; district: string; address: string;
   email: string; phone: string; web: string; cuisine: string; lat: string; lng: string;
-  image: string; showHours: boolean; hours: OpeningDay[]; delivery: boolean; deliveryEta: string;
+  image: string; showHours: boolean; hours: OpeningDay[]; delivery: boolean; deliveryLinks: DeliveryLink[];
 };
 function toForm(profile: RestaurantProfile): ProfileForm {
   return { name: profile.name, tagline: profile.tagline, city: profile.city, district: profile.district,
@@ -24,7 +24,8 @@ function toForm(profile: RestaurantProfile): ProfileForm {
     cuisine: profile.restaurant_type_links[0]?.restaurant_types.name ?? CUISINES[0],
     lat: String(profile.lat), lng: String(profile.lng), image: profile.image,
     showHours: profile.hours.length > 0, hours: openingDays(profile.hours),
-    delivery: profile.delivery_available, deliveryEta: profile.delivery_eta };
+    delivery: profile.delivery_available,
+    deliveryLinks: DELIVERY_PROVIDERS.map(({ name }) => ({ name, url: profile.delivery_links?.find((link) => link.name === name)?.url ?? "" })) };
 }
 export default function OwnerRestaurantSettings({ restaurant, onSaved, onDirtyChange, onBusyChange }: {
   restaurant: OwnedRestaurant; onSaved: (profile: OwnedRestaurant) => void;
@@ -111,14 +112,22 @@ export default function OwnerRestaurantSettings({ restaurant, onSaved, onDirtyCh
     if (!form.lat.trim() || !form.lng.trim() || !Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180)
       return setError("Označte polohu reštaurácie na mape alebo zadajte platné súradnice.");
     if (file) { const validation = imageValidation(file); if (validation) return setError(validation); }
+    const deliveryLinks: DeliveryLink[] = [];
+    for (const link of form.deliveryLinks) {
+      const url = deliveryLinkUrl(link.name, link.url);
+      if (url === null) return setError(`Skontrolujte odkaz na ${link.name}. Vložte HTTPS odkaz na konkrétny podnik na stránke tejto služby.`);
+      if (url) deliveryLinks.push({ name: link.name, url });
+    }
+    if (!Array.isArray(profile.delivery_links)) return setError("Pre uloženie odkazov najprv spustite v Supabase súbor supabase/restaurant_delivery.sql. Potom obnovte stránku.");
     saving.current = true; setBusy(true);
     let uploaded: string | null = null;
+    let uploadError: string | null = null;
     try {
       let image = form.image;
       if (file) {
         const path = `${restaurant.id}/${crypto.randomUUID()}.${IMAGE_EXTENSIONS[file.type]}`;
         const result = await supabase.storage.from(RESTAURANT_IMAGE_BUCKET).upload(path, file, { contentType: file.type, cacheControl: "3600", upsert: false });
-        if (result.error) throw new Error("photo-upload");
+        if (result.error) { uploadError = photoUploadError(result.error); throw new Error("photo-upload"); }
         uploaded = path; image = `${RESTAURANT_IMAGE_BUCKET}/${path}`;
       }
       const payload = {
@@ -126,10 +135,13 @@ export default function OwnerRestaurantSettings({ restaurant, onSaved, onDirtyCh
         address: form.address.trim(), email: form.email.trim(), phone: form.phone.trim(), web,
         cuisine: form.cuisine, lat, lng, image,
         hours: form.showHours ? form.hours.map((day) => [day.day, day.closed ? "Zatvorené" : `${day.open} – ${day.close}`]) : [],
-        delivery_available: form.delivery, delivery_eta: form.delivery ? form.deliveryEta.trim() : "",
+        delivery_available: form.delivery,
+        delivery_eta: "",
+        delivery_links: deliveryLinks,
       };
       const result = await supabase.rpc("update_owned_restaurant", { p_restaurant_id: restaurant.id, p_restaurant: payload });
       if (result.error) throw result.error;
+
       const saved = { ...result.data, restaurant_type_links: [{ restaurant_types: { name: form.cuisine } }] } as RestaurantProfile;
       setProfile(saved); setForm(toForm(saved)); setFile(null); setLocalPreview(null); setPhotoError(null); setDirty(false);
       if (fileInput.current) fileInput.current.value = "";
@@ -144,7 +156,7 @@ export default function OwnerRestaurantSettings({ restaurant, onSaved, onDirtyCh
         // Storage refuses deletion if a save succeeded despite a lost response.
         try { await supabase.storage.from(RESTAURANT_IMAGE_BUCKET).remove([uploaded]); } catch { /* Keep the original form for retry. */ }
       }
-      setError(failure instanceof Error && failure.message === "photo-upload" ? "Fotografiu sa nepodarilo nahrať. Skontrolujte pripojenie a skúste znova."
+      setError(failure instanceof Error && failure.message === "photo-upload" ? uploadError
         : "Nastavenia sa nepodarilo uložiť. Vaše zmeny zostali vo formulári. Skúste znova.");
     } finally { saving.current = false; setBusy(false); }
   };
@@ -183,7 +195,19 @@ export default function OwnerRestaurantSettings({ restaurant, onSaved, onDirtyCh
           <label className="owner-settings-check"><input type="checkbox" checked={form.showHours} onChange={(e) => patch({ showHours: e.target.checked })} />Zobraziť otváracie hodiny</label>
           {form.showHours && <div className="owner-opening-hours">{form.hours.map((day, index) => <div className="owner-opening-day" key={day.day}><strong>{day.day}</strong><label className="owner-settings-check"><input type="checkbox" checked={day.closed} onChange={(e) => patch({ hours: form.hours.map((entry, i) => i === index ? { ...entry, closed: e.target.checked } : entry) })} />Zatvorené</label>{!day.closed && <div><label><span className="review-sr-only">{day.day} – otvorené od</span><input required aria-label={`${day.day} – otvorené od`} inputMode="numeric" maxLength={5} pattern="([01][0-9]|2[0-3]):[0-5][0-9]" value={day.open} onChange={(e) => patch({ hours: form.hours.map((entry, i) => i === index ? { ...entry, open: e.target.value } : entry) })} /></label><span>–</span><label><span className="review-sr-only">{day.day} – otvorené do</span><input required aria-label={`${day.day} – otvorené do`} inputMode="numeric" maxLength={5} pattern="(([01][0-9]|2[0-3]):[0-5][0-9]|24:00)" value={day.close} onChange={(e) => patch({ hours: form.hours.map((entry, i) => i === index ? { ...entry, close: e.target.value } : entry) })} /></label></div>}</div>)}</div>}
         </div>
-        <div className="owner-settings-section"><div className="owner-settings-section-heading"><Icon name="truck" size={20} /><div><h4>Donáška</h4><p>Informujte hostí o dostupnosti donášky.</p></div></div><label className="owner-settings-check"><input type="checkbox" checked={form.delivery} onChange={(e) => patch({ delivery: e.target.checked })} />Reštaurácia poskytuje donášku</label>{form.delivery && <label>Odhadovaný čas doručenia<input maxLength={80} value={form.deliveryEta} onChange={(e) => patch({ deliveryEta: e.target.value })} placeholder="Napr. 30 – 45 min" /></label>}</div>
+        <div className="owner-settings-section">
+          <div className="owner-settings-section-heading"><Icon name="truck" size={20} /><div><h4>Donáška</h4><p>Pridajte odkazy, cez ktoré si hostia môžu objednať jedlo.</p></div></div>
+          <label className="owner-settings-check"><input type="checkbox" checked={form.delivery} onChange={(e) => patch({ delivery: e.target.checked })} />Reštaurácia poskytuje donášku</label>
+          {form.delivery && <>
+            {DELIVERY_PROVIDERS.map((provider) => <label key={provider.name}>Odkaz na {provider.name}
+              <input type="text" inputMode="url" maxLength={1000} value={form.deliveryLinks.find((link) => link.name === provider.name)?.url ?? ""}
+                onChange={(e) => patch({ deliveryLinks: form.deliveryLinks.map((link) => link.name === provider.name ? { ...link, url: e.target.value } : link) })}
+                placeholder={provider.placeholder} autoComplete="off" spellCheck={false} />
+              <small>Nepovinné · odkaz na váš podnik</small>
+            </label>)}
+
+          </>}
+        </div>
         <div className="owner-settings-save"><span>{busy ? "Ukladáme údaje a fotografiu…" : dirty ? "Máte neuložené zmeny" : "Všetky nastavenia sú uložené"}</span><div className="owner-actions"><button className="btn-ghost" type="button" disabled={!dirty} onClick={reset}>Zahodiť zmeny</button><button className="btn-primary" type="submit" disabled={!dirty}>{busy ? "Ukladáme…" : "Uložiť nastavenia"}</button></div></div>
       </fieldset>
       {error && <p className="form-error" role="alert">{error}</p>}{message && <p className="success-note owner-menu-feedback" role="status">{message}</p>}

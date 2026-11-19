@@ -5,7 +5,6 @@ import { ALLERGENS } from "@/data/allergens";
 import { dailyFor, formatPrice, type MenuItem, type Restaurant } from "@/data/restaurants";
 import { fmtKm, openStatus } from "@/lib";
 import { useProto } from "@/proto/ProtoContext";
-import DishPhoto from "./DishPhoto";
 
 export function useFavorite(slug: string) {
   const { loggedIn, favorites, toggleFavorite } = useProto();
@@ -38,7 +37,6 @@ export function MenuRow({ item, hit }: { item: MenuItem; hit?: boolean }) {
   const allergenNames = item.allergens.map((code) => ALLERGENS.find((a) => a.code === String(code))?.name ?? String(code));
   return (
     <div className={`menu-item ${hit ? "hit" : ""}`}>
-      <DishPhoto image={item.image} name={item.name} />
       <span className={`menu-tag ${/Vege|Fit|Vegán/.test(item.tag) ? "green" : ""}`}>{item.tag}</span>
       <div className="meal-copy">
         <h4>{item.name}</h4>
@@ -95,7 +93,6 @@ export default function RestaurantCard({
       <div className="restaurant-top">
         <Link to={`/restaurant/${r.slug}`} className="card-img" aria-label={`Detail ${r.name}`}>
           <img src={r.image} alt={`Jedlo z reštaurácie ${r.name}`} loading="lazy" />
-          <span className="card-logo">{r.initials}</span>
         </Link>
         <div className="restaurant-info">
           <div className="restaurant-title-row">
@@ -120,7 +117,7 @@ export default function RestaurantCard({
             </Link>
             {r.delivery.available && (
               <span className="delivery-badge">
-                <Icon name="truck" size={17} /> Donáška{r.delivery.eta && ` · ${r.delivery.eta}`}
+                <Icon name="truck" size={17} /> Donáška
               </span>
             )}
             {r.delivery.links?.map((l) => (

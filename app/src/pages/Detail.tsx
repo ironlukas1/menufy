@@ -48,7 +48,6 @@ export default function Detail() {
       <div className="detail-head">
         <div className="detail-banner" style={{ backgroundImage: `url(${r.image})` }} />
         <div className="detail-id">
-          <span className="detail-logo">{r.initials}</span>
           <div className="detail-title">
             <span className={`open-label ${status.open ? "" : "closed"}`}>{status.label}</span>
             <h2>{r.name}</h2>
@@ -105,7 +104,6 @@ export default function Detail() {
           {r.delivery.available ? (
             <p className="delivery-info">
               <Icon name="truck" size={18} /> Donáška k dispozícii
-              <strong>{r.delivery.eta}</strong>
             </p>
           ) : (
             <p className="muted">Reštaurácia donášku neposkytuje.</p>
@@ -115,6 +113,7 @@ export default function Detail() {
               Objednať cez {l.name} <Icon name="arrow" size={16} />
             </a>
           ))}
+
         </section>
       </div>
 

@@ -111,7 +111,6 @@ function Search({
               <span className="search-group">Reštaurácie</span>
               {places.map((r) => (
                 <button key={r.slug} onMouseDown={() => onOpen(r.slug)} role="option">
-                  <span className="mini-logo">{r.initials}</span>
                   <span>
                     {r.name}
                     <small>{r.address}</small>

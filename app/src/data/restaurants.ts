@@ -7,7 +7,6 @@ export type MenuItem = {
   allergens: number[];
   price: number;
   tag: string;
-  image?: string;
 };
 
 export type Review = { author: string; stars: number; date: string; text: string };
@@ -94,8 +93,7 @@ export const restaurants: Restaurant[] = [
     daily: [
       [
         i("Tekvicový krém, pražené semienka", "Hokkaido tekvica, smotana, tekvicový olej", "0,33 l", [7, 8], 3.2, "Polievka"),
-        { ...i("Kuracie supreme, zemiakové pyré, hrášok", "Kuracie prsia s kožou, maslové pyré, hrášok", "150 / 200 g", [7], 9.9, "Menu 1"),
-          image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=240&q=80" },
+        i("Kuracie supreme, zemiakové pyré, hrášok", "Kuracie prsia s kožou, maslové pyré, hrášok", "150 / 200 g", [7], 9.9, "Menu 1"),
         i("Hubové rizoto s parmezánom", "Šampiňóny, hliva, parmezán 24 mes.", "350 g", [7, 9], 8.9, "Vege"),
       ],
       [
