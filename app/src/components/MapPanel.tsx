@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { CircleMarker, MapContainer, Marker, Pane, TileLayer, ZoomControl, useMap } from "react-leaflet";
 import L from "leaflet";
 import Icon from "./Icon";
@@ -84,6 +84,34 @@ export default function MapPanel({
   const user = geo === "granted" ? userPosition : null;
   const ratingFilterOn = minRating > 0;
   const matchesRating = (r: Restaurant) => Math.round(r.rating) >= minRating;
+
+  // Hover is handled on the real DOM marker element. Rebuilding the Leaflet icon
+  // on hover would replace that element and make nearby markers flicker.
+  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const activeMarkerEl = useRef<HTMLElement | null>(null);
+
+  useEffect(() => () => {
+    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+    activeMarkerEl.current?.classList.remove("hovered");
+  }, []);
+
+  const activateMarker = (element: HTMLElement) => {
+    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+    if (activeMarkerEl.current && activeMarkerEl.current !== element) {
+      activeMarkerEl.current.classList.remove("hovered");
+    }
+    element.classList.add("hovered");
+    activeMarkerEl.current = element;
+  };
+
+  const deactivateMarker = (element: HTMLElement) => {
+    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+    hoverTimer.current = setTimeout(() => {
+      element.classList.remove("hovered");
+      if (activeMarkerEl.current === element) activeMarkerEl.current = null;
+    }, 120);
+  };
+
   const openMap = () => {
     setExpanded(true);
     requestLocation();
@@ -139,7 +167,17 @@ export default function MapPanel({
                 ratingFilterOn && !matchesRating(r),
               )}
               zIndexOffset={r.slug === hovered ? 1000 : ratingFilterOn && matchesRating(r) ? 500 : 0}
-              eventHandlers={{ click: () => onPick(r.slug) }}
+              eventHandlers={{
+                click: () => onPick(r.slug),
+                mouseover: (event) => {
+                  const element = (event.target as L.Marker).getElement();
+                  if (element) activateMarker(element);
+                },
+                mouseout: (event) => {
+                  const element = (event.target as L.Marker).getElement();
+                  if (element) deactivateMarker(element);
+                },
+              }}
               title={r.name}
             />
           ))}

@@ -111,10 +111,10 @@ a { color: inherit; }
 .pin b { font-size: 10px; font-weight: 800; }
 .pin-name { display: none; padding: 0 12px; font-size: 11px; font-weight: 700; }
 .pin-shell.selected { background: var(--green-dark); }
-.pin-wrap:hover { z-index: 1000 !important; }
-.pin-wrap:hover .pin-shell { max-width: 400px; background: var(--green-dark); transform: rotate(-8deg) scale(1.15); }
-.pin-wrap:hover .pin { width: 0; }
-.pin-wrap:hover .pin-name { display: inline; }
+.pin-wrap.hovered { z-index: 100000 !important; }
+.pin-wrap.hovered .pin-shell { max-width: 400px; background: var(--green-dark); transform: rotate(-8deg) scale(1.15); }
+.pin-wrap.hovered .pin { width: 0; }
+.pin-wrap.hovered .pin-name { display: inline; }
 .pin-shell.highlighted { background: #d99a12; border-color: #fff4cf; box-shadow: 0 0 0 3px rgba(245, 180, 30, .28), 0 4px 12px rgba(120, 76, 0, .35); }
 .pin-shell.dimmed { opacity: .42; }
 .pin-shell.dimmed.selected { opacity: 1; }
