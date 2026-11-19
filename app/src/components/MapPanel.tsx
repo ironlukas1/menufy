@@ -16,8 +16,8 @@ const pin = (name: string | null | undefined, rating: number | null | undefined,
   const ratingLabel = safeRating.toFixed(1).replace(".", ",");
   return L.divIcon({
     className: "pin-wrap",
-    html: `<span class="pin-shell ${selected ? "selected" : ""} ${highlighted ? "highlighted" : ""} ${dimmed ? "dimmed" : ""}"><span class="pin"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3v5a3 3 0 0 0 6 0V3M7 3v18M20 21V3c-4 2-5 6-5 10h5"/></svg><span class="pin-rating">★ ${escapeHtml(ratingLabel)}</span></span><span class="pin-name">${escapeHtml(name)}</span></span>`,
-    iconSize: [64, 36],
+    html: `<span class="pin-shell ${selected ? "selected" : ""} ${highlighted ? "highlighted" : ""} ${dimmed ? "dimmed" : ""}"><span class="pin"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3v5a3 3 0 0 0 6 0V3M7 3v18M20 21V3c-4 2-5 6-5 10h5"/></svg><span class="pin-rating">${escapeHtml(ratingLabel)}</span></span><span class="pin-name">${escapeHtml(name)}</span></span>`,
+    iconSize: [54, 36],
     iconAnchor: [22, 18],
   });
 };
