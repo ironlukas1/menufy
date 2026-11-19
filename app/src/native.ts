@@ -3,7 +3,7 @@ import { Capacitor } from "@capacitor/core";
 const params = new URLSearchParams(location.search);
 
 export const isNative = Capacitor.isNativePlatform() || params.has("native");
-const isIOSApp = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "ios";
+export const isIOSApp = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "ios";
 const nativeGlassHearts = isIOSApp || params.get("glass") === "native";
 /** The bottom tab bar is drawn by the native shell; the web copy must hide. */
 export const nativeTabBar = isIOSApp || params.get("tabbar") === "native";

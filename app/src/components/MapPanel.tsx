@@ -5,6 +5,7 @@ import Icon from "@/components/Icon";
 import type { Restaurant } from "@/data/restaurants";
 import { useProto } from "@/proto/ProtoContext";
 import { CITY_CENTER } from "@/lib";
+import { isIOSApp } from "@/native";
 
 type NativeMapWindow = Window & {
   webkit?: { messageHandlers?: { menufyNativeChrome?: { postMessage: (message: unknown) => void } } };
@@ -125,38 +126,40 @@ export default function MapPanel({
         </button>
       </div>
       <div className={`map-canvas ${dark ? "dark-tiles" : ""}`}>
-        <MapContainer
-          center={[CITY_CENTER.lat, CITY_CENTER.lng]}
-          zoom={13}
-          bounds={items.length ? boundsOf(items) : undefined}
-          boundsOptions={{ maxZoom: 14 }}
-          zoomControl={false}
-          style={{ height: "100%", width: "100%" }}
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-            className="osm-tiles"
-          />
-          {user && (
-            <Pane name="user-location" style={{ zIndex: 625 }}>
-              <CircleMarker center={[user.lat, user.lng]} radius={9} pathOptions={{ color: "#fff", weight: 3, fillColor: "#2f6fe4", fillOpacity: 1 }} />
-            </Pane>
-          )}
-          {items.map((r) => (
-            <Marker
-              key={r.slug + (r.slug === selected)}
-              position={[r.lat, r.lng]}
-              icon={pin(r.rating.toFixed(1).replace(".", ","), r.slug === selected || r.slug === hovered)}
-              zIndexOffset={r.slug === hovered ? 1000 : 0}
-              eventHandlers={{ click: () => onPick(r.slug) }}
-              title={r.name}
+        {!isIOSApp && (
+          <MapContainer
+            center={[CITY_CENTER.lat, CITY_CENTER.lng]}
+            zoom={13}
+            bounds={items.length ? boundsOf(items) : undefined}
+            boundsOptions={{ maxZoom: 14 }}
+            zoomControl={false}
+            style={{ height: "100%", width: "100%" }}
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+              className="osm-tiles"
             />
-          ))}
-          <Interactive />
-          <ZoomControl position="topright" />
-          <Fit items={items} selected={selected} user={user} />
-        </MapContainer>
+            {user && (
+              <Pane name="user-location" style={{ zIndex: 625 }}>
+                <CircleMarker center={[user.lat, user.lng]} radius={9} pathOptions={{ color: "#fff", weight: 3, fillColor: "#2f6fe4", fillOpacity: 1 }} />
+              </Pane>
+            )}
+            {items.map((r) => (
+              <Marker
+                key={r.slug + (r.slug === selected)}
+                position={[r.lat, r.lng]}
+                icon={pin(r.rating.toFixed(1).replace(".", ","), r.slug === selected || r.slug === hovered)}
+                zIndexOffset={r.slug === hovered ? 1000 : 0}
+                eventHandlers={{ click: () => onPick(r.slug) }}
+                title={r.name}
+              />
+            ))}
+            <Interactive />
+            <ZoomControl position="topright" />
+            <Fit items={items} selected={selected} user={user} />
+          </MapContainer>
+        )}
       </div>
       <p className="map-tip" role="status">
         {geo === "requesting" ? "Zisťujeme vašu polohu. Povoľte prístup v prehliadači." : locationError ?? "Kliknutím na marker vyfiltrujete vybranú reštauráciu."}
