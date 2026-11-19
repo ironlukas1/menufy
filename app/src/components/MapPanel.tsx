@@ -6,18 +6,21 @@ import type { Restaurant } from "@/data/restaurants";
 import { useProto } from "@/proto/ProtoContext";
 import { CITY_CENTER } from "@/lib";
 
-const escapeHtml = (value: string) =>
-  value.replace(/[&<>"']/g, (char) =>
+const escapeHtml = (value: string | null | undefined) =>
+  String(value ?? "").replace(/[&<>"']/g, (char) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char] ?? char,
   );
 
-const pin = (label: string, name: string, selected: boolean) =>
-  L.divIcon({
+const pin = (label: string | null | undefined, name: string | null | undefined, selected: boolean) => {
+  const safeName = name ?? "";
+  const safeLabel = label || safeName.slice(0, 2) || "?";
+  return L.divIcon({
     className: "pin-wrap",
-    html: `<span class="pin-shell ${selected ? "selected" : ""}"><span class="pin"><b>${escapeHtml(label)}</b></span><span class="pin-name">${escapeHtml(name)}</span></span>`,
+    html: `<span class="pin-shell ${selected ? "selected" : ""}"><span class="pin"><b>${escapeHtml(safeLabel)}</b></span><span class="pin-name">${escapeHtml(safeName)}</span></span>`,
     iconSize: [44, 36],
     iconAnchor: [22, 18],
   });
+};
 
 const boundsOf = (items: Restaurant[]) =>
   L.latLngBounds(items.map((r) => [r.lat, r.lng] as [number, number])).pad(0.3);
