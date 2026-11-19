@@ -3,7 +3,7 @@ import { Outlet, useLocation, useNavigate, useParams } from "react-router";
 import Icon from "@/components/Icon";
 import SelectField from "@/components/SelectField";
 import MapPanel from "@/components/MapPanel";
-import { ALLERGENS, CUISINES, LOCATIONS } from "@/data/allergens";
+import { ALLERGEN_GROUPS, CUISINES, LOCATIONS } from "@/data/allergens";
 import { DAYS, dailyFor, type Restaurant } from "@/data/restaurants";
 import { CITY_CENTER, distanceKm, nextAt, openStatus } from "@/lib";
 import { useRestaurants } from "@/proto/RestaurantContext";
@@ -148,6 +148,7 @@ export default function Browse() {
   const loc = useLocation();
   const { geo, favorites, userPosition, requestLocation } = useProto();
   const [f, setF] = useState<Filters>(initial);
+  const [pending, setPending] = useState<Filters | null>(null);
   const [draft, setDraft] = useState("");
   const [query, setQuery] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -158,7 +159,29 @@ export default function Browse() {
   const feedRef = useRef<HTMLDivElement>(null);
   const isIndex = loc.pathname === "/";
 
-  const set = (p: Partial<Filters>) => setF((c) => ({ ...c, ...p }));
+  const set = (p: Partial<Filters>) => {
+    setF((c) => ({ ...c, ...p }));
+    setPending((c) => (c ? { ...c, ...p } : null));
+  };
+  const panel = pending ?? f;
+  const setPanel = (p: Partial<Filters>) => setPending((c) => ({ ...(c ?? f), ...p }));
+  const openFilters = () => {
+    setPending(f);
+    setFiltersOpen(true);
+  };
+  const closeFilters = () => {
+    setFiltersOpen(false);
+    setPending(null);
+  };
+  const applyFilters = () => {
+    if (pending) setF(pending);
+    closeFilters();
+  };
+  const resetPanel = () => {
+    setPending({ ...initial, city: panel.city });
+    setPinned(null);
+  };
+  const toggleFilters = () => (filtersOpen ? closeFilters() : openFilters());
   const origin = geo === "granted" && userPosition ? userPosition : CITY_CENTER;
 
   useEffect(() => {
@@ -212,7 +235,9 @@ export default function Browse() {
     f.cuisines.length;
 
   const reset = () => {
-    setF({ ...initial, city: f.city });
+    const next = { ...initial, city: f.city };
+    setF(next);
+    setPending(next);
     setQuery("");
     setDraft("");
     setPinned(null);
@@ -254,7 +279,7 @@ export default function Browse() {
                 onOpen={(s) => nav(`/restaurant/${s}`)} />
               <button
                 className={`hero-filter-button ${filtersOpen ? "active" : ""}`}
-                onClick={() => setFiltersOpen(!filtersOpen)}
+                onClick={toggleFilters}
                 aria-expanded={filtersOpen}
               >
                 <Icon name="filter" size={19} />
@@ -273,12 +298,12 @@ export default function Browse() {
               <strong>Filtrovať ponuku</strong>
               <span>Prispôsobte si výsledky podľa vašich preferencií</span>
             </div>
-            <button onClick={() => setFiltersOpen(false)} aria-label="Zavrieť filtre">
+            <button onClick={closeFilters} aria-label="Zavrieť filtre">
               <Icon name="close" size={18} />
             </button>
           </div>
           <div className="primary-filters">
-            <SelectField icon="calendar" label="Deň" value={String(f.day)} onChange={(v) => set({ day: Number(v) })}>
+            <SelectField icon="calendar" label="Deň" value={String(panel.day)} onChange={(v) => setPanel({ day: Number(v) })}>
               {DAYS.map((d, i) => (
                 <option key={d.label} value={i}>
                   {d.label}
@@ -288,15 +313,15 @@ export default function Browse() {
             <SelectField
               icon="location"
               label="Mesto"
-              value={f.city}
-              onChange={(v) => set({ city: v, district: "Všetky časti" })}
+              value={panel.city}
+              onChange={(v) => setPanel({ city: v, district: "Všetky časti" })}
             >
               {Object.keys(LOCATIONS).map((c) => (
                 <option key={c}>{c}</option>
               ))}
             </SelectField>
-            <SelectField label="Mestská časť" value={f.district} onChange={(v) => set({ district: v })}>
-              {LOCATIONS[f.city].map((d) => (
+            <SelectField label="Mestská časť" value={panel.district} onChange={(v) => setPanel({ district: v })}>
+              {LOCATIONS[panel.city].map((d) => (
                 <option key={d}>{d}</option>
               ))}
             </SelectField>
@@ -307,10 +332,10 @@ export default function Browse() {
               {CUISINES.map((c) => (
                 <button
                   key={c}
-                  className={`chip ${f.cuisines.includes(c) ? "on" : ""}`}
-                  aria-pressed={f.cuisines.includes(c)}
+                  className={`chip ${panel.cuisines.includes(c) ? "on" : ""}`}
+                  aria-pressed={panel.cuisines.includes(c)}
                   onClick={() =>
-                    set({ cuisines: f.cuisines.includes(c) ? f.cuisines.filter((x) => x !== c) : [...f.cuisines, c] })
+                    setPanel({ cuisines: panel.cuisines.includes(c) ? panel.cuisines.filter((x) => x !== c) : [...panel.cuisines, c] })
                   }
                 >
                   {c}
@@ -322,41 +347,48 @@ export default function Browse() {
             <span className="filter-title">
               Bez alergénov <small>(vylúčiť jedlá obsahujúce)</small>
             </span>
-            <div className="chips allergen-grid">
-              {ALLERGENS.map((a) => (
-                <button
-                  key={a.code}
-                  className={`chip ${f.excluded.includes(a.code) ? "on danger" : ""}`}
-                  aria-pressed={f.excluded.includes(a.code)}
-                  onClick={() =>
-                    set({
-                      excluded: f.excluded.includes(a.code)
-                        ? f.excluded.filter((x) => x !== a.code)
-                        : [...f.excluded, a.code],
-                    })
-                  }
-                >
-                  <b>{a.code}</b> {a.name}
-                </button>
+            <div className="allergen-groups">
+              {ALLERGEN_GROUPS.map((group) => (
+                <div className="allergen-group" key={group.name}>
+                  <span className="allergen-group-title">{group.name}</span>
+                  <div className="chips">
+                    {group.allergens.map((a) => (
+                      <button
+                        key={a.code}
+                        className={`chip ${panel.excluded.includes(a.code) ? "on danger" : ""}`}
+                        aria-pressed={panel.excluded.includes(a.code)}
+                        onClick={() =>
+                          setPanel({
+                            excluded: panel.excluded.includes(a.code)
+                              ? panel.excluded.filter((x) => x !== a.code)
+                              : [...panel.excluded, a.code],
+                          })
+                        }
+                      >
+                        {a.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           </div>
           <div className="advanced-filters">
             <label className="range-field">
               <span>
-                Max. cena: <strong>{f.maxPrice >= MAX_PRICE ? "bez limitu" : `${f.maxPrice} €`}</strong>
+                Max. cena: <strong>{panel.maxPrice >= MAX_PRICE ? "bez limitu" : `${panel.maxPrice} €`}</strong>
               </span>
               <input
                 type="range"
                 min={6}
                 max={MAX_PRICE}
                 step={1}
-                value={f.maxPrice}
-                onChange={(e) => set({ maxPrice: Number(e.target.value) })}
+                value={panel.maxPrice}
+                onChange={(e) => setPanel({ maxPrice: Number(e.target.value) })}
                 aria-label="Maximálna cena"
               />
             </label>
-            <SelectField icon="clock" label="Otvorené o" value={f.openAt} onChange={(v) => set({ openAt: v })}>
+            <SelectField icon="clock" label="Otvorené o" value={panel.openAt} onChange={(v) => setPanel({ openAt: v })}>
               <option value="">Kedykoľvek</option>
               <option value="now">Teraz</option>
               {Array.from({ length: 24 }, (_, h) => `${String(h).padStart(2, "0")}:00`).map((t) => (
@@ -365,7 +397,7 @@ export default function Browse() {
                 </option>
               ))}
             </SelectField>
-            <SelectField label="Hodnotenie" value={String(f.minRating)} onChange={(v) => set({ minRating: Number(v) })}>
+            <SelectField label="Hodnotenie" value={String(panel.minRating)} onChange={(v) => setPanel({ minRating: Number(v) })}>
               <option value="0">Akékoľvek hodnotenie</option>
               {[1, 2, 3, 4, 5].map((n) => (
                 <option key={n} value={n} label={n === 5 ? "5 hviezdičiek" : `${n} ${n === 1 ? "hviezdička" : "hviezdičky"} a viac`}>
@@ -379,12 +411,17 @@ export default function Browse() {
               ))}
             </SelectField>
             <label className="check-field">
-              <input type="checkbox" checked={f.delivery} onChange={(e) => set({ delivery: e.target.checked })} />
-              <span className="custom-check">{f.delivery && <Icon name="check" size={14} />}</span>
+              <input type="checkbox" checked={panel.delivery} onChange={(e) => setPanel({ delivery: e.target.checked })} />
+              <span className="custom-check">{panel.delivery && <Icon name="check" size={14} />}</span>
               <Icon name="truck" size={19} /> Len s donáškou
             </label>
-            <button className="reset-button" onClick={reset}>
+          </div>
+          <div className="filter-actions">
+            <button className="reset-button" onClick={resetPanel}>
               Zrušiť filtre
+            </button>
+            <button className="btn-primary filter-apply" onClick={applyFilters}>
+              Použiť filtre <Icon name="check" size={16} />
             </button>
           </div>
         </section>
@@ -401,7 +438,7 @@ export default function Browse() {
               </div>
               <button
                 onClick={() => {
-                  setFiltersOpen(true);
+                  openFilters();
                   setBannerOff(true);
                 }}
               >

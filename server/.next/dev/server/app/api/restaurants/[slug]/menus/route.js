@@ -1,0 +1,11 @@
+var R=require("../../../../../chunks/[turbopack]_runtime.js")("server/app/api/restaurants/[slug]/menus/route.js")
+R.c("server/chunks/[root-of-the-server]__0rgroj64i28ey._.js")
+R.c("server/chunks/0ewr_next_1acn3a3fdzgos._.js")
+R.c("server/chunks/1h6z_zod_v4_core_0m86gn6glrqgh._.js")
+R.c("server/chunks/1h6z_zod_v4_classic_0lli82bmnbubd._.js")
+R.c("server/chunks/1h6z_zod_v4_locales_1u2tk-4y3zabu._.js")
+R.c("server/chunks/01-k_@supabase_auth-js_dist_module_19dkq0d7sr6eo._.js")
+R.c("server/chunks/node_modules__pnpm_0_zat-oge58xe._.js")
+R.c("server/chunks/1oeh_server_app_api_restaurants_[slug]_menus_route_actions_0_mo6f60jjnra.js")
+R.m("[project]/node_modules/.pnpm/next@16.4.2_@types+node@22.20.5_react-dom@19.3.1_react@19.3.1__react@19.3.1/node_modules/next/dist/esm/build/templates/app-route.js { INNER_APP_ROUTE => \"[project]/src/app/api/restaurants/[slug]/menus/route.ts [app-route] (ecmascript)\" } [app-route] (ecmascript)")
+module.exports=R.m("[project]/node_modules/.pnpm/next@16.4.2_@types+node@22.20.5_react-dom@19.3.1_react@19.3.1__react@19.3.1/node_modules/next/dist/esm/build/templates/app-route.js { INNER_APP_ROUTE => \"[project]/src/app/api/restaurants/[slug]/menus/route.ts [app-route] (ecmascript)\" } [app-route] (ecmascript)").exports

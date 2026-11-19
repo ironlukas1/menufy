@@ -106,14 +106,14 @@ export default function RestaurantCard({
           </div>
           <div className="restaurant-meta">
             {r.ratingCount > 0 && (
-              <span className="rating" title="Hodnotenie Google">
+              <Link className="rating" to={`/restaurant/${r.slug}#reviews`} title="Zobraziť hodnotenia">
                 <Icon name="star" size={16} filled /> <strong>{r.rating.toFixed(1).replace(".", ",")}</strong>
                 <em>({r.ratingCount})</em>
-              </span>
+              </Link>
             )}
-            <span>
+            <Link to={`/restaurant/${r.slug}#location`} title="Zobraziť adresu">
               <Icon name="location" size={15} /> {fmtKm(distance)}
-            </span>
+            </Link>
             {r.delivery.available && (
               <span className="delivery-badge">
                 <Icon name="truck" size={17} /> Donáška{r.delivery.eta && ` · ${r.delivery.eta}`}
@@ -126,16 +126,20 @@ export default function RestaurantCard({
             ))}
           </div>
           <p className="detail-line">
-            <Icon name="location" size={15} /> {r.address}
+            <Link to={`/restaurant/${r.slug}#location`} title="Zobraziť adresu">
+              <Icon name="location" size={15} /> {r.address}
+            </Link>
           </p>
           <p className="detail-line">
             {r.phone && (
-              <span className="desktop-only phone-line">
+              <Link className="desktop-only phone-line" to={`/restaurant/${r.slug}#contact`} title="Zobraziť kontakt">
                 <Icon name="phone" size={15} /> {r.phone}
                 <i />
-              </span>
+              </Link>
             )}
-            <Icon name="clock" size={15} /> {r.todayHours}
+            <Link to={`/restaurant/${r.slug}#hours`} title="Zobraziť otváracie hodiny">
+              <Icon name="clock" size={15} /> {r.todayHours}
+            </Link>
           </p>
         </div>
       </div>
