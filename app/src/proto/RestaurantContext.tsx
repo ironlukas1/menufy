@@ -14,14 +14,30 @@ function toRestaurant(row: PublicRestaurantRow): Restaurant {
     name: item.name, desc: item.description, weight: item.weight, allergens: item.allergens,
     price: item.price_cents / 100, tag: item.tag,
   }));
+  const fallback = prototypeRestaurants.find((restaurant) => restaurant.slug === row.slug);
+  const hours = row.hours?.length ? row.hours : fallback?.hours ?? [];
+  const weekday = new Intl.DateTimeFormat("sk", { weekday: "long" }).format(new Date()).toLocaleLowerCase("sk");
+  const todayHours = hours.find(([day]) => day.toLocaleLowerCase("sk") === weekday)?.[1] ?? "";
+  const dailySample: boolean[] = [];
+  const daily = DAYS.map((day, index) => {
+    const published = items(row.menus.find((menu) => menu.kind === "daily" && menu.date === day.date && menu.status === "published"));
+    if (published.length) {
+      dailySample.push(false);
+      return published;
+    }
+    const sample = fallback?.daily[index === 0 ? 0 : 1] ?? [];
+    dailySample.push(sample.length > 0);
+    return sample;
+  });
+  const publishedStandard = items(row.menus.find((menu) => menu.kind === "standard" && menu.status === "published"));
+  const sampleStandard = publishedStandard.length === 0 && (fallback?.standard.length ?? 0) > 0;
   return {
     slug: row.slug, name: row.name, initials: row.initials, tagline: row.tagline, city: row.city, district: row.district,
     address: row.address, email: row.email, phone: row.phone, web: row.web, rating: Number(row.rating), ratingCount: row.rating_count,
     lat: row.lat, lng: row.lng, image: row.image || prototypeRestaurants[0].image, gallery: row.gallery ?? [],
-    cuisines: row.restaurant_type_links.map((link) => link.restaurant_types.name), hours: row.hours ?? [], todayHours: "",
+    cuisines: row.restaurant_type_links.map((link) => link.restaurant_types.name), hours, todayHours,
     delivery: { available: row.delivery_available, eta: row.delivery_eta }, reviews: [], live: true,
-    daily: DAYS.map((day) => items(row.menus.find((menu) => menu.kind === "daily" && menu.date === day.date && menu.status === "published"))),
-    standard: items(row.menus.find((menu) => menu.kind === "standard" && menu.status === "published")),
+    daily, standard: publishedStandard.length ? publishedStandard : fallback?.standard ?? [], dailySample, standardSample: sampleStandard,
   };
 }
 const Context = createContext<{ restaurants: Restaurant[]; loading: boolean; refresh: () => void } | null>(null);

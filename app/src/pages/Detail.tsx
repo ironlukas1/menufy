@@ -160,10 +160,15 @@ export default function Detail() {
                 <MenuRow key={it.name} item={it} />
               ))}
             </div>
-            <p className="menu-note">{r.live ? "Menu zverejňuje reštaurácia." : "Denné menu sa aktualizuje automaticky každé ráno."}</p>
+            <p className="menu-note">
+              {r.dailySample?.[day]
+                ? "Ukážkové menu — reštaurácia ho ešte nepotvrdila pre tento deň."
+                : r.live ? "Menu zverejňuje reštaurácia." : "Denné menu sa aktualizuje automaticky každé ráno."}
+            </p>
           </>
         )}
         {tab === "standard" && r.standard.length === 0 && <p className="muted">Stále menu zatiaľ nebolo zverejnené.</p>}
+        {tab === "standard" && r.standardSample && <p className="menu-note">Ukážkové stále menu — reštaurácia ho ešte nepotvrdila.</p>}
         {tab === "standard" && (
           <div className="menu-list flush">
             {r.standard.map((it) => (

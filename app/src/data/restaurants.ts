@@ -35,6 +35,8 @@ export type Restaurant = {
   gallery: string[];
   daily: MenuItem[][];
   standard: MenuItem[];
+  dailySample?: boolean[];
+  standardSample?: boolean;
   reviews: Review[];
 };
 

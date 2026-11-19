@@ -155,7 +155,7 @@ export default function RestaurantCard({
               onClick={() => navigate(`/restaurant/${r.slug}`, { state: { scrollToHours: true } })}
               aria-label={`Otvoriť hodiny reštaurácie ${r.name}`}
             >
-              <Icon name="clock" size={15} /> {r.todayHours}
+              <Icon name="clock" size={15} /> {r.todayHours || "Otváracie hodiny neuvedené"}
             </button>
           </p>
         </div>
@@ -163,7 +163,7 @@ export default function RestaurantCard({
       <button className={`menu-heading ${open ? "open" : ""}`} onClick={() => setOpen(!open)} aria-expanded={open}>
         <span>Denné menu</span>
         <span className="menu-date">
-          {date} · {publishesMenu ? `${n} ${noun}` : "nezverejňuje"} <Icon name="chevron" size={16} />
+          {date} · {publishesMenu ? `${r.dailySample?.[day] ? "ukážkové · " : ""}${n} ${noun}` : "nezverejňuje"} <Icon name="chevron" size={16} />
         </span>
       </button>
       {open && (
@@ -175,6 +175,9 @@ export default function RestaurantCard({
             <p className="menu-empty">
               {publishesMenu ? "Žiadne jedlo nevyhovuje filtrom." : "Denné menu nezverejňuje. Ponuku nájdete u donáškovej služby."}
             </p>
+          )}
+          {items.length > 0 && r.dailySample?.[day] && (
+            <p className="menu-note">Ukážkové menu — reštaurácia ho ešte nepotvrdila pre tento deň.</p>
           )}
         </div>
       )}
