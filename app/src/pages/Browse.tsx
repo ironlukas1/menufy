@@ -251,8 +251,9 @@ export default function Browse() {
 
   const pick = (s: string) => {
     setPinned(s);
+    setMapExpanded(false);
     if (!isIndex) nav("/");
-    setTimeout(() => feedRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+    setTimeout(() => feedRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 120);
   };
 
   const ctx: BrowseCtx = { f, set, query, setQuery, results, pinned, setPinned, reset, activeCount, setHovered };
