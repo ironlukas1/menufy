@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useNavigate, useParams } from "react-router";
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate, useParams } from "react-router";
 import Icon from "@/components/Icon";
 import Lightbox from "@/components/Lightbox";
 import MapPanel from "@/components/MapPanel";
@@ -12,6 +12,7 @@ import RestaurantReviews from "@/components/RestaurantReviews";
 
 export default function Detail() {
   const { slug } = useParams();
+  const location = useLocation();
   const { restaurants, loading } = useRestaurants();
   const { panel, setPanel } = useUi();
   const navigate = useNavigate();
@@ -19,6 +20,18 @@ export default function Detail() {
   const [tab, setTab] = useState<"daily" | "standard">("daily");
   const [day, setDay] = useState(0);
   const [photo, setPhoto] = useState<number | null>(null);
+  const routeAction = location.state as { openMap?: boolean; scrollToHours?: boolean } | null;
+
+  useEffect(() => {
+    if (!r || !routeAction?.openMap && !routeAction?.scrollToHours) return;
+    requestAnimationFrame(() => {
+      if (routeAction.openMap) setPanel("map");
+      if (routeAction.scrollToHours) {
+        document.getElementById("opening-hours")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+    navigate(location.pathname, { replace: true, state: null });
+  }, [r, routeAction, setPanel, navigate, location.pathname]);
 
   if (!r && loading) return <p className="page" role="status">Načítavame reštauráciu…</p>;
 
@@ -58,7 +71,7 @@ export default function Detail() {
       </div>
 
       <div className="detail-grid">
-        <section className="panel">
+        <section className="panel opening-hours" id="opening-hours">
           <h3>Kontakt</h3>
           <ul className="contact-list">
             <li>

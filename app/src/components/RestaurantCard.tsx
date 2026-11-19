@@ -70,6 +70,7 @@ export default function RestaurantCard({
   onHover?: (slug: string | null) => void;
 }) {
   const status = openStatus(r);
+  const navigate = useNavigate();
   const q = query.trim().toLocaleLowerCase("sk");
   const items = dailyFor(r, day).filter(
     (it) => it.price <= maxPrice && !it.allergens.some((a) => excluded.includes(String(a))),
@@ -85,6 +86,16 @@ export default function RestaurantCard({
   return (
     <article
       className={`restaurant-card ${selected ? "is-selected" : ""}`}
+      role="link"
+      tabIndex={0}
+      aria-label={`Otvoriť reštauráciu ${r.name}`}
+      onClick={(event) => {
+        if ((event.target as HTMLElement).closest("a, button, input, select, textarea")) return;
+        navigate(`/restaurant/${r.slug}`);
+      }}
+      onKeyDown={(event) => {
+        if (event.target === event.currentTarget && event.key === "Enter") navigate(`/restaurant/${r.slug}`);
+      }}
       onMouseEnter={onHover && (() => onHover(r.slug))}
       onMouseLeave={onHover && (() => onHover(null))}
     >
@@ -125,9 +136,13 @@ export default function RestaurantCard({
               </a>
             ))}
           </div>
-          <p className="detail-line">
+          <button
+            className="detail-line card-inline-link"
+            onClick={() => navigate(`/restaurant/${r.slug}`, { state: { openMap: true } })}
+            aria-label={`Otvoriť mapu k reštaurácii ${r.name}`}
+          >
             <Icon name="location" size={15} /> {r.address}
-          </p>
+          </button>
           <p className="detail-line">
             {r.phone && (
               <span className="desktop-only phone-line">
@@ -135,7 +150,13 @@ export default function RestaurantCard({
                 <i />
               </span>
             )}
-            <Icon name="clock" size={15} /> {r.todayHours}
+            <button
+              className="card-inline-link"
+              onClick={() => navigate(`/restaurant/${r.slug}`, { state: { scrollToHours: true } })}
+              aria-label={`Otvoriť hodiny reštaurácie ${r.name}`}
+            >
+              <Icon name="clock" size={15} /> {r.todayHours}
+            </button>
           </p>
         </div>
       </div>

@@ -463,6 +463,8 @@ h3 { margin: 3px 0 1px; font-family: "Manrope", sans-serif; font-size: 20px; let
 .rating strong { color: var(--ink); }
 .rating em { color: var(--muted); font-style: normal; }
 .detail-line { margin: 4px 0 0; display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 11px; }
+.card-inline-link { display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.card-inline-link:hover { color: var(--green); }
 .detail-line i, .meal-copy i { width: 3px; height: 3px; display: inline-block; border-radius: 50%; background: var(--faint); }
 .menu-heading { padding: 11px 20px; display: flex; justify-content: space-between; border-block: 1px solid var(--soft-line); background: var(--subtle); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; }
 .menu-date { color: var(--muted); font-weight: 500; letter-spacing: 0; text-transform: none; }
