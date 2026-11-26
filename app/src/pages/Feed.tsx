@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useOutletContext } from "react-router";
 import Icon from "@/components/Icon";
 import SelectField from "@/components/SelectField";
@@ -12,7 +11,6 @@ export default function Feed() {
   const { f, set, results, query, pinned, setPinned, reset, setHovered } = useOutletContext<BrowseCtx>();
   const { restaurants } = useRestaurants();
   const { geo } = useProto();
-  const [allOpen, setAllOpen] = useState(false);
   const n = results.length;
   const noun = n === 1 ? "reštaurácia" : n >= 2 && n <= 4 ? "reštaurácie" : "reštaurácií";
 
@@ -26,10 +24,7 @@ export default function Feed() {
           </p>
           <h2>Menu vo vašom okolí</h2>
           <p>
-            {n} {noun} · {DAYS[f.day].short === "Dnes" ? "dnešné menu" : DAYS[f.day].label} ·{" "}
-            <button className="inline-link plain" onClick={() => setAllOpen(!allOpen)} aria-pressed={allOpen}>
-              {allOpen ? "Skryť všetky menu" : "Zobraziť všetky menu"}
-            </button>
+            {n} {noun} · {DAYS[f.day].short === "Dnes" ? "dnešné menu" : DAYS[f.day].label}
           </p>
         </div>
         <SelectField label="Zoradiť výsledky" value={f.sort} onChange={(v) => set({ sort: v as typeof f.sort })}>
@@ -62,7 +57,6 @@ export default function Feed() {
             query={query}
             distance={distance}
             selected={pinned === r.slug}
-            menuOpen={allOpen}
             onHover={setHovered}
           />
         ))}

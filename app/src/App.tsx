@@ -8,6 +8,7 @@ import Saved from "@/pages/Saved";
 import Notifications from "@/pages/Notifications";
 import Owners from "@/pages/Owners";
 import { RestaurantProvider } from "@/proto/RestaurantContext";
+import { UiProvider } from "@/proto/UiContext";
 import Settings from "@/pages/Settings";
 import { ForgotPassword, Login, ResetPassword, Verified } from "@/pages/Auth";
 import { Privacy, Terms } from "@/pages/Legal";
@@ -17,6 +18,7 @@ export default function App() {
     <ProtoProvider>
       <RestaurantProvider>
       <BrowserRouter>
+        <UiProvider>
         <Routes>
           <Route element={<Layout />}>
             <Route element={<Browse />}>
@@ -36,6 +38,7 @@ export default function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
+        </UiProvider>
       </BrowserRouter>
       </RestaurantProvider>
     </ProtoProvider>

@@ -27,6 +27,13 @@
   --map-river: #c9e3e2;
   --map-road: #fbfbf7;
   --shadow: 0 14px 38px rgba(27, 52, 38, 0.08);
+  --glass-bg: rgba(255, 255, 255, 0.55);
+  --glass-bg-strong: rgba(255, 255, 255, 0.82);
+  --glass-line: rgba(255, 255, 255, 0.7);
+  --glass-highlight: rgba(255, 255, 255, 0.9);
+  --glass-edges: rgba(23, 107, 67, 0.1);
+  --glass-shadow: 0 14px 44px rgba(24, 51, 36, 0.13);
+  --glass-sheen: rgba(255, 255, 255, 0.6);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -57,6 +64,13 @@
     --map-river: #1d3a3a;
     --map-road: #2a352f;
     --shadow: 0 14px 38px rgba(0, 0, 0, 0.35);
+    --glass-bg: rgba(27, 37, 32, 0.55);
+    --glass-bg-strong: rgba(27, 37, 32, 0.8);
+    --glass-line: rgba(255, 255, 255, 0.14);
+    --glass-highlight: rgba(255, 255, 255, 0.24);
+    --glass-edges: rgba(0, 0, 0, 0.35);
+    --glass-shadow: 0 14px 44px rgba(0, 0, 0, 0.5);
+    --glass-sheen: rgba(255, 255, 255, 0.16);
   }
 }
 
@@ -87,4 +101,11 @@
   --map-river: #1d3a3a;
   --map-road: #2a352f;
   --shadow: 0 14px 38px rgba(0, 0, 0, 0.35);
+  --glass-bg: rgba(27, 37, 32, 0.55);
+  --glass-bg-strong: rgba(27, 37, 32, 0.8);
+  --glass-line: rgba(255, 255, 255, 0.14);
+  --glass-highlight: rgba(255, 255, 255, 0.24);
+  --glass-edges: rgba(0, 0, 0, 0.35);
+  --glass-shadow: 0 14px 44px rgba(0, 0, 0, 0.5);
+  --glass-sheen: rgba(255, 255, 255, 0.16);
 }

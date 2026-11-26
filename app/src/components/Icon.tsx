@@ -14,6 +14,7 @@ export type IconName =
   | "filter"
   | "globe"
   | "heart"
+  | "home"
   | "info"
   | "location"
   | "logout"
@@ -32,6 +33,13 @@ export type IconName =
   | "user";
 
 const paths: Record<IconName, ReactNode> = {
+  home: (
+    <>
+      <path d="m3 10.5 9-7.2 9 7.2" />
+      <path d="M5.5 9.2V21h13V9.2" />
+      <path d="M9.5 21v-6h5v6" />
+    </>
+  ),
   arrow: <path d="m9 18 6-6-6-6" />,
   back: <path d="m15 18-6-6 6-6" />,
   bell: (
