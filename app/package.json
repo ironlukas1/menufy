@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "test": "node --experimental-strip-types --test src/lib.test.ts src/data/owner.test.ts src/data/restaurantSettings.test.ts src/data/restaurantMerge.test.ts src/data/filtersStorage.test.ts src/data/locationStorage.test.ts",
+    "test": "node --experimental-strip-types --test src/lib.test.ts src/data/owner.test.ts src/data/restaurantSettings.test.ts src/data/restaurantMerge.test.ts src/data/filtersStorage.test.ts src/data/locationStorage.test.ts src/data/restaurantFilters.test.ts",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview"
   },

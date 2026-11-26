@@ -6,8 +6,9 @@ import SelectField from "@/components/SelectField";
 import MapPanel from "@/components/MapPanel";
 import { ALLERGEN_GROUPS, CUISINES, LOCATIONS } from "@/data/allergens";
 import { DAYS, dailyFor, type Restaurant } from "@/data/restaurants";
-import { CITY_CENTER, distanceKm, nextAt, openStatus } from "@/lib";
+import { CITY_CENTER, distanceKm } from "@/lib";
 import { initialFilters as initial, loadFilters, saveFilters, MAX_PRICE, type Filters } from "@/data/filtersStorage";
+import { matchesFilters } from "@/data/restaurantFilters";
 import { useRestaurants } from "@/proto/RestaurantContext";
 import { useProto } from "@/proto/ProtoContext";
 
@@ -176,26 +177,10 @@ export default function Browse() {
   }, [userPosition, locationRestored, restaurants]);
 
   const results = useMemo(() => {
-    const q = query.trim().toLocaleLowerCase("sk");
     return restaurants
-      .filter((r) => r.city === f.city)
-      .filter((r) => f.district === "Všetky časti" || r.district === f.district)
-      .filter((r) => !f.cuisines.length || r.cuisines.some((c) => f.cuisines.includes(c)))
-      .filter((r) => !f.delivery || r.delivery.available)
-      .filter((r) => !f.openAt || openStatus(r, nextAt(f.openAt)).open)
+      .filter((r) => matchesFilters(r, f, query, favorites))
       .filter((r) => Math.round(r.rating) >= f.minRating)
       .filter((r) => !pinned || r.slug === pinned)
-      .filter((r) => f.sort !== "favorites" || favorites.includes(r.slug))
-      .filter((r) => {
-        const dayMenu = dailyFor(r, f.day);
-        const items = (r.live && !dayMenu.length ? r.standard : dayMenu).filter(
-          (it) => it.price <= f.maxPrice && !it.allergens.some((a) => f.excluded.includes(String(a))),
-        );
-        const publishesMenu = r.daily.some((d) => d.length) || r.standard.length > 0;
-        if (!items.length && publishesMenu) return false;
-        if (!q) return true;
-        return r.name.toLocaleLowerCase("sk").includes(q) || items.some((it) => it.name.toLocaleLowerCase("sk").includes(q));
-      })
       .map((r) => ({ r, distance: distanceKm(origin, r) }))
       .sort((a, b) => {
         if (f.sort === "distance") return a.distance - b.distance;
@@ -224,7 +209,12 @@ export default function Browse() {
     setPinned(null);
   };
 
-  const mapItems = useMemo(() => restaurants.filter((r) => r.city === f.city), [f.city, restaurants]);
+  // All active filters narrow the markers together with the list; rating stays
+  // visual (highlight/dim) so those restaurants remain visible on the map.
+  const mapItems = useMemo(
+    () => restaurants.filter((r) => matchesFilters(r, f, query, favorites)),
+    [f, query, favorites, restaurants],
+  );
 
   const pick = (s: string) => {
     setMapExpanded(false);
