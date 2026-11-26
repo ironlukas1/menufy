@@ -380,7 +380,7 @@ export default function Browse() {
                           })
                         }
                       >
-                        {a.name}
+                        {a.code}. {a.name}
                       </button>
                     ))}
                   </div>

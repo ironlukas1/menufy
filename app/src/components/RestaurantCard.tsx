@@ -35,7 +35,10 @@ export function HeartButton({ slug }: { slug: string }) {
 }
 
 export function MenuRow({ item, hit }: { item: MenuItem; hit?: boolean }) {
-  const allergenNames = item.allergens.map((code) => ALLERGENS.find((a) => a.code === String(code))?.name ?? String(code));
+  const allergenNames = item.allergens.map((code) => {
+    const allergen = ALLERGENS.find((a) => a.code === String(code));
+    return allergen ? `${allergen.code}. ${allergen.name}` : String(code);
+  });
   return (
     <div className={`menu-item ${hit ? "hit" : ""}`}>
       <span className={`menu-tag ${/Vege|Fit|Vegán/.test(item.tag) ? "green" : ""}`}>{item.tag}</span>
