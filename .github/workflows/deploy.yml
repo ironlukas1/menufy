@@ -101,12 +101,20 @@ jobs:
           status=$(curl -fsS --retry 5 --retry-connrefused --retry-delay 3 -o "$html" -w '%{http_code}' "$url/")
           test "$status" = "200"
           grep -q '<div id="root"></div>' "$html"
-          headers=$(curl -fsSI "$url/")
+          headers=$(curl -fsS --retry 5 --retry-connrefused --retry-delay 2 -I "$url/")
           grep -qi '^x-content-type-options: nosniff' <<<"$headers"
           grep -qi '^referrer-policy: ' <<<"$headers"
           grep -Fi 'frame-ancestors https://space.misaligned.dev' <<<"$headers"
+          grep -qi '^content-security-policy-report-only:' <<<"$headers"
+          # The edge proxy sets frame-ancestors for the embedded app on every
+          # path, so API responses cannot assert 'none' here. Verify instead
+          # that the SPA report-only policy is not applied to API responses.
           api_headers=$(curl -sS -D - -o /dev/null "$url/api/v1/health" || true)
-          grep -Fi "frame-ancestors 'none'" <<<"$api_headers"
+          if grep -qi '^content-security-policy-report-only:' <<<"$api_headers"; then
+            echo '::error::API responses must not carry the SPA report-only CSP'
+            exit 1
+          fi
+          grep -qi '^x-content-type-options: nosniff' <<<"$api_headers"
           api_status=$(curl -sS --retry 3 --retry-connrefused -o /dev/null -w '%{http_code}' "$url/api/v1/health" || true)
           echo "API /api/v1/health HTTP status: ${api_status:-none}"
           echo "Deployment verification passed"
