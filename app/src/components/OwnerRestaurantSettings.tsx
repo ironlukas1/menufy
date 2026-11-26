@@ -170,7 +170,7 @@ export default function OwnerRestaurantSettings({ restaurant, onSaved, onDirtyCh
           <div className="owner-photo-controls"><label className="btn-ghost owner-photo-picker"><Icon name="arrow" size={16} />{preview ? "Vybrať inú fotografiu" : "Vybrať fotografiu"}<input ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => {
             const selected = event.target.files?.[0]; if (selected) void choosePhoto(selected);
           }} /></label>{(preview || form.image) && <button className="inline-link plain" type="button" onClick={() => { setFile(null); setLocalPreview(null); setPhotoError(null); patch({ image: "" }); if (fileInput.current) fileInput.current.value = ""; }}>Odstrániť fotografiu</button>}</div>
-          <small>JPG, PNG alebo WebP, najviac 5 MB. Fotografia bude verejne dostupná. Zmena sa použije po uložení nastavení.</small>
+          <small>JPG, PNG alebo WebP, najviac 5 MB a 25 miliónov pixelov. Fotografia bude verejne dostupná. Zmena sa použije po uložení nastavení.</small>
           {preparingPhoto && <p role="status" className="muted">Načítavame fotografiu…</p>}
           {photoError && <p className="form-error" role="alert">{photoError}</p>}
           {file && <p className="owner-photo-filename">Vybraná fotografia: {file.name}</p>}

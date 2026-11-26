@@ -8,8 +8,11 @@ services:
     pids_limit: 100
     environment:
       NODE_ENV: production
+      MENUFY_DATA_SOURCE: supabase
       CORS_ORIGINS: ${MENUFY_CORS_ORIGINS:-capacitor://localhost,ionic://localhost}
       SUPABASE_URL: ${SUPABASE_URL:-}
+      # Publishable (RLS-safe) key only. Never pass SUPABASE_SERVICE_ROLE_KEY
+      # or any sb_secret_* value through this compose file.
       SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY:-}
       SUPABASE_HEALTH_TABLE: ${SUPABASE_HEALTH_TABLE:-}
       GOOGLE_PLACES_API_KEY: ${GOOGLE_PLACES_API_KEY:-}

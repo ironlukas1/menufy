@@ -1,0 +1,32 @@
+# Local environment files may contain credentials. Keep only examples in Git.
+**/.env
+**/.env.*
+!**/.env.example
+
+# Dependencies and build output (never commit installed packages or bundles).
+**/node_modules/
+**/.next/
+**/.expo/
+
+# Signing material and platform credentials.
+*.jks
+*.keystore
+google-services.json
+GoogleService-Info.plist
+
+# Private keys, certificates and credential/backup files.
+*.pem
+*.key
+*.p12
+*.pfx
+*.p8
+*.cer
+*.der
+id_rsa*
+id_ed25519*
+*.ppk
+*.kdbx
+credentials.json
+service-account*.json
+secrets*.json
+*secret*.env

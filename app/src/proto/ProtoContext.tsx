@@ -6,7 +6,8 @@ export type Theme = "system" | "light" | "dark";
 
 type Proto = {
   loggedIn: boolean;
-  setLoggedIn: (v: boolean) => void;
+  authReady: boolean;
+  signOut: () => void;
   theme: Theme;
   setTheme: (t: Theme) => void;
   dark: boolean;
@@ -44,18 +45,23 @@ const write = (k: string, v: string) => {
 };
 
 export function ProtoProvider({ children }: { children: ReactNode }) {
-  const [loggedIn, setLoggedInState] = useState(read("menufy-auth") === "1");
+  // Authentication state comes only from Supabase. A localStorage flag used to
+  // make protected pages look authenticated to anyone who could edit storage.
+  const [loggedIn, setLoggedInState] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
   const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("Člen menufy");
   const [userId, setUserId] = useState<string | null>(null);
   const [notify, setNotifyState] = useState<Notify>({ daily: true, fav: true, promo: false });
-  const setLoggedIn = (v: boolean) => {
-    setLoggedInState(v);
-    if (!v) void supabase.auth.signOut();
+  const signOut = () => {
+    setLoggedInState(false);
+    void supabase.auth.signOut();
   };
 
   useEffect(() => {
+    let live = true;
     const apply = (s: { user: { id: string; email?: string; user_metadata?: Record<string, unknown> } } | null) => {
+      if (!live) return;
       setLoggedInState(!!s);
       setUserId(s?.user.id ?? null);
       setEmail(s?.user.email ?? "");
@@ -64,9 +70,15 @@ export function ProtoProvider({ children }: { children: ReactNode }) {
         .find((value): value is string => typeof value === "string" && value.trim().length >= 2);
       setDisplayName(name ? Array.from(name.trim()).slice(0, 60).join("") : "Člen menufy");
     };
-    supabase.auth.getSession().then(({ data }) => apply(data.session));
+    void supabase.auth.getSession()
+      .then(({ data }) => apply(data.session))
+      .catch(() => undefined)
+      .finally(() => { if (live) setAuthReady(true); });
     const { data } = supabase.auth.onAuthStateChange((_e, s) => apply(s));
-    return () => data.subscription.unsubscribe();
+    return () => {
+      live = false;
+      data.subscription.unsubscribe();
+    };
   }, []);
   const stored = read("menufy-theme");
   const [theme, setThemeState] = useState<Theme>(stored === "light" || stored === "dark" ? stored : "system");
@@ -199,13 +211,10 @@ export function ProtoProvider({ children }: { children: ReactNode }) {
     }
   }, [theme]);
 
-  useEffect(() => {
-    write("menufy-auth", loggedIn ? "1" : "0");
-  }, [loggedIn]);
-
   const value: Proto = {
     loggedIn,
-    setLoggedIn,
+    authReady,
+    signOut,
     theme,
     setTheme,
     dark: theme === "dark" || (theme === "system" && systemDark),
@@ -233,8 +242,9 @@ export function useProto() {
 }
 
 export function RequireAuth({ children }: { children: ReactNode }) {
-  const { loggedIn } = useProto();
+  const { loggedIn, authReady } = useProto();
   const loc = useLocation();
+  if (!authReady) return <p className="page" role="status">Overujeme prihlásenie…</p>;
   if (!loggedIn) return <Navigate to={`/login?next=${encodeURIComponent(loc.pathname + loc.search)}`} replace />;
   return <>{children}</>;
 }

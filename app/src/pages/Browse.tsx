@@ -189,10 +189,6 @@ export default function Browse() {
   const origin = geo === "granted" && userPosition ? userPosition : CITY_CENTER;
 
   useEffect(() => {
-    if (geo === "unknown") requestLocation();
-  }, []);
-
-  useEffect(() => {
     if (!userPosition) return;
     const near = restaurants.reduce((a, b) => (distanceKm(userPosition, a) <= distanceKm(userPosition, b) ? a : b));
     set({ city: near.city, district: "Všetky časti", sort: "distance" });
@@ -281,6 +277,17 @@ export default function Browse() {
                   setTimeout(() => feedRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
                 }}
                 onOpen={(s) => nav(`/restaurant/${s}`)} />
+              {geo !== "granted" && (
+                <button
+                  type="button"
+                  className="btn-ghost hero-location"
+                  disabled={geo === "requesting"}
+                  onClick={requestLocation}
+                >
+                  <Icon name="location" size={18} />
+                  {geo === "requesting" ? "Zisťujeme polohu…" : "Použiť moju polohu"}
+                </button>
+              )}
               <button
                 className={`hero-filter-button ${filtersOpen ? "active" : ""}`}
                 onClick={toggleFilters}

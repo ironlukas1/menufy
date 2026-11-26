@@ -47,3 +47,36 @@ export function createRequestBudget(limit = 30, windowMs = 60000) {
     used += 1; return true;
   };
 }
+
+// Only trust x-forwarded-for when it is supplied; no other client IP headers are available on Request.
+export function clientIdentifier(request: Request): string {
+  const forwarded = request.headers.get("x-forwarded-for")?.split(",", 1)[0]?.trim();
+  return forwarded && forwarded.length <= 128 && !/[\u0000-\u001f]/.test(forwarded) ? forwarded : "unknown";
+}
+
+// Bounded, per-client+slug budget: stale buckets are swept and the map never exceeds maxKeys.
+export function createKeyedRequestBudget(limit = 30, windowMs = 60000, maxKeys = 5000) {
+  const buckets = new Map<string, { start: number; used: number }>();
+  let lastCleanup = 0;
+  return (key: string, now = Date.now()) => {
+    if (now - lastCleanup >= windowMs) {
+      for (const [bucketKey, bucket] of buckets) if (now - bucket.start >= windowMs) buckets.delete(bucketKey);
+      lastCleanup = now;
+    }
+    const retryAfter = (bucket: { start: number }) => Math.max(1, Math.ceil((bucket.start + windowMs - now) / 1000));
+    const bucket = buckets.get(key);
+    if (bucket) {
+      if (now - bucket.start >= windowMs) { bucket.start = now; bucket.used = 0; }
+      if (bucket.used >= limit) return { allowed: false, retryAfterSeconds: retryAfter(bucket) };
+      bucket.used += 1;
+      return { allowed: true, retryAfterSeconds: 0 };
+    }
+    if (buckets.size >= maxKeys) {
+      const oldest = buckets.keys().next().value;
+      if (oldest !== undefined) buckets.delete(oldest);
+    }
+    const fresh = { start: now, used: 1 };
+    buckets.set(key, fresh);
+    return { allowed: true, retryAfterSeconds: 0 };
+  };
+}

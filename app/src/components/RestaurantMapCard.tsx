@@ -3,6 +3,8 @@ import { MapContainer, Marker, TileLayer, ZoomControl, useMap } from "react-leaf
 import L from "leaflet";
 import Icon from "./Icon";
 import type { Restaurant } from "@/data/restaurants";
+import { googleMapsUrl } from "@/data/restaurantSettings";
+import { CITY_CENTER } from "@/lib";
 import { useProto } from "@/proto/ProtoContext";
 
 const escapeHtml = (value: string | null | undefined) =>
@@ -35,20 +37,27 @@ function Center({ lat, lng }: { lat: number; lng: number }) {
 
 export default function RestaurantMapCard({ restaurant }: { restaurant: Restaurant }) {
   const { dark } = useProto();
-  const position: [number, number] = [restaurant.lat, restaurant.lng];
-  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${restaurant.name}, ${restaurant.address}`)}`;
+  const validCoords = Number.isFinite(restaurant.lat) && Number.isFinite(restaurant.lng);
+  const lat = validCoords ? restaurant.lat : CITY_CENTER.lat;
+  const lng = validCoords ? restaurant.lng : CITY_CENTER.lng;
+  const position: [number, number] = [lat, lng];
+  const mapsUrl = googleMapsUrl(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${restaurant.name}, ${restaurant.address}`)}`);
+  const ratingLabel = Number.isFinite(restaurant.rating) ? restaurant.rating.toFixed(1).replace(".", ",") : "—";
 
   return (
     <section className="panel detail-map" id="location" aria-labelledby="location-heading">
       <div className="panel-head">
         <h3 id="location-heading">Poloha</h3>
-        <a className="inline-link" href={mapsUrl} target="_blank" rel="noopener noreferrer">
-          Otvoriť v mapách <Icon name="arrow" size={14} />
-        </a>
+        {mapsUrl && (
+          <a className="inline-link" href={mapsUrl} target="_blank" rel="noopener noreferrer">
+            Otvoriť v mapách <Icon name="arrow" size={14} />
+          </a>
+        )}
       </div>
       <p className="detail-map-address">
         <Icon name="location" size={16} /> {restaurant.address}
       </p>
+      {!validCoords && <p className="muted">Poloha reštaurácie nie je k dispozícii.</p>}
       <div className={`detail-map-canvas ${dark ? "dark-tiles" : ""}`}>
         <MapContainer center={position} zoom={16} scrollWheelZoom={false} style={{ height: "100%", width: "100%" }}>
           <TileLayer
@@ -56,9 +65,9 @@ export default function RestaurantMapCard({ restaurant }: { restaurant: Restaura
             url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
             className="osm-tiles"
           />
-          <Marker position={position} icon={pin(restaurant.rating.toFixed(1).replace(".", ","), restaurant.name)} title={restaurant.name} />
+          {validCoords && <Marker position={position} icon={pin(ratingLabel, restaurant.name)} title={restaurant.name} />}
           <ZoomControl position="topright" />
-          <Center lat={restaurant.lat} lng={restaurant.lng} />
+          <Center lat={lat} lng={lng} />
         </MapContainer>
       </div>
     </section>

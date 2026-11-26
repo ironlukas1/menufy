@@ -3,9 +3,11 @@
 -- Does not require the obsolete restaurants.initials column. Existing photos are preserved.
 begin;
 
+-- The bucket stays private: pending photos must not be publicly readable.
+-- Never upsert public = true here; see supabase/20261126_security_hardening.sql.
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values ('restaurant-images', 'restaurant-images', true, 5242880, array['image/jpeg', 'image/png', 'image/webp'])
-on conflict (id) do update set public = excluded.public,
+values ('restaurant-images', 'restaurant-images', false, 5242880, array['image/jpeg', 'image/png', 'image/webp'])
+on conflict (id) do update set
   file_size_limit = excluded.file_size_limit, allowed_mime_types = excluded.allowed_mime_types;
 
 create or replace function public.can_manage_restaurant_image(p_name text)

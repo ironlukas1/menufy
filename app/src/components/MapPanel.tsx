@@ -22,8 +22,11 @@ const pin = (name: string | null | undefined, rating: number | null | undefined,
   });
 };
 
-const boundsOf = (items: Restaurant[]) =>
-  L.latLngBounds(items.map((r) => [r.lat, r.lng] as [number, number])).pad(0.3);
+const validPosition = (r: Restaurant) => Number.isFinite(r.lat) && Number.isFinite(r.lng);
+const boundsOf = (items: Restaurant[]) => {
+  const points = items.filter(validPosition).map((r) => [r.lat, r.lng] as [number, number]);
+  return points.length ? L.latLngBounds(points).pad(0.3) : null;
+};
 
 function Fit({ items, selected, expanded, user }: { items: Restaurant[]; selected: string | null; expanded: boolean; user: { lat: number; lng: number } | null }) {
   const map = useMap();
@@ -31,10 +34,11 @@ function Fit({ items, selected, expanded, user }: { items: Restaurant[]; selecte
     const t = setTimeout(() => {
       if (!(map as unknown as { _loaded?: boolean })._loaded) return;
       map.invalidateSize();
-      const sel = items.find((r) => r.slug === selected);
+      const sel = items.find((r) => r.slug === selected && validPosition(r));
+      const bounds = boundsOf(items);
       if (sel) map.flyTo([sel.lat, sel.lng], 15, { duration: 0.5 });
-      else if (expanded && user) map.flyTo([user.lat, user.lng], 14, { duration: 0.5 });
-      else if (items.length) map.fitBounds(boundsOf(items), { maxZoom: 14 });
+      else if (expanded && user && Number.isFinite(user.lat) && Number.isFinite(user.lng)) map.flyTo([user.lat, user.lng], 14, { duration: 0.5 });
+      else if (bounds) map.fitBounds(bounds, { maxZoom: 14 });
     }, 60);
     return () => {
       clearTimeout(t);
@@ -112,10 +116,7 @@ export default function MapPanel({
     }, 120);
   };
 
-  const openMap = () => {
-    setExpanded(true);
-    requestLocation();
-  };
+  const openMap = () => setExpanded(true);
 
   return (
     <aside className={`map-card ${expanded ? "expanded" : ""}`} aria-label="Mapa reštaurácií">
@@ -140,7 +141,7 @@ export default function MapPanel({
         <MapContainer
           center={[CITY_CENTER.lat, CITY_CENTER.lng]}
           zoom={13}
-          bounds={items.length ? boundsOf(items) : undefined}
+          bounds={boundsOf(items) ?? undefined}
           boundsOptions={{ maxZoom: 14 }}
           zoomControl={false}
           style={{ height: "100%", width: "100%" }}
@@ -150,12 +151,12 @@ export default function MapPanel({
             url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
             className="osm-tiles"
           />
-          {user && (
+          {user && Number.isFinite(user.lat) && Number.isFinite(user.lng) && (
             <Pane name="user-location" style={{ zIndex: 625 }}>
               <CircleMarker center={[user.lat, user.lng]} radius={9} pathOptions={{ color: "#fff", weight: 3, fillColor: "#2f6fe4", fillOpacity: 1 }} />
             </Pane>
           )}
-          {items.map((r) => (
+          {items.filter(validPosition).map((r) => (
             <Marker
               key={r.slug + (r.slug === selected)}
               position={[r.lat, r.lng]}
@@ -192,7 +193,14 @@ export default function MapPanel({
           ? "Zisťujeme vašu polohu. Povoľte prístup v prehliadači."
           : locationError ??
             `${ratingFilterOn ? `Žlté markery zodpovedajú zvolenému hodnoteniu (${minRating}+). ` : ""}Nájazdom na marker zobrazíte celý názov, kliknutím reštauráciu vyfiltrujete.`}
-        {locationError && <> <button className="inline-link plain" onClick={requestLocation}>Skúsiť znova</button></>}
+        {geo !== "granted" && (
+          <>
+            {" "}
+            <button type="button" className="inline-link plain" disabled={geo === "requesting"} onClick={requestLocation}>
+              {geo === "requesting" ? "Zisťujeme polohu…" : locationError ? "Skúsiť znova" : "Použiť moju polohu"}
+            </button>
+          </>
+        )}
       </p>}
     </aside>
   );

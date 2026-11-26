@@ -156,21 +156,31 @@ export function Footer() {
   );
 }
 
-class RouteBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
-  state = { error: null as Error | null };
+const errorId = () => {
+  try {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") return crypto.randomUUID().slice(0, 8);
+  } catch {
+    /* fall through to a random identifier */
+  }
+  return Math.random().toString(36).slice(2, 10);
+};
+
+class RouteBoundary extends Component<{ children: ReactNode }, { error: Error | null; id: string }> {
+  state = { error: null as Error | null, id: "" };
   static getDerivedStateFromError(error: Error) {
-    return { error };
+    return { error, id: errorId() };
   }
   componentDidCatch(e: unknown) {
-    console.error(e);
+    // Details are for the console only; users get a generic message and an ID.
+    console.error(`[menufy] Chyba stránky (${this.state.id})`, e);
   }
   render() {
-    const { error } = this.state;
+    const { error, id } = this.state;
     if (!error) return this.props.children;
     return (
       <div style={{ padding: 32 }}>
-        <p>Niečo sa pokazilo.</p>
-        <pre style={{ whiteSpace: "pre-wrap", fontSize: 12 }}>{error.stack || error.message}</pre>
+        <p>Niečo sa pokazilo. Skúste stránku obnoviť.</p>
+        <p className="muted">Kód chyby: {id}</p>
         <button onClick={() => location.reload()}>Obnoviť stránku</button>
       </div>
     );

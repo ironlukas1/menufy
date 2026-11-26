@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router";
 import Icon from "./Icon";
 import { ALLERGENS } from "@/data/allergens";
 import { dailyFor, formatPrice, type MenuItem, type Restaurant } from "@/data/restaurants";
+import { deliveryLinkUrl, safeImageUrl } from "@/data/restaurantSettings";
 import { fmtKm, openStatus } from "@/lib";
 import { useProto } from "@/proto/ProtoContext";
 
@@ -83,6 +84,12 @@ export default function RestaurantCard({
   const n = items.length;
   const noun = n === 1 ? "jedlo" : n >= 2 && n <= 4 ? "jedlá" : "jedál";
   const publishesMenu = r.daily.some((d) => d.length) || r.standard.length > 0;
+  const image = safeImageUrl(r.image);
+  const deliveryLinks = (Array.isArray(r.delivery.links) ? r.delivery.links : []).flatMap((link) => {
+    const url = deliveryLinkUrl(link?.name, link?.url);
+    return url ? [{ name: typeof link.name === "string" ? link.name : "Donáška", url }] : [];
+  });
+  const showRating = Number.isFinite(r.rating) && r.ratingCount > 0;
 
   return (
     <article
@@ -92,7 +99,7 @@ export default function RestaurantCard({
     >
       <div className="restaurant-top">
         <Link to={`/restaurant/${r.slug}`} className="card-img" aria-label={`Detail ${r.name}`}>
-          <img src={r.image} alt={`Jedlo z reštaurácie ${r.name}`} loading="lazy" />
+          {image && <img src={image} alt={`Jedlo z reštaurácie ${r.name}`} loading="lazy" />}
         </Link>
         <div className="restaurant-info">
           <div className="restaurant-title-row">
@@ -106,7 +113,7 @@ export default function RestaurantCard({
             <HeartButton slug={r.slug} />
           </div>
           <div className="restaurant-meta">
-            {r.ratingCount > 0 && (
+            {showRating && (
               <Link className="rating" to={`/restaurant/${r.slug}#reviews`} title="Hodnotenie členov menufy">
                 <Icon name="star" size={16} filled /> <strong>{r.rating.toFixed(1).replace(".", ",")}</strong>
                 <em>({r.ratingCount})</em>
@@ -120,9 +127,9 @@ export default function RestaurantCard({
                 <Icon name="truck" size={17} /> Donáška
               </span>
             )}
-            {r.delivery.links?.map((l) => (
-              <a key={l.url} className="inline-link" href={l.url} target="_blank" rel="noopener noreferrer">
-                Objednať cez {l.name} <Icon name="arrow" size={14} />
+            {deliveryLinks.map((link) => (
+              <a key={link.url} className="inline-link" href={link.url} target="_blank" rel="noopener noreferrer">
+                Objednať cez {link.name} <Icon name="arrow" size={14} />
               </a>
             ))}
           </div>

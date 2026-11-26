@@ -13,18 +13,53 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
 
       - uses: pnpm/action-setup@v4
         with:
           package_json_file: app/package.json
           version: 10
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24
           cache: pnpm
           cache-dependency-path: app/pnpm-lock.yaml
+
+      - name: Guard client-exposed secret names
+        # Only names are inspected; values are never printed. VITE_*/NEXT_PUBLIC_*
+        # variables end up in the browser bundle, so they must not hold secrets.
+        # Publishable (RLS-safe) keys are the only documented exception.
+        env:
+          SECRETS_JSON: ${{ toJSON(secrets) }}
+        run: |
+          python3 - <<'PY'
+          import json, os, re, sys
+
+          try:
+              names = json.loads(os.environ.get("SECRETS_JSON") or "{}")
+          except json.JSONDecodeError as exc:
+              print(f"::error::Cannot parse secret names: {exc}")
+              sys.exit(1)
+
+          client_prefix = re.compile(r"^(VITE_|NEXT_PUBLIC_)")
+          sensitive = re.compile(r"SECRET|SERVICE|TOKEN|PASSWORD|KEY", re.IGNORECASE)
+          publishable = re.compile(r"^(VITE_|NEXT_PUBLIC_)[A-Z0-9_]*PUBLISHABLE_KEY$")
+          offenders = sorted(
+              name for name in names
+              if client_prefix.match(name) and sensitive.search(name)
+              and not publishable.match(name)
+          )
+          if offenders:
+              print(
+                  "::error::Client-exposed secret names must not contain "
+                  "SECRET/SERVICE/TOKEN/PASSWORD/KEY: " + ", ".join(offenders)
+              )
+              sys.exit(1)
+          print(f"Checked {len(names)} secret names; no client-exposed sensitive names found.")
+          PY
 
       - name: Test and build
         working-directory: app
@@ -38,10 +73,15 @@ jobs:
 
       - name: Stage release
         run: |
+          set -euo pipefail
           mkdir stage
           cp -r app/dist stage/site
           rsync -a --exclude=node_modules --exclude=.next --exclude='.env*' backend/ stage/backend/
           cp deploy/docker-compose.yml deploy/nginx.conf stage/
+          if grep -RIEq 'sb_secret_|service_role|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}' stage/site; then
+            echo '::error::Secret-shaped value found in the staged browser bundle'
+            exit 1
+          fi
 
       - name: Ship to max
         env:
@@ -50,11 +90,36 @@ jobs:
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
         run: |
+          set -euo pipefail
           install -m 700 -d ~/.ssh
           printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/id_deploy
           chmod 600 ~/.ssh/id_deploy
+          ssh-keygen -y -f ~/.ssh/id_deploy > /dev/null
           printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
-          tar -C stage -c . | ssh -i ~/.ssh/id_deploy -o IdentitiesOnly=yes "$DEPLOY_USER@$DEPLOY_HOST"
+          chmod 600 ~/.ssh/known_hosts
+          ssh-keygen -lf ~/.ssh/known_hosts > /dev/null
+          if ! ssh-keygen -F "$DEPLOY_HOST" -f ~/.ssh/known_hosts > /dev/null; then
+            echo "::error::DEPLOY_KNOWN_HOSTS has no entry for $DEPLOY_HOST"
+            exit 1
+          fi
+          tar -C stage -c . | ssh -i ~/.ssh/id_deploy \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -o UserKnownHostsFile="$HOME/.ssh/known_hosts" \
+            "$DEPLOY_USER@$DEPLOY_HOST"
 
       - name: Check site
-        run: curl -fsS -o /dev/null https://menufy.misaligned.dev/
+        run: |
+          set -euo pipefail
+          url=https://menufy.misaligned.dev
+          html=$(mktemp)
+          status=$(curl -fsS --retry 5 --retry-connrefused --retry-delay 3 -o "$html" -w '%{http_code}' "$url/")
+          test "$status" = "200"
+          grep -q '<div id="root"></div>' "$html"
+          headers=$(curl -fsSI "$url/")
+          grep -qi '^x-content-type-options: nosniff' <<<"$headers"
+          grep -qi '^referrer-policy: ' <<<"$headers"
+          grep -qi "frame-ancestors 'none'" <<<"$headers"
+          api_status=$(curl -sS --retry 3 --retry-connrefused -o /dev/null -w '%{http_code}' "$url/api/v1/health" || true)
+          echo "API /api/v1/health HTTP status: ${api_status:-none}"
+          echo "Deployment verification passed"

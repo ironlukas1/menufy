@@ -5,6 +5,7 @@ import Lightbox from "@/components/Lightbox";
 import { HeartButton, MenuRow } from "@/components/RestaurantCard";
 import RestaurantMapCard from "@/components/RestaurantMapCard";
 import { DAYS, dailyFor } from "@/data/restaurants";
+import { deliveryLinkUrl, mailtoHref, safeImageUrl, telHref, websiteUrl } from "@/data/restaurantSettings";
 import { openStatus } from "@/lib";
 import { useRestaurants } from "@/proto/RestaurantContext";
 import RestaurantReviews from "@/components/RestaurantReviews";
@@ -38,6 +39,15 @@ export default function Detail() {
 
   const status = openStatus(r);
   const todayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+  const website = websiteUrl(r.web);
+  const cover = safeImageUrl(r.image);
+  const gallery = Array.isArray(r.gallery) ? r.gallery.map(safeImageUrl).filter((url): url is string => !!url) : [];
+  const phone = telHref(r.phone);
+  const mail = mailtoHref(r.email);
+  const deliveryLinks = (Array.isArray(r.delivery.links) ? r.delivery.links : []).flatMap((link) => {
+    const url = deliveryLinkUrl(link?.name, link?.url);
+    return url ? [{ name: typeof link.name === "string" ? link.name : "Donáška", url }] : [];
+  });
 
   return (
     <article className="detail">
@@ -46,7 +56,7 @@ export default function Detail() {
       </Link>
 
       <div className="detail-head">
-        <div className="detail-banner" style={{ backgroundImage: `url(${r.image})` }} />
+        <div className="detail-banner" style={cover ? { backgroundImage: `url("${cover}")` } : undefined} />
         <div className="detail-id">
           <div className="detail-title">
             <span className={`open-label ${status.open ? "" : "closed"}`}>{status.label}</span>
@@ -68,19 +78,19 @@ export default function Detail() {
             <li>
               <Icon name="location" size={16} /> <Link to="#location" title="Zobraziť na mape">{r.address}</Link>
             </li>
-            {r.phone && (
+            {phone && (
               <li>
-                <Icon name="phone" size={16} /> <a href={`tel:${r.phone.replace(/\s/g, "")}`}>{r.phone}</a>
+                <Icon name="phone" size={16} /> <a href={phone}>{r.phone}</a>
               </li>
             )}
-            {r.email && (
+            {mail && (
               <li>
-                <Icon name="mail" size={16} /> <a href={`mailto:${r.email}`}>{r.email}</a>
+                <Icon name="mail" size={16} /> <a href={mail}>{r.email}</a>
               </li>
             )}
-            {r.web && (
+            {website && (
               <li>
-                <Icon name="globe" size={16} /> <a href={/^https?:\/\//.test(r.web) ? r.web : `https://${r.web}`}>{r.web}</a>
+                <Icon name="globe" size={16} /> <a href={website}>{website}</a>
               </li>
             )}
           </ul>
@@ -108,9 +118,9 @@ export default function Detail() {
           ) : (
             <p className="muted">Reštaurácia donášku neposkytuje.</p>
           )}
-          {r.delivery.links?.map((l) => (
-            <a key={l.url} className="btn-ghost block" href={l.url} target="_blank" rel="noopener noreferrer">
-              Objednať cez {l.name} <Icon name="arrow" size={16} />
+          {deliveryLinks.map((link) => (
+            <a key={link.url} className="btn-ghost block" href={link.url} target="_blank" rel="noopener noreferrer">
+              Objednať cez {link.name} <Icon name="arrow" size={16} />
             </a>
           ))}
 
@@ -161,16 +171,16 @@ export default function Detail() {
 
       <section className="panel">
         <h3>Fotogaléria</h3>
-        {r.gallery.length === 0 && <p className="muted">Reštaurácia zatiaľ nepridala fotografie.</p>}
+        {gallery.length === 0 && <p className="muted">Reštaurácia zatiaľ nepridala fotografie.</p>}
         <div className="gallery">
-          {r.gallery.map((g, i) => (
-            <button key={i} className="gallery-item" onClick={() => setPhoto(i)} aria-label={`Zväčšiť fotku ${i + 1}`}>
-              <img src={g} alt={`${r.name} – fotka ${i + 1}`} loading="lazy" />
+          {gallery.map((image, i) => (
+            <button key={`${image}-${i}`} className="gallery-item" onClick={() => setPhoto(i)} aria-label={`Zväčšiť fotku ${i + 1}`}>
+              <img src={image} alt={`${r.name} – fotka ${i + 1}`} loading="lazy" />
             </button>
           ))}
         </div>
-        {photo !== null && (
-          <Lightbox images={r.gallery} index={photo} alt={r.name} onClose={() => setPhoto(null)} onIndex={setPhoto} />
+        {photo !== null && photo < gallery.length && (
+          <Lightbox images={gallery} index={photo} alt={r.name} onClose={() => setPhoto(null)} onIndex={setPhoto} />
         )}
       </section>
 

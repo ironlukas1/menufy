@@ -28,14 +28,37 @@ function Section({ id, title, children, danger }: { id?: string; title: string; 
   );
 }
 
+// Supabase error text is not localized; map known codes and keep a safe fallback.
+const authUpdateError = (error: { code?: string }) => {
+  switch (error.code) {
+    case "weak_password": return "Heslo je príliš slabé. Použite min. 8 znakov, veľké písmeno a číslo.";
+    case "same_password": return "Nové heslo sa musí líšiť od aktuálneho.";
+    case "email_address_invalid": return "Zadajte platnú e-mailovú adresu.";
+    case "email_address_not_authorized": return "Túto e-mailovú adresu nie je možné použiť.";
+    case "email_address_exists": return "Túto e-mailovú adresu už používa iný účet.";
+    case "over_email_send_rate_limit": return "Odosielanie overovacích e-mailov je dočasne obmedzené. Skúste to neskôr.";
+    case "session_not_found": case "bad_jwt": return "Prihlásenie vypršalo. Prihláste sa znova.";
+    default: return "Zmenu sa nepodarilo uložiť. Skúste znova.";
+  }
+};
+
 export default function Settings() {
-  const { loggedIn, setLoggedIn, theme, setTheme, dark, email, displayName, userId, notify: n, setNotify } = useProto();
+  const { loggedIn, signOut, theme, setTheme, dark, email, displayName, userId, notify: n, setNotify } = useProto();
   const nav = useNavigate();
   const { hash } = useLocation();
   const [modal, setModal] = useState<null | "email" | "delete">(null);
   const [faq, setFaq] = useState<number | null>(null);
   const [sent, setSent] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [newEmail, setNewEmail] = useState("");
+  const [emailBusy, setEmailBusy] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [emailSent, setEmailSent] = useState(false);
+  const [pw, setPw] = useState("");
+  const [pw2, setPw2] = useState("");
+  const [pwBusy, setPwBusy] = useState(false);
+  const [pwError, setPwError] = useState<string | null>(null);
+  const [pwSaved, setPwSaved] = useState(false);
 
   const [username, setUsername] = useState(displayName === "Člen menufy" ? "" : displayName);
   const [nameBusy, setNameBusy] = useState(false);
@@ -68,11 +91,53 @@ export default function Settings() {
     }
   };
 
+  const savePassword = async (event: FormEvent) => {
+    event.preventDefault();
+    if (pwBusy || !userId) return;
+    setPwError(null);
+    setPwSaved(false);
+    if (pw !== pw2) return setPwError("Zadané heslá sa nezhodujú.");
+    if (pw.length < 8 || !/[A-Z]/.test(pw) || !/\d/.test(pw))
+      return setPwError("Heslo musí mať min. 8 znakov, aspoň 1 veľké písmeno a 1 číslo.");
+    setPwBusy(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: pw });
+      if (error) setPwError(authUpdateError(error));
+      else {
+        setPw(""); setPw2(""); setPwSaved(true);
+      }
+    } catch {
+      setPwError("Heslo sa nepodarilo zmeniť. Skúste znova.");
+    } finally {
+      setPwBusy(false);
+    }
+  };
+
+  const saveEmail = async (event: FormEvent) => {
+    event.preventDefault();
+    if (emailBusy) return;
+    const mail = newEmail.trim();
+    setEmailError(null);
+    setEmailSent(false);
+    if (!/^[A-Za-z0-9._+'-]+@[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)*\.[A-Za-z]{2,63}$/.test(mail))
+      return setEmailError("Zadajte platnú e-mailovú adresu.");
+    setEmailBusy(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ email: mail });
+      if (error) setEmailError(authUpdateError(error));
+      else setEmailSent(true);
+    } catch {
+      setEmailError("E-mail sa nepodarilo zmeniť. Skúste znova.");
+    } finally {
+      setEmailBusy(false);
+    }
+  };
+
   const deleteAccount = async () => {
     const { error } = await supabase.rpc("delete_user");
     if (error) return setDeleteError("Účet sa nepodarilo zmazať. Skúste to znova.");
     setModal(null);
-    setLoggedIn(false);
+    signOut();
     nav("/");
   };
 
@@ -112,26 +177,28 @@ export default function Settings() {
               <span>Aktuálny e-mail</span>
               <strong>{email}</strong>
             </div>
-            <button className="btn-ghost" onClick={() => setModal("email")}>
+            <button className="btn-ghost" onClick={() => { setNewEmail(""); setEmailError(null); setEmailSent(false); setModal("email"); }}>
               <Icon name="mail" size={16} /> Zmeniť e-mail
             </button>
           </Section>
 
           <Section title="Zabezpečenie">
-            <form className="form" onSubmit={(e) => e.preventDefault()}>
-              <label>
-                Aktuálne heslo
-                <input type="password" autoComplete="current-password" placeholder="••••••••" />
-              </label>
+            <form className="form" onSubmit={savePassword}>
               <label>
                 Nové heslo
-                <input type="password" autoComplete="new-password" placeholder="Min. 8 znakov, 1 veľké písmeno, 1 číslo" />
+                <input type="password" autoComplete="new-password" required minLength={8} maxLength={128}
+                  disabled={pwBusy} value={pw} onChange={(e) => { setPw(e.target.value); setPwSaved(false); }}
+                  placeholder="Min. 8 znakov, 1 veľké písmeno, 1 číslo" />
               </label>
               <label>
                 Potvrdiť nové heslo
-                <input type="password" autoComplete="new-password" placeholder="Zopakujte nové heslo" />
+                <input type="password" autoComplete="new-password" required minLength={8} maxLength={128}
+                  disabled={pwBusy} value={pw2} onChange={(e) => { setPw2(e.target.value); setPwSaved(false); }}
+                  placeholder="Zopakujte nové heslo" />
               </label>
-              <button className="btn-primary">Zmeniť heslo</button>
+              {pwError && <p className="form-error" role="alert">{pwError}</p>}
+              {pwSaved && <p className="success-note" role="status">Heslo bolo zmenené.</p>}
+              <button className="btn-primary" disabled={pwBusy || !userId}>{pwBusy ? "Ukladáme…" : "Zmeniť heslo"}</button>
             </form>
           </Section>
         </>
@@ -208,7 +275,7 @@ export default function Settings() {
             <button
               className="btn-ghost"
               onClick={() => {
-                setLoggedIn(false);
+                signOut();
                 nav("/");
               }}
             >
@@ -223,26 +290,20 @@ export default function Settings() {
 
       {modal === "email" && (
         <Modal title="Zmeniť e-mail" onClose={() => setModal(null)}>
-          <form
-            className="form"
-            onSubmit={(e) => {
-              e.preventDefault();
-              setModal(null);
-            }}
-          >
+          <form className="form" onSubmit={saveEmail}>
             <label>
               Nový e-mail
-              <input type="email" placeholder="novy@email.sk" />
+              <input type="email" required maxLength={254} autoComplete="email" placeholder="novy@email.sk"
+                disabled={emailBusy} value={newEmail} onChange={(e) => { setNewEmail(e.target.value); setEmailSent(false); }} />
+              <small>Na novú adresu pošleme overovací odkaz.</small>
             </label>
-            <label>
-              Heslo pre potvrdenie
-              <input type="password" placeholder="••••••••" />
-            </label>
+            {emailError && <p className="form-error" role="alert">{emailError}</p>}
+            {emailSent && <p className="success-note" role="status">Ak je nová adresa dostupná, poslali sme na ňu overovací odkaz. Skontrolujte schránku.</p>}
             <div className="modal-actions">
               <button type="button" className="btn-ghost" onClick={() => setModal(null)}>
                 Zrušiť
               </button>
-              <button className="btn-primary">Uložiť</button>
+              <button className="btn-primary" disabled={emailBusy}>{emailBusy ? "Ukladáme…" : "Uložiť"}</button>
             </div>
           </form>
         </Modal>
