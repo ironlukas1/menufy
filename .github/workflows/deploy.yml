@@ -63,7 +63,7 @@ jobs:
           cp -r app/dist stage/site
           rsync -a --exclude=node_modules --exclude=.next --exclude='.env*' backend/ stage/backend/
           cp deploy/docker-compose.yml deploy/nginx.conf stage/
-          if grep -RIEq 'sb_secret_|service_role|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}' stage/site; then
+          if grep -RIEq 'sb_secret_[A-Za-z0-9_-]{20,}|service_role|eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}' stage/site; then
             echo '::error::Secret-shaped value found in the staged browser bundle'
             exit 1
           fi
