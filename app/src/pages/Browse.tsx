@@ -7,36 +7,12 @@ import MapPanel from "@/components/MapPanel";
 import { ALLERGEN_GROUPS, CUISINES, LOCATIONS } from "@/data/allergens";
 import { DAYS, dailyFor, type Restaurant } from "@/data/restaurants";
 import { CITY_CENTER, distanceKm, nextAt, openStatus } from "@/lib";
+import { initialFilters as initial, loadFilters, saveFilters, MAX_PRICE, type Filters } from "@/data/filtersStorage";
 import { useRestaurants } from "@/proto/RestaurantContext";
 import { useProto } from "@/proto/ProtoContext";
 
-export type Filters = {
-  day: number;
-  city: string;
-  district: string;
-  cuisines: string[];
-  excluded: string[];
-  maxPrice: number;
-  delivery: boolean;
-  minRating: number;
-  openAt: string;
-  sort: "rating" | "price" | "distance" | "favorites";
-};
-
-export const MAX_PRICE = 15;
-
-const initial: Filters = {
-  day: 0,
-  city: "Bratislava",
-  district: "Všetky časti",
-  cuisines: [],
-  excluded: [],
-  maxPrice: MAX_PRICE,
-  delivery: false,
-  minRating: 0,
-  openAt: "",
-  sort: "rating",
-};
+export type { Filters };
+export { MAX_PRICE };
 
 export type BrowseCtx = {
   f: Filters;
@@ -146,8 +122,8 @@ export default function Browse() {
   const { slug } = useParams();
   const nav = useNavigate();
   const loc = useLocation();
-  const { geo, favorites, userPosition, requestLocation } = useProto();
-  const [f, setF] = useState<Filters>(initial);
+  const { geo, favorites, userPosition, locationRestored, requestLocation } = useProto();
+  const [f, setF] = useState<Filters>(loadFilters);
   const [pending, setPending] = useState<Filters | null>(null);
   const [draft, setDraft] = useState("");
   const [query, setQuery] = useState("");
@@ -189,10 +165,15 @@ export default function Browse() {
   const origin = geo === "granted" && userPosition ? userPosition : CITY_CENTER;
 
   useEffect(() => {
-    if (!userPosition) return;
+    saveFilters(f);
+  }, [f]);
+
+  useEffect(() => {
+    // A restored position must not overwrite filters the user saved earlier.
+    if (!userPosition || locationRestored) return;
     const near = restaurants.reduce((a, b) => (distanceKm(userPosition, a) <= distanceKm(userPosition, b) ? a : b));
     set({ city: near.city, district: "Všetky časti", sort: "distance" });
-  }, [userPosition, restaurants]);
+  }, [userPosition, locationRestored, restaurants]);
 
   const results = useMemo(() => {
     const q = query.trim().toLocaleLowerCase("sk");

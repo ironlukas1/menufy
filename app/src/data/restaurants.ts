@@ -1,4 +1,4 @@
-import { upcomingMenuDays } from "./owner";
+import { upcomingMenuDays } from "./owner.ts";
 
 export type MenuItem = {
   name: string;

@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { Navigate, useLocation } from "react-router";
 import { supabase } from "@/supabase";
+import { loadLocation, saveLocation } from "@/data/locationStorage";
 
 export type Theme = "system" | "light" | "dark";
 
@@ -14,6 +15,7 @@ type Proto = {
   geo: "unknown" | "requesting" | "granted" | "denied";
   setGeo: (g: "granted" | "denied") => void;
   userPosition: { lat: number; lng: number } | null;
+  locationRestored: boolean;
   locationError: string | null;
   requestLocation: () => void;
   favorites: string[];
@@ -93,10 +95,19 @@ export function ProtoProvider({ children }: { children: ReactNode }) {
     setNotifyState((n) => ({ ...n, ...patch }));
     savePrefs(Object.fromEntries(Object.entries(patch).map(([k, v]) => [`notify_${k}`, v])));
   };
-  const [geo, setGeo] = useState<Proto["geo"]>("unknown");
-  const [userPosition, setUserPosition] = useState<Proto["userPosition"]>(null);
+  const [storedLocation] = useState(loadLocation);
+  const [geo, setGeoState] = useState<Proto["geo"]>(
+    storedLocation.position ? "granted" : storedLocation.denied ? "denied" : "unknown",
+  );
+  const [userPosition, setUserPosition] = useState<Proto["userPosition"]>(storedLocation.position);
+  const [locationRestored, setLocationRestored] = useState(!!storedLocation.position);
   const [locationError, setLocationError] = useState<string | null>(null);
   const locating = useRef(false);
+
+  const setGeo = (next: "granted" | "denied") => {
+    setGeoState(next);
+    saveLocation({ position: userPosition, denied: next === "denied" });
+  };
 
   const requestLocation = () => {
     if (locating.current) return;
@@ -107,15 +118,19 @@ export function ProtoProvider({ children }: { children: ReactNode }) {
     }
     locating.current = true;
     setLocationError(null);
-    setGeo("requesting");
+    setGeoState("requesting");
     const onSuccess = ({ coords }: GeolocationPosition) => {
         locating.current = false;
-        setUserPosition({ lat: coords.latitude, lng: coords.longitude });
-        setGeo("granted");
+        const position = { lat: coords.latitude, lng: coords.longitude };
+        saveLocation({ position, denied: false });
+        setLocationRestored(false);
+        setUserPosition(position);
+        setGeoState("granted");
       };
     const onError = (error: GeolocationPositionError) => {
         locating.current = false;
-        setGeo(userPosition ? "granted" : "denied");
+        if (error.code === 1) saveLocation({ position: userPosition, denied: true });
+        setGeoState(userPosition ? "granted" : "denied");
         setLocationError(error.code === 1
           ? "Povoľte prístup k polohe v nastaveniach prehliadača a skúste znova."
           : error.code === 3
@@ -221,6 +236,7 @@ export function ProtoProvider({ children }: { children: ReactNode }) {
     geo,
     setGeo,
     userPosition,
+    locationRestored,
     locationError,
     requestLocation,
     favorites,
