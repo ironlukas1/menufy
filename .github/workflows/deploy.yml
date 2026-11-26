@@ -29,37 +29,22 @@ jobs:
           cache-dependency-path: app/pnpm-lock.yaml
 
       - name: Guard client-exposed secret names
-        # Only names are inspected; values are never printed. VITE_*/NEXT_PUBLIC_*
+        # Inspect only the names referenced by checked-in workflows. Secret
+        # values are never serialised into a script. VITE_*/NEXT_PUBLIC_*
         # variables end up in the browser bundle, so they must not hold secrets.
         # Publishable (RLS-safe) keys are the only documented exception.
-        env:
-          SECRETS_JSON: ${{ toJSON(secrets) }}
         run: |
-          python3 - <<'PY'
-          import json, os, re, sys
-
-          try:
-              names = json.loads(os.environ.get("SECRETS_JSON") or "{}")
-          except json.JSONDecodeError as exc:
-              print(f"::error::Cannot parse secret names: {exc}")
-              sys.exit(1)
-
-          client_prefix = re.compile(r"^(VITE_|NEXT_PUBLIC_)")
-          sensitive = re.compile(r"SECRET|SERVICE|TOKEN|PASSWORD|KEY", re.IGNORECASE)
-          publishable = re.compile(r"^(VITE_|NEXT_PUBLIC_)[A-Z0-9_]*PUBLISHABLE_KEY$")
-          offenders = sorted(
-              name for name in names
-              if client_prefix.match(name) and sensitive.search(name)
-              and not publishable.match(name)
+          set -euo pipefail
+          offenders=$(
+            git grep -nE 'secrets\.(VITE_|NEXT_PUBLIC_)[A-Z0-9_]*(SECRET|SERVICE|TOKEN|PASSWORD|KEY)' -- .github/workflows \
+              | grep -v 'PUBLISHABLE_KEY' || true
           )
-          if offenders:
-              print(
-                  "::error::Client-exposed secret names must not contain "
-                  "SECRET/SERVICE/TOKEN/PASSWORD/KEY: " + ", ".join(offenders)
-              )
-              sys.exit(1)
-          print(f"Checked {len(names)} secret names; no client-exposed sensitive names found.")
-          PY
+          if [ -n "$offenders" ]; then
+            echo '::error::Client-exposed secret names must not contain SECRET/SERVICE/TOKEN/PASSWORD/KEY'
+            printf '%s\n' "$offenders"
+            exit 1
+          fi
+          echo 'Checked workflow secret references; no client-exposed sensitive names found.'
 
       - name: Test and build
         working-directory: app
@@ -119,7 +104,9 @@ jobs:
           headers=$(curl -fsSI "$url/")
           grep -qi '^x-content-type-options: nosniff' <<<"$headers"
           grep -qi '^referrer-policy: ' <<<"$headers"
-          grep -qi "frame-ancestors 'none'" <<<"$headers"
+          grep -Fi 'frame-ancestors https://space.misaligned.dev' <<<"$headers"
+          api_headers=$(curl -sS -D - -o /dev/null "$url/api/v1/health" || true)
+          grep -Fi "frame-ancestors 'none'" <<<"$api_headers"
           api_status=$(curl -sS --retry 3 --retry-connrefused -o /dev/null -w '%{http_code}' "$url/api/v1/health" || true)
           echo "API /api/v1/health HTTP status: ${api_status:-none}"
           echo "Deployment verification passed"
